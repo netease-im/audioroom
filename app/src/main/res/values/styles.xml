@@ -9,6 +9,7 @@
         <item name="actionBarSize">@dimen/action_bar_height</item>
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
+        <item name="android:windowBackground">@drawable/background_img</item>
 
     </style>
 
@@ -20,5 +21,21 @@
         <attr name="civ_fill_color" format="color" />
     </declare-styleable>
 
+
+    <style name="TextStyle_Color_828282_Size_14sp">
+        <item name="android:textColor">@color/color_828282</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+    </style>
+
+
+    <style name="Base_Audio_UI_Switch">
+        <item name="android:layout_width">30dp</item>
+        <item name="android:layout_height">30dp</item>
+        <item name="android:layout_marginLeft">10dp</item>
+        <item name="android:padding">5dp</item>
+        <item name="android:scaleType">fitXY</item>
+    </style>
 
 </resources>

@@ -119,7 +119,6 @@ public class NimHttpClient {
         if (!inited) {
             return;
         }
-
         executor.execute(new NimHttpTask(url, headers, body, callback, post));
     }
 

@@ -121,6 +121,8 @@ public class CircleImageView extends AppCompatImageView {
         if (mFillColor != Color.TRANSPARENT) {
             canvas.drawCircle(getWidth() / 2.0f, getHeight() / 2.0f, mDrawableRadius, mFillPaint);
         }
+
+
         canvas.drawCircle(getWidth() / 2.0f, getHeight() / 2.0f, mDrawableRadius, mBitmapPaint);
         if (mBorderWidth != 0) {
             canvas.drawCircle(getWidth() / 2.0f, getHeight() / 2.0f, mBorderRadius, mBorderPaint);

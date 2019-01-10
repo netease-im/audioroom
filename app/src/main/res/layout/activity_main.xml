@@ -1,11 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+
+    <com.netease.audioroom.demo.widget.HeadImageView
+        android:id="@+id/iv_self_avatar"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="10dp"
+        android:src="@drawable/nim_avatar_default" />
+
     <TextView
+        android:id="@+id/tv_self_nick"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hello World!" />
+        android:layout_below="@id/iv_self_avatar"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="6dp"
+        android:text="我"
+        android:textColor="@color/color_ffffff" />
 
-</LinearLayout>
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/rcy_chat_room_list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/tv_self_nick"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:layout_marginTop="21dp" />
+
+
+    <ImageView
+        android:id="@+id/iv_create_chat_room"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="20dp"
+        android:src="@drawable/create_room_btn" />
+</RelativeLayout>
