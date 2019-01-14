@@ -8,11 +8,20 @@ import android.view.View;
 import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.base.BaseAudioActivity;
 import com.netease.audioroom.demo.base.IAudioLive;
+import com.netease.audioroom.demo.cache.DemoCache;
+import com.netease.audioroom.demo.model.AccountInfo;
 import com.netease.audioroom.demo.model.QueueInfo;
 import com.netease.audioroom.demo.permission.MPermission;
 import com.netease.audioroom.demo.permission.MPermissionUtil;
+import com.netease.audioroom.demo.util.CommonUtil;
 import com.netease.audioroom.demo.util.ToastHelper;
+import com.netease.nimlib.sdk.RequestCallback;
+import com.netease.nimlib.sdk.chatroom.model.ChatRoomMember;
+import com.netease.nimlib.sdk.chatroom.model.EnterChatRoomData;
+import com.netease.nimlib.sdk.chatroom.model.EnterChatRoomResultData;
+import com.netease.nimlib.sdk.msg.model.CustomNotification;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -26,6 +35,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive {
         super.onCreate(savedInstanceState);
 
         requestLivePermission();
+        enterChatRoom(roomInfo.getRoomId());
     }
 
     @Override
@@ -49,9 +59,21 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive {
         return false;
     }
 
+    @Override
+    protected void receiveNotification(CustomNotification customNotification) {
+
+    }
+
 
     @Override
-    public void enterChatRoom(String roomId) {
+    protected void enterRoomSuccess(EnterChatRoomResultData resultData) {
+        super.enterRoomSuccess(resultData);
+        AccountInfo accountInfo = DemoCache.getAccountInfo();
+        ivLiverAvatar.loadAvatar(accountInfo.avatar);
+        tvLiverNick.setText(accountInfo.nick);
+
+
+//        chatRoomService.updateQueue()
 
     }
 

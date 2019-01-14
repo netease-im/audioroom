@@ -11,7 +11,6 @@ import java.io.Serializable;
 
 public class MemberInfo implements Serializable {
 
-
     private static final String ACCOUNT_KEY = "account";
     private static final String NICK_KEY = "nick";
     private static final String AVATAR_KEY = "avatar";

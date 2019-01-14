@@ -49,7 +49,7 @@ public class QueueAdapter extends BaseAdapter<QueueInfo> {
             viewHolder.ivDefault.setImageResource(
                     status == QueueInfo.INIT_STATUS ? R.drawable.queue_add_member : R.drawable.queue_forbid_apply);
 
-            viewHolder.tvNick.setText("麦位" + queueInfo.getIndex());
+            viewHolder.tvNick.setText("麦位" + (queueInfo.getIndex() + 1));
             return;
         }
 

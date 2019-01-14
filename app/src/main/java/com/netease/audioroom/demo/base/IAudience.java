@@ -1,5 +1,7 @@
 package com.netease.audioroom.demo.base;
 
+import com.netease.audioroom.demo.model.QueueInfo;
+
 /**
  * 观众行为
  */
@@ -17,7 +19,7 @@ public interface IAudience {
     /**
      * 请求连麦
      */
-    void requestLink();
+    void requestLink(QueueInfo model);
 
 
     /**

@@ -2,13 +2,8 @@ package com.netease.audioroom.demo.cache;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.text.TextUtils;
 
 import com.netease.audioroom.demo.model.AccountInfo;
-import com.netease.nimlib.sdk.NIMClient;
-import com.netease.nimlib.sdk.auth.LoginInfo;
-import com.netease.nimlib.sdk.uinfo.UserService;
-import com.netease.nimlib.sdk.uinfo.model.NimUserInfo;
 
 
 public class DemoCache {
@@ -19,22 +14,16 @@ public class DemoCache {
 
     private static Context context;
 
-    private static String account;
+    private static String accountId;
+    private static AccountInfo accountInfo;
 
-    private static NimUserInfo userInfo;
 
-
-    public static void clear() {
-        account = null;
-        userInfo = null;
+    public static String getAccountId() {
+        return accountId;
     }
 
-    public static String getAccount() {
-        return account;
-    }
-
-    public static void setAccount(String account) {
-        DemoCache.account = account;
+    public static void setAccountId(String accid) {
+        accountId = accid;
     }
 
     public static Context getContext() {
@@ -45,26 +34,25 @@ public class DemoCache {
         DemoCache.context = context.getApplicationContext();
     }
 
-    public static NimUserInfo getUserInfo() {
-        if (userInfo == null) {
-            userInfo = NIMClient.getService(UserService.class).getUserInfo(account);
-        }
 
-        return userInfo;
-    }
-
-
-    public static void saveAccountInfo(AccountInfo accountInfo) {
+    public static void saveAccountInfo(AccountInfo account) {
+        accountInfo = account;
         getSharedPreferences().edit().putString(ACCOUNT_INFO_KEY, accountInfo.toString()).apply();
     }
 
 
     public static AccountInfo getAccountInfo() {
+
+        if (accountInfo != null) {
+            return accountInfo;
+        }
+
         String jsonStr = getSharedPreferences().getString(ACCOUNT_INFO_KEY, null);
         if (jsonStr == null) {
             return null;
         }
-        return new AccountInfo(jsonStr);
+        accountInfo = new AccountInfo(jsonStr);
+        return accountInfo;
     }
 
 

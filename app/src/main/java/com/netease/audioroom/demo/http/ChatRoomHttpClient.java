@@ -223,6 +223,7 @@ public class ChatRoomHttpClient {
                             param = new DemoRoomInfo();
                             param.setRoomId(msg.optString(RESULT_KEY_ROOM_ID));
                             param.setName(msg.optString(RESULT_KEY_NAME));
+                            param.setCreator(msg.optString(RESULT_KEY_CREATOR));
 
                         }
                         callback.onSuccess(param);

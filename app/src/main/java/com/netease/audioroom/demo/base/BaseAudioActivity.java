@@ -5,28 +5,31 @@ import android.support.annotation.Nullable;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.adapter.QueueAdapter;
+import com.netease.audioroom.demo.cache.DemoCache;
+import com.netease.audioroom.demo.model.AccountInfo;
 import com.netease.audioroom.demo.model.DemoRoomInfo;
 import com.netease.audioroom.demo.model.QueueInfo;
+import com.netease.audioroom.demo.util.CommonUtil;
 import com.netease.audioroom.demo.util.ToastHelper;
 import com.netease.audioroom.demo.widget.HeadImageView;
 import com.netease.nimlib.sdk.NIMClient;
 import com.netease.nimlib.sdk.Observer;
 import com.netease.nimlib.sdk.RequestCallback;
-import com.netease.nimlib.sdk.StatusCode;
-import com.netease.nimlib.sdk.auth.AuthService;
-import com.netease.nimlib.sdk.auth.AuthServiceObserver;
-import com.netease.nimlib.sdk.auth.LoginInfo;
 import com.netease.nimlib.sdk.chatroom.ChatRoomService;
-import com.netease.nimlib.sdk.chatroom.model.ChatRoomInfo;
+import com.netease.nimlib.sdk.chatroom.model.EnterChatRoomData;
+import com.netease.nimlib.sdk.chatroom.model.EnterChatRoomResultData;
+import com.netease.nimlib.sdk.msg.MsgServiceObserve;
+import com.netease.nimlib.sdk.msg.model.CustomNotification;
+import com.netease.nimlib.sdk.util.Entry;
 
 import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -37,6 +40,7 @@ public abstract class BaseAudioActivity extends PermissionActivity {
 
     public static final String ROOM_INFO_KEY = "room_info_key";
     private static final String TAG = "BaseAudioActivity";
+    private static final String QUEUE_KEY_PREFIX = "audio_queue_";
 
     //主播基础信息
     protected HeadImageView ivLiverAvatar;
@@ -60,7 +64,7 @@ public abstract class BaseAudioActivity extends PermissionActivity {
 
 
     // 聊天室信息
-    protected DemoRoomInfo demoRoomInfo;
+    protected DemoRoomInfo roomInfo;
 
 
     // 聊天室服务
@@ -81,6 +85,13 @@ public abstract class BaseAudioActivity extends PermissionActivity {
             return onQueueItemLongClick(model, position);
         }
     };
+    private Observer<CustomNotification> customNotification =  new Observer<CustomNotification>() {
+        @Override
+        public void onEvent(CustomNotification customNotification) {
+            receiveNotification(customNotification);
+        }
+    };
+
 
 
 
@@ -90,16 +101,18 @@ public abstract class BaseAudioActivity extends PermissionActivity {
 
         setContentView(getContentViewID());
 
-        demoRoomInfo = getIntent().getParcelableExtra(ROOM_INFO_KEY);
-        if (demoRoomInfo == null) {
+        roomInfo = getIntent().getParcelableExtra(ROOM_INFO_KEY);
+        if (roomInfo == null) {
             ToastHelper.showToast("聊天室信息不能为空");
             finish();
             return;
         }
         chatRoomService = NIMClient.getService(ChatRoomService.class);
+        enterChatRoom(roomInfo.getRoomId());
         findBaseView();
         setupBaseViewInner();
         setupBaseView();
+
     }
 
 
@@ -134,66 +147,99 @@ public abstract class BaseAudioActivity extends PermissionActivity {
     private void setupBaseViewInner() {
 
 
-        String name = demoRoomInfo.getName();
-        name = "房间：" + (TextUtils.isEmpty(name) ? demoRoomInfo.getRoomId() : name) + "（" + demoRoomInfo.getOnlineUserCount() + "人）";
+        String name = roomInfo.getName();
+        name = "房间：" + (TextUtils.isEmpty(name) ? roomInfo.getRoomId() : name) + "（" + roomInfo.getOnlineUserCount() + "人）";
 
         tvRoomName.setText(name);
 
         rcyQueueList.setLayoutManager(new GridLayoutManager(this, 4));
-
-        //todo
-        ArrayList<QueueInfo> queueInfo = new ArrayList<>();
-        for (int i = 0; i < 8; i++) {
-            QueueInfo queue = new QueueInfo();
-            queue.setIndex(i + 1);
-            queueInfo.add(queue);
-        }
-        queueAdapter = new QueueAdapter(queueInfo, this);
+        queueAdapter = new QueueAdapter(null, this);
         rcyQueueList.setAdapter(queueAdapter);
-
 
         queueAdapter.setItemClickListener(itemClickListener);
         queueAdapter.setItemLongClickListener(itemLongClickListener);
+    }
 
+    private void initQueue(List<Entry<String, String>> entries) {
+        ArrayList<QueueInfo> queueInfoList = new ArrayList<>();
 
-        chatRoomService.fetchRoomInfo(demoRoomInfo.getRoomId()).setCallback(new RequestCallback<ChatRoomInfo>() {
+        for (int i = 0; i < 8; i++) {
+            QueueInfo queue = new QueueInfo();
+            queue.setIndex(i);
+            queueInfoList.add(queue);
+        }
+
+        if (entries == null) {
+            queueAdapter.setItems(queueInfoList);
+            return;
+        }
+
+        for (Entry<String, String> entry : entries) {
+            if (entry.key.startsWith(AUDIO_SERVICE)) {
+                QueueInfo queueInfo = QueueInfo.fromJson(entry.value);
+                if (queueInfo == null) {
+                    continue;
+                }
+                queueInfoList.set(queueInfo.getIndex(), queueInfo);
+            }
+
+        }
+        queueAdapter.setItems(queueInfoList);
+    }
+
+    public void enterChatRoom(String roomId) {
+        AccountInfo accountInfo = DemoCache.getAccountInfo();
+        EnterChatRoomData roomData = new EnterChatRoomData(roomId);
+        roomData.setAvatar(accountInfo.avatar);
+        roomData.setNick(accountInfo.nick);
+        chatRoomService.enterChatRoomEx(roomData, 2).setCallback(new RequestCallback<EnterChatRoomResultData>() {
             @Override
-            public void onSuccess(ChatRoomInfo chatRoomInfo) {
-
+            public void onSuccess(EnterChatRoomResultData resultData) {
+                enterRoomSuccess(resultData);
             }
 
             @Override
             public void onFailed(int i) {
+                ToastHelper.showToast("进入聊天室失败 ， code = " + i);
             }
 
             @Override
             public void onException(Throwable throwable) {
-
+                ToastHelper.showToast("进入聊天室异常 ，  e = " + throwable);
             }
         });
 
-//        LoginInfo loginInfo = new LoginInfo("wen01", "e10adc3949ba59abbe56e057f20f883e");
-//        NIMClient.getService(AuthService.class).login(loginInfo).setCallback(new RequestCallback() {
-//            @Override
-//            public void onSuccess(Object o) {
-//
-//            }
-//
-//            @Override
-//            public void onFailed(int i) {
-//
-//            }
-//
-//            @Override
-//            public void onException(Throwable throwable) {
-//
-//            }
-//        });
+    }
+
+    protected void enterRoomSuccess(EnterChatRoomResultData resultData) {
+
+        chatRoomService.fetchQueue(roomInfo.getRoomId()).setCallback(new RequestCallback<List<Entry<String, String>>>() {
+            @Override
+            public void onSuccess(List<Entry<String, String>> entries) {
+                initQueue(entries);
+            }
+
+            @Override
+            public void onFailed(int i) {
+                ToastHelper.showToast("获取队列失败 ，  code = " + i);
+            }
+
+            @Override
+            public void onException(Throwable throwable) {
+                ToastHelper.showToast("获取队列异常，  e = " + throwable);
+            }
+        });
+
 
     }
 
 
+    @Override
+    protected void registerObserver(boolean register) {
+        super.registerObserver(register);
 
+        NIMClient.getService(MsgServiceObserve.class).observeCustomNotification(customNotification, register);
+    }
 
     protected abstract int getContentViewID();
 
@@ -202,6 +248,8 @@ public abstract class BaseAudioActivity extends PermissionActivity {
     protected abstract void onQueueItemClick(QueueInfo model, int position);
 
     protected abstract boolean onQueueItemLongClick(QueueInfo model, int position);
+
+    protected abstract void receiveNotification(CustomNotification customNotification);
 
 
 }

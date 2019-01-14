@@ -6,11 +6,18 @@ import android.view.View;
 import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.base.BaseAudioActivity;
 import com.netease.audioroom.demo.base.IAudience;
+import com.netease.audioroom.demo.custom.P2PNotificationHelper;
 import com.netease.audioroom.demo.model.QueueInfo;
 import com.netease.audioroom.demo.permission.MPermission;
 import com.netease.audioroom.demo.permission.MPermissionUtil;
+import com.netease.audioroom.demo.util.CommonUtil;
 import com.netease.audioroom.demo.util.ToastHelper;
+import com.netease.nimlib.sdk.RequestCallback;
+import com.netease.nimlib.sdk.chatroom.model.ChatRoomMember;
+import com.netease.nimlib.sdk.chatroom.model.EnterChatRoomResultData;
+import com.netease.nimlib.sdk.msg.model.CustomNotification;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -19,9 +26,37 @@ import java.util.List;
  */
 public class AudienceActivity extends BaseAudioActivity implements IAudience {
 
-
     @Override
-    public void enterChatRoom(String roomId) {
+    protected void enterRoomSuccess(EnterChatRoomResultData resultData) {
+        super.enterRoomSuccess(resultData);
+
+        String creatorId = resultData.getRoomInfo().getCreator();
+        ArrayList<String> accountList = new ArrayList();
+        accountList.add(creatorId);
+        chatRoomService.fetchRoomMembersByIds(resultData.getRoomId(), accountList).setCallback(new RequestCallback<List<ChatRoomMember>>() {
+            @Override
+            public void onSuccess(List<ChatRoomMember> chatRoomMembers) {
+
+                if (CommonUtil.isEmpty(chatRoomMembers)) {
+                    ToastHelper.showToast("获取主播信息失败 ， 结果为空");
+                    return;
+                }
+
+                ChatRoomMember roomMember = chatRoomMembers.get(0);
+                ivLiverAvatar.loadAvatar(roomMember.getAvatar());
+                tvLiverNick.setText(roomMember.getNick());
+            }
+
+            @Override
+            public void onFailed(int i) {
+                ToastHelper.showToast("获取主播信息失败 ， code = " + i);
+            }
+
+            @Override
+            public void onException(Throwable throwable) {
+                ToastHelper.showToast("获取主播信息异常 ， e = " + throwable);
+            }
+        });
 
     }
 
@@ -41,7 +76,10 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience {
 
     @Override
     protected void onQueueItemClick(QueueInfo model, int position) {
-
+        if (model.getStatus() != QueueInfo.INIT_STATUS) {
+            return;
+        }
+        requestLink(model);
     }
 
     @Override
@@ -49,9 +87,21 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience {
         return false;
     }
 
+    @Override
+    protected void receiveNotification(CustomNotification customNotification) {
+
+    }
+
 
     @Override
-    public void requestLink() {
+    public void requestLink(QueueInfo model) {
+        P2PNotificationHelper.requestLink(model);
+
+
+
+
+
+
 
     }
 

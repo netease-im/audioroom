@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
@@ -33,6 +34,7 @@ import java.util.ArrayList;
 public class MainActivity extends BaseActivity implements View.OnClickListener, BaseAdapter.ItemClickListener<DemoRoomInfo> {
 
 
+    private static final String TAG = "MainActivity";
     private HeadImageView ivAvatar;
     private TextView tvNick;
 
@@ -136,10 +138,11 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
 
     private void afterLogin(AccountInfo accountInfo) {
         ToastHelper.showToast("登陆成功");
-        DemoCache.setAccount(accountInfo.account);
+        DemoCache.setAccountId(accountInfo.account);
         DemoCache.saveAccountInfo(accountInfo);
         ivAvatar.loadAvatar(accountInfo.avatar);
         tvNick.setText(accountInfo.nick);
+        Log.i(TAG, "after login  , account = " + accountInfo.account);
 
     }
 
@@ -169,6 +172,10 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
     }
 
     private void showCreateChatRoomDialog() {
+        if (loginStatus != StatusCode.LOGINED) {
+            ToastHelper.showToast("登陆失败，请杀掉APP重新登陆");
+            return;
+        }
 
         //todo 弹窗
 
@@ -177,40 +184,37 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
     }
 
     private void createChatRoom(String roomName) {
-        if (loginStatus != StatusCode.LOGINED) {
-            ToastHelper.showToast("登陆失败，请杀掉APP重新登陆");
-            return;
-        }
+
         if (TextUtils.isEmpty(roomName) || roomName.trim().length() == 0) {
             ToastHelper.showToast("房间名不能为空");
             return;
         }
 
-        ChatRoomHttpClient.getInstance().createRoom(DemoCache.getAccount(), roomName, new ChatRoomHttpClient.ChatRoomHttpCallback<DemoRoomInfo>() {
-            @Override
-            public void onSuccess(DemoRoomInfo demoRoomInfo) {
-                if (demoRoomInfo == null) {
-                    ToastHelper.showToast("创建房间失败，返回信息为空");
-                    return;
-                }
-                if (isActivityPaused()) {
-                    return;
-                }
-
-                startLive(demoRoomInfo);
-            }
-
-            @Override
-            public void onFailed(int code, String errorMsg) {
-                ToastHelper.showToast("创建房间失败");
-            }
-        });
+//        ChatRoomHttpClient.getInstance().createRoom(DemoCache.getAccountId(), roomName, new ChatRoomHttpClient.ChatRoomHttpCallback<DemoRoomInfo>() {
+//            @Override
+//            public void onSuccess(DemoRoomInfo roomInfo) {
+//                if (roomInfo == null) {
+//                    ToastHelper.showToast("创建房间失败，返回信息为空");
+//                    return;
+//                }
+//                if (isActivityPaused()) {
+//                    return;
+//                }
+//
+//                startLive(roomInfo);
+//            }
+//
+//            @Override
+//            public void onFailed(int code, String errorMsg) {
+//                ToastHelper.showToast("创建房间失败");
+//            }
+//        });
 
 
         //todo  测试代码 ，直接改成自己创建的room 的id 即可
-//        DemoRoomInfo demoRoomInfo = new DemoRoomInfo();
-//        demoRoomInfo.setRoomId("61103854");
-//        startLive(demoRoomInfo);
+        DemoRoomInfo demoRoomInfo = new DemoRoomInfo();
+        demoRoomInfo.setRoomId("60929944");
+        startLive(demoRoomInfo);
 
 
     }
@@ -229,17 +233,14 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
         }
 
         //当前帐号创建的房间
-        if (TextUtils.equals(DemoCache.getAccount(), model.getCreator())) {
+        if (TextUtils.equals(DemoCache.getAccountId(), model.getCreator())) {
             startLive(model);
             return;
         }
 
-
-        //todo
-//        Intent intent = new Intent(MainActivity.this, AudienceActivity.class);
-//        intent.putExtra(BaseAudioActivity.ROOM_INFO_KEY, model);
-//        startActivity(intent);
-
+        Intent intent = new Intent(MainActivity.this, AudienceActivity.class);
+        intent.putExtra(BaseAudioActivity.ROOM_INFO_KEY, model);
+        startActivity(intent);
 
     }
 

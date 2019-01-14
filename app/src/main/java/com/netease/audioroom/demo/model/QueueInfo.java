@@ -49,6 +49,7 @@ public class QueueInfo implements Serializable {
 
     private static final String STATUS_KEY = "status";
     private static final String MEMBER_KEY = "member";
+    private static final String INDEX_KEY = "index";
 
     private MemberInfo memberInfo;
     private int status = INIT_STATUS;
@@ -65,24 +66,7 @@ public class QueueInfo implements Serializable {
     }
 
     public QueueInfo() {
-
-    }
-
-    public QueueInfo(JSONObject jsonObject) {
-        fromJson(jsonObject);
-    }
-
-    private void fromJson(JSONObject jsonObject) {
-        JSONObject memberJson = null;
-        try {
-            memberJson = jsonObject.getJSONObject(MEMBER_KEY);
-            if (memberJson != null) {
-                memberInfo = new MemberInfo(memberJson);
-            }
-            status = jsonObject.getInt(STATUS_KEY);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        this(null, INIT_STATUS);
     }
 
     public int getIndex() {
@@ -116,6 +100,7 @@ public class QueueInfo implements Serializable {
         JSONObject jsonObject = new JSONObject();
         try {
             jsonObject.put(STATUS_KEY, status);
+            jsonObject.put(INDEX_KEY, index);
             if (memberInfo != null) {
                 jsonObject.put(MEMBER_KEY, memberInfo.toJson());
             }
@@ -129,5 +114,23 @@ public class QueueInfo implements Serializable {
     @Override
     public String toString() {
         return toJson().toString();
+    }
+
+    public static QueueInfo fromJson(String json) {
+        try {
+            QueueInfo queueInfo = new QueueInfo();
+            JSONObject jsonObject = new JSONObject(json);
+            queueInfo.setStatus(jsonObject.optInt(STATUS_KEY, INIT_STATUS));
+            queueInfo.setIndex(jsonObject.optInt(INDEX_KEY));
+            JSONObject memberJson = jsonObject.getJSONObject(MEMBER_KEY);
+            if (memberJson != null) {
+                MemberInfo memberInfo = new MemberInfo(memberJson);
+                queueInfo.setMemberInfo(memberInfo);
+            }
+            return queueInfo;
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }
