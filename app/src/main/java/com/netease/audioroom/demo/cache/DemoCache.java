@@ -1,13 +1,21 @@
 package com.netease.audioroom.demo.cache;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.text.TextUtils;
 
+import com.netease.audioroom.demo.model.AccountInfo;
 import com.netease.nimlib.sdk.NIMClient;
+import com.netease.nimlib.sdk.auth.LoginInfo;
 import com.netease.nimlib.sdk.uinfo.UserService;
 import com.netease.nimlib.sdk.uinfo.model.NimUserInfo;
 
 
 public class DemoCache {
+
+
+    private static final String ACCOUNT_INFO_KEY = "account_info_key";
+
 
     private static Context context;
 
@@ -33,7 +41,7 @@ public class DemoCache {
         return context;
     }
 
-    public static void setContext(Context context) {
+    public static void init(Context context) {
         DemoCache.context = context.getApplicationContext();
     }
 
@@ -43,6 +51,25 @@ public class DemoCache {
         }
 
         return userInfo;
+    }
+
+
+    public static void saveAccountInfo(AccountInfo accountInfo) {
+        getSharedPreferences().edit().putString(ACCOUNT_INFO_KEY, accountInfo.toString()).apply();
+    }
+
+
+    public static AccountInfo getAccountInfo() {
+        String jsonStr = getSharedPreferences().getString(ACCOUNT_INFO_KEY, null);
+        if (jsonStr == null) {
+            return null;
+        }
+        return new AccountInfo(jsonStr);
+    }
+
+
+    private static SharedPreferences getSharedPreferences() {
+        return context.getSharedPreferences("audio_demo", Context.MODE_PRIVATE);
     }
 
 

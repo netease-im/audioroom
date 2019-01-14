@@ -2,8 +2,10 @@ package com.netease.audioroom.demo.model;
 
 import android.text.TextUtils;
 
-import com.alibaba.fastjson.JSONObject;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMember;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.Serializable;
 
@@ -47,11 +49,11 @@ public class MemberInfo implements Serializable {
     }
 
     private void fromJson(JSONObject jsonObject) {
-        account = jsonObject.getString(ACCOUNT_KEY);
-        nick = jsonObject.getString(NICK_KEY);
-        avatar = jsonObject.getString(AVATAR_KEY);
-        isMutedText = jsonObject.getIntValue(MUTED_TEXT_KEY) == 1;
-        isMutedAudio = jsonObject.getIntValue(MUTED_AUDIO_KEY) == 1;
+        account = jsonObject.optString(ACCOUNT_KEY);
+        nick = jsonObject.optString(NICK_KEY);
+        avatar = jsonObject.optString(AVATAR_KEY);
+        isMutedText = jsonObject.optInt(MUTED_TEXT_KEY) == 1;
+        isMutedAudio = jsonObject.optInt(MUTED_AUDIO_KEY) == 1;
     }
 
 
@@ -88,17 +90,22 @@ public class MemberInfo implements Serializable {
 
     public JSONObject toJson() {
         JSONObject jsonObject = new JSONObject();
-        if (!TextUtils.isEmpty(account)) {
-            jsonObject.put(ACCOUNT_KEY, account);
+        try {
+            if (!TextUtils.isEmpty(account)) {
+                jsonObject.put(ACCOUNT_KEY, account);
+            }
+            if (!TextUtils.isEmpty(nick)) {
+                jsonObject.put(NICK_KEY, nick);
+            }
+            if (!TextUtils.isEmpty(avatar)) {
+                jsonObject.put(AVATAR_KEY, avatar);
+            }
+            jsonObject.put(MUTED_TEXT_KEY, isMutedText ? 1 : 0);
+            jsonObject.put(MUTED_AUDIO_KEY, isMutedAudio ? 1 : 0);
+
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
-        if (!TextUtils.isEmpty(nick)) {
-            jsonObject.put(NICK_KEY, nick);
-        }
-        if (!TextUtils.isEmpty(avatar)) {
-            jsonObject.put(AVATAR_KEY, avatar);
-        }
-        jsonObject.put(MUTED_TEXT_KEY, isMutedText ? 1 : 0);
-        jsonObject.put(MUTED_AUDIO_KEY, isMutedAudio ? 1 : 0);
         return jsonObject;
     }
 

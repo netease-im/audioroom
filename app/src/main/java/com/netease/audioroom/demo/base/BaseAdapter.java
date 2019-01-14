@@ -103,7 +103,7 @@ public abstract class BaseAdapter<T> extends RecyclerView.Adapter {
         return dataList.get(position);
     }
 
-    public final void setData(ArrayList<T> newDataList) {
+    public final void setItems(ArrayList<T> newDataList) {
         if (newDataList == null) {
             return;
         }
@@ -113,7 +113,7 @@ public abstract class BaseAdapter<T> extends RecyclerView.Adapter {
     }
 
 
-    public final void appendData(T model) {
+    public final void appendItem(T model) {
         if (model == null) {
             return;
         }
@@ -122,16 +122,17 @@ public abstract class BaseAdapter<T> extends RecyclerView.Adapter {
     }
 
 
-    public final void removeAt(int position) {
-        if (position < 0 || position >= dataList.size()) {
+    public final void appendItems(ArrayList<T> items) {
+        if (items == null) {
             return;
         }
-        dataList.remove(position);
-        notifyItemRemoved(position);
+        int start = dataList.size();
+        dataList.addAll(items);
+        notifyItemRangeChanged(start, items.size());
     }
 
 
-    public final void replaceData(T model, int position) {
+    public final void replaceItem(T model, int position) {
         if (model == null || position < 0 || position >= dataList.size()) {
             return;
         }
@@ -139,6 +140,18 @@ public abstract class BaseAdapter<T> extends RecyclerView.Adapter {
         notifyItemChanged(position);
     }
 
+    public final void removeItemAt(int position) {
+        if (position < 0 || position >= dataList.size()) {
+            return;
+        }
+        dataList.remove(position);
+        notifyItemRemoved(position);
+    }
+
+    public final void clearAll() {
+        dataList.clear();
+        notifyDataSetChanged();
+    }
 
     public final void setItemClickListener(ItemClickListener<T> itemClickListener) {
         this.itemClickListener = itemClickListener;

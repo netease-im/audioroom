@@ -14,24 +14,31 @@ import com.netease.audioroom.demo.adapter.ChatRoomListAdapter;
 import com.netease.audioroom.demo.base.BaseActivity;
 import com.netease.audioroom.demo.base.BaseAdapter;
 import com.netease.audioroom.demo.base.BaseAudioActivity;
+import com.netease.audioroom.demo.cache.DemoCache;
 import com.netease.audioroom.demo.http.ChatRoomHttpClient;
+import com.netease.audioroom.demo.model.AccountInfo;
 import com.netease.audioroom.demo.model.DemoRoomInfo;
 import com.netease.audioroom.demo.util.ScreenUtil;
 import com.netease.audioroom.demo.util.ToastHelper;
 import com.netease.audioroom.demo.widget.HeadImageView;
 import com.netease.audioroom.demo.widget.VerticalItemDecoration;
+import com.netease.nimlib.sdk.NIMClient;
+import com.netease.nimlib.sdk.RequestCallback;
+import com.netease.nimlib.sdk.StatusCode;
+import com.netease.nimlib.sdk.auth.AuthService;
+import com.netease.nimlib.sdk.auth.LoginInfo;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class MainActivity extends BaseActivity implements View.OnClickListener, BaseAdapter.ItemClickListener<DemoRoomInfo> {
 
 
     private HeadImageView ivAvatar;
     private TextView tvNick;
-    private RecyclerView rcyChatList;
 
     private ChatRoomListAdapter chatRoomListAdapter;
+
+    private StatusCode loginStatus = StatusCode.UNLOGIN;
 
 
     @Override
@@ -39,30 +46,22 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setupView();
+
+        tryLogin();
         fetchChatRoomList();
     }
 
+
     private void setupView() {
+
         ivAvatar = findViewById(R.id.iv_self_avatar);
         tvNick = findViewById(R.id.tv_self_nick);
-        rcyChatList = findViewById(R.id.rcy_chat_room_list);
+        RecyclerView rcyChatList = findViewById(R.id.rcy_chat_room_list);
         findViewById(R.id.iv_create_chat_room).setOnClickListener(this);
 
         rcyChatList.setLayoutManager(new LinearLayoutManager(this));
-        //todo
-        ArrayList<DemoRoomInfo> roomList = new ArrayList<>();
-        DemoRoomInfo demoRoomInfo1 = new DemoRoomInfo();
-        demoRoomInfo1.setOnlineUserCount(12);
-        demoRoomInfo1.setName("临时测试1");
-        roomList.add(demoRoomInfo1);
 
-        DemoRoomInfo demoRoomInfo2 = new DemoRoomInfo();
-        demoRoomInfo2.setOnlineUserCount(1143);
-        demoRoomInfo2.setName("临时测试2");
-        roomList.add(demoRoomInfo2);
-
-
-        chatRoomListAdapter = new ChatRoomListAdapter(roomList, this);
+        chatRoomListAdapter = new ChatRoomListAdapter(null, this);
         // 每个item 16dp 的间隔
         rcyChatList.addItemDecoration(new VerticalItemDecoration(Color.TRANSPARENT, ScreenUtil.dip2px(this, 16)));
         rcyChatList.setAdapter(chatRoomListAdapter);
@@ -71,13 +70,86 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
 
     }
 
+    private void tryLogin() {
+
+        final AccountInfo accountInfo = DemoCache.getAccountInfo();
+        if (accountInfo == null) {
+            fetchLoginAccount(null);
+            return;
+        }
+        LoginInfo loginInfo = new LoginInfo(accountInfo.account, accountInfo.token);
+
+        NIMClient.getService(AuthService.class).login(loginInfo).setCallback(new RequestCallback() {
+            @Override
+            public void onSuccess(Object o) {
+                afterLogin(accountInfo);
+            }
+
+            @Override
+            public void onFailed(int i) {
+                fetchLoginAccount(accountInfo.account);
+            }
+
+            @Override
+            public void onException(Throwable throwable) {
+                fetchLoginAccount(accountInfo.account);
+            }
+        });
+
+    }
+
+    private void fetchLoginAccount(String preAccount) {
+
+
+        ChatRoomHttpClient.getInstance().fetchAccount(preAccount, new ChatRoomHttpClient.ChatRoomHttpCallback<AccountInfo>() {
+            @Override
+            public void onSuccess(AccountInfo accountInfo) {
+                login(accountInfo);
+            }
+
+            @Override
+            public void onFailed(int code, String errorMsg) {
+                ToastHelper.showToast("获取登陆帐号失败 ， code = " + code);
+            }
+        });
+    }
+
+    private void login(final AccountInfo accountInfo) {
+        LoginInfo loginInfo = new LoginInfo(accountInfo.account, accountInfo.token);
+        NIMClient.getService(AuthService.class).login(loginInfo).setCallback(new RequestCallback() {
+            @Override
+            public void onSuccess(Object o) {
+                afterLogin(accountInfo);
+            }
+
+            @Override
+            public void onFailed(int i) {
+                ToastHelper.showToast("SDK登录失败 , code = " + i);
+            }
+
+            @Override
+            public void onException(Throwable throwable) {
+                ToastHelper.showToast("SDK登录异常 , e = " + throwable);
+            }
+        });
+    }
+
+    private void afterLogin(AccountInfo accountInfo) {
+        ToastHelper.showToast("登陆成功");
+        DemoCache.setAccount(accountInfo.account);
+        DemoCache.saveAccountInfo(accountInfo);
+        ivAvatar.loadAvatar(accountInfo.avatar);
+        tvNick.setText(accountInfo.nick);
+
+    }
+
 
     private void fetchChatRoomList() {
 
-        ChatRoomHttpClient.getInstance().fetchChatRoomList(new ChatRoomHttpClient.ChatRoomHttpCallback<List<DemoRoomInfo>>() {
+        ChatRoomHttpClient.getInstance().fetchChatRoomList(0, 20, new ChatRoomHttpClient.ChatRoomHttpCallback<ArrayList<DemoRoomInfo>>() {
             @Override
-            public void onSuccess(List<DemoRoomInfo> demoRoomInfoList) {
-
+            public void onSuccess(ArrayList<DemoRoomInfo> roomList) {
+                chatRoomListAdapter.appendItems(roomList);
             }
 
             @Override
@@ -98,82 +170,82 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
 
     private void showCreateChatRoomDialog() {
 
-        //todo
+        //todo 弹窗
 
         createChatRoom("测试");
 
     }
 
     private void createChatRoom(String roomName) {
+        if (loginStatus != StatusCode.LOGINED) {
+            ToastHelper.showToast("登陆失败，请杀掉APP重新登陆");
+            return;
+        }
         if (TextUtils.isEmpty(roomName) || roomName.trim().length() == 0) {
-
             ToastHelper.showToast("房间名不能为空");
             return;
         }
 
-        //todo
-//        ChatRoomHttpClient.getInstance().masterEnterRoom("wen01", roomName, new ChatRoomHttpClient.ChatRoomHttpCallback<DemoRoomInfo>() {
-//            @Override
-//            public void onSuccess(DemoRoomInfo demoRoomInfo) {
-//                if (demoRoomInfo == null) {
-//                    ToastHelper.showToast("创建房间失败，返回信息为空");
-//                    return;
-//                }
-//                if (isActivityPaused()) {
-//                    return;
-//                }
-//
-//
-//                Intent intent = new Intent(MainActivity.this, AudioLiveActivity.class);
-//                intent.putExtra(BaseAudioActivity.ROOM_INFO_KEY, demoRoomInfo);
-//                MainActivity.this.startActivity(intent);
-//            }
-//
-//            @Override
-//            public void onFailed(int code, String errorMsg) {
-//                ToastHelper.showToast("创建房间失败");
-//            }
-//        });
+        ChatRoomHttpClient.getInstance().createRoom(DemoCache.getAccount(), roomName, new ChatRoomHttpClient.ChatRoomHttpCallback<DemoRoomInfo>() {
+            @Override
+            public void onSuccess(DemoRoomInfo demoRoomInfo) {
+                if (demoRoomInfo == null) {
+                    ToastHelper.showToast("创建房间失败，返回信息为空");
+                    return;
+                }
+                if (isActivityPaused()) {
+                    return;
+                }
+
+                startLive(demoRoomInfo);
+            }
+
+            @Override
+            public void onFailed(int code, String errorMsg) {
+                ToastHelper.showToast("创建房间失败");
+            }
+        });
 
 
-        //todo  测试代码
-        DemoRoomInfo demoRoomInfo = new DemoRoomInfo();
-        demoRoomInfo.setCreator("wen01");
-        demoRoomInfo.setRoomId("60379482");
+        //todo  测试代码 ，直接改成自己创建的room 的id 即可
+//        DemoRoomInfo demoRoomInfo = new DemoRoomInfo();
+//        demoRoomInfo.setRoomId("61103854");
+//        startLive(demoRoomInfo);
+
+
+    }
+
+    private void startLive(DemoRoomInfo demoRoomInfo) {
         Intent intent = new Intent(MainActivity.this, AudioLiveActivity.class);
         intent.putExtra(BaseAudioActivity.ROOM_INFO_KEY, demoRoomInfo);
-        MainActivity.this.startActivity(intent);
-
-
+        startActivity(intent);
     }
 
     @Override
     public void onItemClick(DemoRoomInfo model, int position) {
-        //todo 进入聊天室
+        if (loginStatus != StatusCode.LOGINED) {
+            ToastHelper.showToast("登陆失败，请杀掉APP重新登陆");
+            return;
+        }
+
+        //当前帐号创建的房间
+        if (TextUtils.equals(DemoCache.getAccount(), model.getCreator())) {
+            startLive(model);
+            return;
+        }
+
+
+        //todo
+//        Intent intent = new Intent(MainActivity.this, AudienceActivity.class);
+//        intent.putExtra(BaseAudioActivity.ROOM_INFO_KEY, model);
+//        startActivity(intent);
+
+
     }
 
 
-//    private static class FetchChatRoomListCallback implements ChatRoomHttpClient.ChatRoomHttpCallback<List<DemoRoomInfo>> {
-//
-//        private final WeakReference<MainActivity> mainActivityWeakReference;
-//
-//        FetchChatRoomListCallback(MainActivity activity) {
-//            this.mainActivityWeakReference = new WeakReference<>(activity);
-//        }
-//
-//        @Override
-//        public void onSuccess(List<DemoRoomInfo> chatRoomInfoList) {
-//
-//        }
-//
-//        @Override
-//        public void onFailed(int code, String errorMsg) {
-//            MainActivity activity = mainActivityWeakReference.get();
-//            if (activity == null) {
-//                return;
-//            }
-//            ToastHelper.showToast(activity, "获取聊天室列表失败 ， code = " + code);
-//        }
-//    }
-
+    @Override
+    protected void onLoginEvent(StatusCode statusCode) {
+        loginStatus = statusCode;
+    }
 }

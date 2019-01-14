@@ -2,7 +2,9 @@ package com.netease.audioroom.demo.model;
 
 import android.support.annotation.Nullable;
 
-import com.alibaba.fastjson.JSONObject;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.Serializable;
 
@@ -71,11 +73,16 @@ public class QueueInfo implements Serializable {
     }
 
     private void fromJson(JSONObject jsonObject) {
-        JSONObject memberJson = jsonObject.getJSONObject(MEMBER_KEY);
-        if (memberJson != null) {
-            memberInfo = new MemberInfo(memberJson);
+        JSONObject memberJson = null;
+        try {
+            memberJson = jsonObject.getJSONObject(MEMBER_KEY);
+            if (memberJson != null) {
+                memberInfo = new MemberInfo(memberJson);
+            }
+            status = jsonObject.getInt(STATUS_KEY);
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
-        status = jsonObject.getIntValue(STATUS_KEY);
     }
 
     public int getIndex() {
@@ -107,10 +114,13 @@ public class QueueInfo implements Serializable {
 
     public JSONObject toJson() {
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put(STATUS_KEY, status);
-
-        if (memberInfo != null) {
-            jsonObject.put(MEMBER_KEY, memberInfo.toJson());
+        try {
+            jsonObject.put(STATUS_KEY, status);
+            if (memberInfo != null) {
+                jsonObject.put(MEMBER_KEY, memberInfo.toJson());
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
         return jsonObject;
     }
