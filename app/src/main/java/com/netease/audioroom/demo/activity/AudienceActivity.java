@@ -2,10 +2,13 @@ package com.netease.audioroom.demo.activity;
 
 
 import android.view.View;
+import android.widget.ImageView;
 
 import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.base.BaseAudioActivity;
 import com.netease.audioroom.demo.base.IAudience;
+import com.netease.audioroom.demo.cache.DemoCache;
+import com.netease.audioroom.demo.custom.CloseRoomAttach;
 import com.netease.audioroom.demo.custom.P2PNotificationHelper;
 import com.netease.audioroom.demo.model.QueueInfo;
 import com.netease.audioroom.demo.permission.MPermission;
@@ -14,7 +17,10 @@ import com.netease.audioroom.demo.util.CommonUtil;
 import com.netease.audioroom.demo.util.ToastHelper;
 import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMember;
+import com.netease.nimlib.sdk.chatroom.model.ChatRoomMessage;
 import com.netease.nimlib.sdk.chatroom.model.EnterChatRoomResultData;
+import com.netease.nimlib.sdk.msg.attachment.MsgAttachment;
+import com.netease.nimlib.sdk.msg.constant.MsgTypeEnum;
 import com.netease.nimlib.sdk.msg.model.CustomNotification;
 
 import java.util.ArrayList;
@@ -24,7 +30,7 @@ import java.util.List;
 /***
  * 观众页
  */
-public class AudienceActivity extends BaseAudioActivity implements IAudience {
+public class AudienceActivity extends BaseAudioActivity implements IAudience, View.OnClickListener {
 
     @Override
     protected void enterRoomSuccess(EnterChatRoomResultData resultData) {
@@ -72,10 +78,15 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience {
         ivAudioQuality.setVisibility(View.GONE);
         ivCloseSelfAudio.setVisibility(View.GONE);
         ivCancelLink.setVisibility(View.GONE);
+
+        ivCloseSelfAudio.setOnClickListener(this);
+        ivCancelLink.setOnClickListener(this);
+        ivExistRoom.setOnClickListener(this);
     }
 
     @Override
     protected void onQueueItemClick(QueueInfo model, int position) {
+
         if (model.getStatus() != QueueInfo.INIT_STATUS) {
             return;
         }
@@ -89,20 +100,32 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience {
 
     @Override
     protected void receiveNotification(CustomNotification customNotification) {
+        //todo
 
     }
 
 
     @Override
     public void requestLink(QueueInfo model) {
-        P2PNotificationHelper.requestLink(model);
+        P2PNotificationHelper.requestLink(model, DemoCache.getAccountInfo(), roomInfo.getCreator(), new RequestCallback<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                //todo 请求连接成功，等待主播同意
+                ToastHelper.showToast("请求连麦成功");
 
+            }
 
+            @Override
+            public void onFailed(int i) {
+                ToastHelper.showToast("请求连麦失败 ， code = " + i);
 
+            }
 
-
-
-
+            @Override
+            public void onException(Throwable throwable) {
+                ToastHelper.showToast("请求连麦异常 ， e = " + throwable);
+            }
+        });
     }
 
     @Override
@@ -172,4 +195,35 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience {
         ToastHelper.showToastLong(builder.toString());
     }
 
+    @Override
+    public void onClick(View view) {
+
+        if (view == ivCloseSelfAudio) {
+
+        } else if (view == ivCancelLink) {
+
+        } else if (view == ivExistRoom) {
+            //todo
+            chatRoomService.exitChatRoom(roomInfo.getRoomId());
+            finish();
+        }
+
+    }
+
+    @Override
+    protected void messageInComing(ChatRoomMessage message) {
+        super.messageInComing(message);
+
+        //
+        MsgAttachment msgAttachment = message.getAttachment();
+        if (msgAttachment != null && msgAttachment instanceof CloseRoomAttach) {
+            //todo UI & 释放资源
+            ToastHelper.showToast("主播关闭了房间");
+            finish();
+            return;
+
+        }
+
+//        if(message.)
+    }
 }

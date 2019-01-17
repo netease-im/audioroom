@@ -60,8 +60,7 @@ public class QueueAdapter extends BaseAdapter<QueueInfo> {
         }
 
 
-        if (status == QueueInfo.APPLYING_STATUS ||
-                status == QueueInfo.NORMAL_STATUS ||
+        if (status == QueueInfo.NORMAL_STATUS ||
                 status == QueueInfo.BE_MUTED_AUDIO_STATUS ||
                 status == QueueInfo.CLOSE_SELF_AUDIO_STATUS) {
 

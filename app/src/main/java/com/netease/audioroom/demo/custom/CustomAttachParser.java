@@ -1,5 +1,6 @@
 package com.netease.audioroom.demo.custom;
 
+import com.netease.audioroom.demo.util.JsonUtil;
 import com.netease.nimlib.sdk.msg.attachment.MsgAttachment;
 import com.netease.nimlib.sdk.msg.attachment.MsgAttachmentParser;
 
@@ -15,21 +16,20 @@ public class CustomAttachParser implements MsgAttachmentParser {
     @Override
     public MsgAttachment parse(String json) {
         CustomAttachment attachment = null;
-        try {
-            JSONObject object = new JSONObject(json);
-            int type = object.optInt(KEY_TYPE);
-            JSONObject data = object.getJSONObject(KEY_DATA);
-            switch (type) {
-                case CustomAttachmentType.CLOSER_ROOM:
-                    attachment = new CloseRoomAttach(type);
-                    break;
-            }
+        JSONObject object = JsonUtil.parse(json);
+        if (object == null) {
+            return null;
+        }
+        int type = object.optInt(KEY_TYPE);
+        JSONObject data = object.optJSONObject(KEY_DATA);
+        switch (type) {
+            case CustomAttachmentType.CLOSER_ROOM:
+                attachment = new CloseRoomAttach();
+                break;
+        }
 
-            if (attachment != null) {
-                attachment.fromJson(data);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (attachment != null) {
+            attachment.fromJson(data);
         }
 
         return attachment;

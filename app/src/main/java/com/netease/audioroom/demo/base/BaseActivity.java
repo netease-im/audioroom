@@ -12,7 +12,7 @@ import com.netease.nimlib.sdk.auth.AuthServiceObserver;
 
 public class BaseActivity extends AppCompatActivity {
 
-    private static final String TAG = "BaseActivity";
+    private static final String TAG = "AudioRoom";
     protected boolean isPaused = true;
 
     //监听登录状态

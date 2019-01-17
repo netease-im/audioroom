@@ -34,7 +34,7 @@ import java.util.ArrayList;
 public class MainActivity extends BaseActivity implements View.OnClickListener, BaseAdapter.ItemClickListener<DemoRoomInfo> {
 
 
-    private static final String TAG = "MainActivity";
+    private static final String TAG = "AudioRoom";
     private HeadImageView ivAvatar;
     private TextView tvNick;
 
@@ -111,7 +111,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
 
             @Override
             public void onFailed(int code, String errorMsg) {
-                ToastHelper.showToast("获取登陆帐号失败 ， code = " + code);
+                ToastHelper.showToast("获取登陆帐号失败 ， code = " + code + " , msg = " + errorMsg);
             }
         });
     }
@@ -142,7 +142,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
         DemoCache.saveAccountInfo(accountInfo);
         ivAvatar.loadAvatar(accountInfo.avatar);
         tvNick.setText(accountInfo.nick);
-        Log.i(TAG, "after login  , account = " + accountInfo.account);
+        Log.i(TAG, "after login  , account = " + accountInfo.account + " , nick = " + accountInfo.nick);
 
     }
 
@@ -157,7 +157,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
 
             @Override
             public void onFailed(int code, String errorMsg) {
-                ToastHelper.showToast("获取聊天室列表失败 ， code = " + code);
+                ToastHelper.showToast("获取聊天室列表失败 ， code = " + code + " , msg = " + errorMsg);
             }
         });
     }
@@ -179,7 +179,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
 
         //todo 弹窗
 
-        createChatRoom("测试");
+        createChatRoom("三星手机1号");
 
     }
 
@@ -190,32 +190,25 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
             return;
         }
 
-//        ChatRoomHttpClient.getInstance().createRoom(DemoCache.getAccountId(), roomName, new ChatRoomHttpClient.ChatRoomHttpCallback<DemoRoomInfo>() {
-//            @Override
-//            public void onSuccess(DemoRoomInfo roomInfo) {
-//                if (roomInfo == null) {
-//                    ToastHelper.showToast("创建房间失败，返回信息为空");
-//                    return;
-//                }
-//                if (isActivityPaused()) {
-//                    return;
-//                }
-//
-//                startLive(roomInfo);
-//            }
-//
-//            @Override
-//            public void onFailed(int code, String errorMsg) {
-//                ToastHelper.showToast("创建房间失败");
-//            }
-//        });
+        ChatRoomHttpClient.getInstance().createRoom(DemoCache.getAccountId(), roomName, new ChatRoomHttpClient.ChatRoomHttpCallback<DemoRoomInfo>() {
+            @Override
+            public void onSuccess(DemoRoomInfo roomInfo) {
+                if (roomInfo == null) {
+                    ToastHelper.showToast("创建房间失败，返回信息为空");
+                    return;
+                }
+                if (isActivityPaused()) {
+                    return;
+                }
 
+                startLive(roomInfo);
+            }
 
-        //todo  测试代码 ，直接改成自己创建的room 的id 即可
-        DemoRoomInfo demoRoomInfo = new DemoRoomInfo();
-        demoRoomInfo.setRoomId("60929944");
-        startLive(demoRoomInfo);
-
+            @Override
+            public void onFailed(int code, String errorMsg) {
+                ToastHelper.showToast("创建房间失败 , msg = " + errorMsg);
+            }
+        });
 
     }
 

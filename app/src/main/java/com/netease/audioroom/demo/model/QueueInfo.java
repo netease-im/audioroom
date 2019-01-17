@@ -3,6 +3,8 @@ package com.netease.audioroom.demo.model;
 import android.support.annotation.Nullable;
 
 
+import com.netease.audioroom.demo.util.JsonUtil;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -13,10 +15,21 @@ import java.io.Serializable;
  */
 public class QueueInfo implements Serializable {
 
+
+    public static final String QUEUE_KEY_PREFIX = "queue_";
+
+
     /**
      * 麦位初始化状态
      */
-    public static final int INIT_STATUS = 1;
+    public static final int INIT_STATUS = 0;
+
+
+    /**
+     * 麦位上有人，且能正常发言
+     */
+    public static final int NORMAL_STATUS = 1;
+
 
     /**
      * 麦位上没人，但是被主播屏蔽
@@ -25,26 +38,15 @@ public class QueueInfo implements Serializable {
 
 
     /**
-     * 麦位上有申请连麦人
-     */
-    public static final int APPLYING_STATUS = 3;
-
-
-    /**
-     * 麦位上有人，且能正常发言
-     */
-    public static final int NORMAL_STATUS = 4;
-
-    /**
      * 麦位上有人，但是语音被屏蔽
      */
-    public static final int BE_MUTED_AUDIO_STATUS = 5;
+    public static final int BE_MUTED_AUDIO_STATUS = 3;
 
 
     /**
      * 麦位上有人，但是他关闭了自己的语音
      */
-    public static final int CLOSE_SELF_AUDIO_STATUS = 6;
+    public static final int CLOSE_SELF_AUDIO_STATUS = 4;
 
 
     private static final String STATUS_KEY = "status";
@@ -61,6 +63,7 @@ public class QueueInfo implements Serializable {
         this.status = status;
     }
 
+
     public QueueInfo(@Nullable MemberInfo memberInfo) {
         this(memberInfo, INIT_STATUS);
     }
@@ -71,6 +74,11 @@ public class QueueInfo implements Serializable {
 
     public int getIndex() {
         return index;
+    }
+
+
+    public String getKey() {
+        return QUEUE_KEY_PREFIX + index;
     }
 
     @Nullable
@@ -117,20 +125,16 @@ public class QueueInfo implements Serializable {
     }
 
     public static QueueInfo fromJson(String json) {
-        try {
-            QueueInfo queueInfo = new QueueInfo();
-            JSONObject jsonObject = new JSONObject(json);
-            queueInfo.setStatus(jsonObject.optInt(STATUS_KEY, INIT_STATUS));
-            queueInfo.setIndex(jsonObject.optInt(INDEX_KEY));
-            JSONObject memberJson = jsonObject.getJSONObject(MEMBER_KEY);
-            if (memberJson != null) {
-                MemberInfo memberInfo = new MemberInfo(memberJson);
-                queueInfo.setMemberInfo(memberInfo);
-            }
-            return queueInfo;
-        } catch (JSONException e) {
-            e.printStackTrace();
+        QueueInfo queueInfo = new QueueInfo();
+        JSONObject jsonObject = JsonUtil.parse(json);
+        queueInfo.setStatus(jsonObject.optInt(STATUS_KEY, INIT_STATUS));
+        queueInfo.setIndex(jsonObject.optInt(INDEX_KEY));
+        JSONObject memberJson = jsonObject.optJSONObject(MEMBER_KEY);
+        if (memberJson != null) {
+            MemberInfo memberInfo = new MemberInfo(memberJson);
+            queueInfo.setMemberInfo(memberInfo);
         }
-        return null;
+        return queueInfo;
+
     }
 }
