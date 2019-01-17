@@ -10,7 +10,7 @@ import android.widget.TextView;
 
 import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.base.BaseAdapter;
-import com.netease.audioroom.demo.model.MemberInfo;
+import com.netease.audioroom.demo.model.QueueMember;
 import com.netease.audioroom.demo.model.QueueInfo;
 import com.netease.audioroom.demo.widget.HeadImageView;
 
@@ -54,8 +54,8 @@ public class QueueAdapter extends BaseAdapter<QueueInfo> {
         }
 
 
-        MemberInfo memberInfo = queueInfo.getMemberInfo();
-        if (memberInfo == null) {
+        QueueMember queueMember = queueInfo.getQueueMember();
+        if (queueMember == null) {
             return;
         }
 
@@ -77,8 +77,8 @@ public class QueueAdapter extends BaseAdapter<QueueInfo> {
 
             viewHolder.tvNick.setVisibility(View.VISIBLE);
 
-            viewHolder.ivAvatar.loadAvatar(memberInfo.getAvatar());
-            viewHolder.tvNick.setText(memberInfo.getNick());
+            viewHolder.ivAvatar.loadAvatar(queueMember.getAvatar());
+            viewHolder.tvNick.setText(queueMember.getNick());
             return;
         }
 

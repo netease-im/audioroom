@@ -53,19 +53,19 @@ public class QueueInfo implements Serializable {
     private static final String MEMBER_KEY = "member";
     private static final String INDEX_KEY = "index";
 
-    private MemberInfo memberInfo;
+    private QueueMember queueMember;
     private int status = INIT_STATUS;
     private int index = 0;
 
 
-    public QueueInfo(@Nullable MemberInfo memberInfo, int status) {
-        this.memberInfo = memberInfo;
+    public QueueInfo(@Nullable QueueMember queueMember, int status) {
+        this.queueMember = queueMember;
         this.status = status;
     }
 
 
-    public QueueInfo(@Nullable MemberInfo memberInfo) {
-        this(memberInfo, INIT_STATUS);
+    public QueueInfo(@Nullable QueueMember queueMember) {
+        this(queueMember, INIT_STATUS);
     }
 
     public QueueInfo() {
@@ -82,8 +82,8 @@ public class QueueInfo implements Serializable {
     }
 
     @Nullable
-    public MemberInfo getMemberInfo() {
-        return memberInfo;
+    public QueueMember getQueueMember() {
+        return queueMember;
     }
 
     public int getStatus() {
@@ -91,8 +91,8 @@ public class QueueInfo implements Serializable {
     }
 
 
-    public void setMemberInfo(MemberInfo memberInfo) {
-        this.memberInfo = memberInfo;
+    public void setQueueMember(QueueMember queueMember) {
+        this.queueMember = queueMember;
     }
 
     public void setStatus(int status) {
@@ -109,8 +109,8 @@ public class QueueInfo implements Serializable {
         try {
             jsonObject.put(STATUS_KEY, status);
             jsonObject.put(INDEX_KEY, index);
-            if (memberInfo != null) {
-                jsonObject.put(MEMBER_KEY, memberInfo.toJson());
+            if (queueMember != null) {
+                jsonObject.put(MEMBER_KEY, queueMember.toJson());
             }
         } catch (JSONException e) {
             e.printStackTrace();
@@ -131,8 +131,8 @@ public class QueueInfo implements Serializable {
         queueInfo.setIndex(jsonObject.optInt(INDEX_KEY));
         JSONObject memberJson = jsonObject.optJSONObject(MEMBER_KEY);
         if (memberJson != null) {
-            MemberInfo memberInfo = new MemberInfo(memberJson);
-            queueInfo.setMemberInfo(memberInfo);
+            QueueMember queueMember = new QueueMember(memberJson);
+            queueInfo.setQueueMember(queueMember);
         }
         return queueInfo;
 

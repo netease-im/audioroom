@@ -1,6 +1,6 @@
 package com.netease.audioroom.demo.base;
 
-import com.netease.audioroom.demo.model.MemberInfo;
+import com.netease.audioroom.demo.model.QueueMember;
 import com.netease.audioroom.demo.model.QueueInfo;
 
 /**
@@ -19,10 +19,10 @@ public interface IAudioLive {
 
     /**
      * 有人请求连麦
-     * @param memberInfo
+     * @param queueMember
      * @param index
      */
-    void linkRequest(MemberInfo memberInfo, int index);
+    void linkRequest(QueueMember queueMember, int index);
 
 
     /**
@@ -33,9 +33,9 @@ public interface IAudioLive {
 
     /**
      * 拒绝连麦
-     * @param memberInfo
+     * @param queueMember
      */
-    void rejectLink(MemberInfo memberInfo);
+    void rejectLink(QueueMember queueMember);
 
 
     /**

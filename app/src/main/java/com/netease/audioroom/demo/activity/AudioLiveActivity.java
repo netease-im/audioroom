@@ -4,9 +4,7 @@ package com.netease.audioroom.demo.activity;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
-import android.widget.ImageView;
 
 import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.base.BaseAudioActivity;
@@ -16,7 +14,7 @@ import com.netease.audioroom.demo.custom.CloseRoomAttach;
 import com.netease.audioroom.demo.custom.P2PNotificationHelper;
 import com.netease.audioroom.demo.http.ChatRoomHttpClient;
 import com.netease.audioroom.demo.model.AccountInfo;
-import com.netease.audioroom.demo.model.MemberInfo;
+import com.netease.audioroom.demo.model.QueueMember;
 import com.netease.audioroom.demo.model.QueueInfo;
 import com.netease.audioroom.demo.permission.MPermission;
 import com.netease.audioroom.demo.permission.MPermissionUtil;
@@ -97,8 +95,8 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
             int index = jsonObject.optInt(P2PNotificationHelper.INDEX);
             String nick = jsonObject.optString(P2PNotificationHelper.NICK);
             String avatar = jsonObject.optString(P2PNotificationHelper.AVATAR);
-            MemberInfo memberInfo = new MemberInfo(customNotification.getFromAccount(), nick, avatar, false);
-            linkRequest(memberInfo, index);
+            QueueMember queueMember = new QueueMember(customNotification.getFromAccount(), nick, avatar, false);
+            linkRequest(queueMember, index);
             return;
         }
 
@@ -121,12 +119,12 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
     }
 
     @Override
-    public void linkRequest(MemberInfo memberInfo, int index) {
+    public void linkRequest(QueueMember queueMember, int index) {
         //todo UI呈现
 
 
         //同意连麦
-        QueueInfo queueInfo = new QueueInfo(memberInfo);
+        QueueInfo queueInfo = new QueueInfo(queueMember);
         queueInfo.setIndex(index);
         acceptLink(queueInfo);
 
@@ -139,7 +137,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
     }
 
     @Override
-    public void rejectLink(MemberInfo memberInfo) {
+    public void rejectLink(QueueMember queueMember) {
         //todo
 
     }
@@ -148,7 +146,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
     public void acceptLink(QueueInfo queueInfo) {
         //当前麦位有人了
         if (queueMap.get(queueInfo.getKey()) != null) {
-            rejectLink(queueInfo.getMemberInfo());
+            rejectLink(queueInfo.getQueueMember());
             return;
         }
 
