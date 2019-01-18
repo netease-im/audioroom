@@ -1,8 +1,8 @@
 package com.netease.audioroom.demo.activity;
 
 
+import android.text.TextUtils;
 import android.view.View;
-import android.widget.ImageView;
 
 import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.base.BaseAudioActivity;
@@ -11,6 +11,7 @@ import com.netease.audioroom.demo.cache.DemoCache;
 import com.netease.audioroom.demo.custom.CloseRoomAttach;
 import com.netease.audioroom.demo.custom.P2PNotificationHelper;
 import com.netease.audioroom.demo.model.QueueInfo;
+import com.netease.audioroom.demo.model.QueueMember;
 import com.netease.audioroom.demo.permission.MPermission;
 import com.netease.audioroom.demo.permission.MPermissionUtil;
 import com.netease.audioroom.demo.util.CommonUtil;
@@ -18,9 +19,10 @@ import com.netease.audioroom.demo.util.ToastHelper;
 import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMember;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMessage;
+import com.netease.nimlib.sdk.chatroom.model.ChatRoomQueueChangeAttachment;
 import com.netease.nimlib.sdk.chatroom.model.EnterChatRoomResultData;
 import com.netease.nimlib.sdk.msg.attachment.MsgAttachment;
-import com.netease.nimlib.sdk.msg.constant.MsgTypeEnum;
+import com.netease.nimlib.sdk.msg.constant.ChatRoomQueueChangeType;
 import com.netease.nimlib.sdk.msg.model.CustomNotification;
 
 import java.util.ArrayList;
@@ -31,6 +33,20 @@ import java.util.List;
  * 观众页
  */
 public class AudienceActivity extends BaseAudioActivity implements IAudience, View.OnClickListener {
+
+
+    private QueueInfo selfQueue;
+
+    /**
+     * 是否正在申请连麦中
+     */
+    private boolean isRequestingLink = false;
+
+
+    /**
+     * 是否主动下麦
+     */
+    private boolean isCancelLink = false;
 
     @Override
     protected void enterRoomSuccess(EnterChatRoomResultData resultData) {
@@ -86,8 +102,13 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
 
     @Override
     protected void onQueueItemClick(QueueInfo model, int position) {
-
+        //todo
         if (model.getStatus() != QueueInfo.INIT_STATUS) {
+            return;
+        }
+
+        //自己已经在麦上了
+        if (selfQueue != null) {
             return;
         }
         requestLink(model);
@@ -111,6 +132,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             @Override
             public void onSuccess(Void aVoid) {
                 //todo 请求连接成功，等待主播同意
+                isRequestingLink = true;
                 ToastHelper.showToast("请求连麦成功");
 
             }
@@ -128,19 +150,63 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         });
     }
 
+
+    @Override
+    protected void onQueueChange(ChatRoomQueueChangeAttachment queueChange) {
+        super.onQueueChange(queueChange);
+
+        ChatRoomQueueChangeType changeType = queueChange.getChatRoomQueueChangeType();
+        String value = queueChange.getContent();
+
+        //只关心新增元素或更新
+        if (changeType != ChatRoomQueueChangeType.OFFER || TextUtils.isEmpty(value)) {
+            return;
+        }
+        QueueInfo queueInfo = new QueueInfo(value);
+        QueueMember member = queueInfo.getQueueMember();
+        //与自己无关
+        if (!TextUtils.equals(member.getAccount(), DemoCache.getAccountId())) {
+            return;
+        }
+        int status = queueInfo.getStatus();
+
+        if (status == QueueInfo.NORMAL_STATUS) {
+            selfQueue = queueInfo;
+            if (isRequestingLink) {
+                //TODO 主播同意了你连麦请求
+                ToastHelper.showToast("主播同意了你连麦请求");
+            } else {
+                //TODO 你被主播抱麦
+                ToastHelper.showToast("你被主播抱麦");
+            }
+
+        } else if (status == QueueInfo.BE_MUTED_AUDIO_STATUS) {
+            selfQueue = queueInfo;
+            //TODO 主播屏蔽了你的语音
+            ToastHelper.showToast("主播屏蔽了你的语音");
+        } else if (status == QueueInfo.INIT_STATUS && selfQueue != null) {
+            removed();
+            selfQueue = null;
+        }
+
+
+    }
+
+
     @Override
     public void cancelLinkRequest() {
-
+        isRequestingLink = false;
     }
 
     @Override
     public void linkBeRejected() {
-
+        isRequestingLink = false;
     }
 
     @Override
     public void linkBeAccept() {
-
+        //todo
+        isRequestingLink = false;
     }
 
     @Override
@@ -149,13 +215,19 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     }
 
     @Override
-    public void beRemoved() {
-
+    public void removed() {
+        //TODO 下麦
+        if (isCancelLink) {
+            ToastHelper.showToast("主动下麦成功");
+            isCancelLink = false;
+        } else {
+            ToastHelper.showToast("你被主播下麦");
+        }
     }
 
     @Override
-    public void cancelLink() {
-
+    public void cancelLink(QueueInfo info) {
+        isCancelLink = true;
     }
 
     @Override
@@ -223,7 +295,5 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             return;
 
         }
-
-//        if(message.)
     }
 }

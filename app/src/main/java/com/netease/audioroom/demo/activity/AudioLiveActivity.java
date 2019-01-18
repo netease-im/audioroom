@@ -24,6 +24,7 @@ import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.RequestCallbackWrapper;
 import com.netease.nimlib.sdk.chatroom.ChatRoomMessageBuilder;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMessage;
+import com.netease.nimlib.sdk.chatroom.model.ChatRoomQueueChangeAttachment;
 import com.netease.nimlib.sdk.chatroom.model.EnterChatRoomResultData;
 import com.netease.nimlib.sdk.msg.model.CustomNotification;
 
@@ -101,6 +102,13 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         }
 
         //todo
+
+
+    }
+
+    @Override
+    protected void onQueueChange(ChatRoomQueueChangeAttachment queueChange) {
+        super.onQueueChange(queueChange);
 
 
     }
@@ -233,6 +241,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
     public void onClick(View view) {
 
         if (view == ivMuteOtherText) {
+
 
         } else if (view == ivAudioQuality) {
 

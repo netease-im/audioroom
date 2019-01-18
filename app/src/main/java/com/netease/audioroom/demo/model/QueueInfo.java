@@ -55,12 +55,13 @@ public class QueueInfo implements Serializable {
 
     private QueueMember queueMember;
     private int status = INIT_STATUS;
-    private int index = 0;
+    private int index = -1;
 
 
     public QueueInfo(@Nullable QueueMember queueMember, int status) {
         this.queueMember = queueMember;
         this.status = status;
+        this.index = 0;
     }
 
 
@@ -70,6 +71,22 @@ public class QueueInfo implements Serializable {
 
     public QueueInfo() {
         this(null, INIT_STATUS);
+    }
+
+
+    public QueueInfo(String json) {
+
+        JSONObject jsonObject = JsonUtil.parse(json);
+        if (jsonObject == null) {
+            return;
+        }
+        status = jsonObject.optInt(STATUS_KEY, INIT_STATUS);
+        index = jsonObject.optInt(INDEX_KEY, -1);
+        JSONObject memberJson = jsonObject.optJSONObject(MEMBER_KEY);
+        if (memberJson != null) {
+            queueMember = new QueueMember(memberJson);
+        }
+
     }
 
     public int getIndex() {
@@ -124,17 +141,5 @@ public class QueueInfo implements Serializable {
         return toJson().toString();
     }
 
-    public static QueueInfo fromJson(String json) {
-        QueueInfo queueInfo = new QueueInfo();
-        JSONObject jsonObject = JsonUtil.parse(json);
-        queueInfo.setStatus(jsonObject.optInt(STATUS_KEY, INIT_STATUS));
-        queueInfo.setIndex(jsonObject.optInt(INDEX_KEY));
-        JSONObject memberJson = jsonObject.optJSONObject(MEMBER_KEY);
-        if (memberJson != null) {
-            QueueMember queueMember = new QueueMember(memberJson);
-            queueInfo.setQueueMember(queueMember);
-        }
-        return queueInfo;
 
-    }
 }

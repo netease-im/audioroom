@@ -132,7 +132,7 @@ public abstract class BaseAdapter<T> extends RecyclerView.Adapter {
     }
 
 
-    public final void replaceItem(T model, int position) {
+    public final void updateItem(int position, T model) {
         if (model == null || position < 0 || position >= dataList.size()) {
             return;
         }
