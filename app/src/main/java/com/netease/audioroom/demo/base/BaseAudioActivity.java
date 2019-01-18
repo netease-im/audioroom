@@ -17,7 +17,6 @@ import com.netease.audioroom.demo.cache.DemoCache;
 import com.netease.audioroom.demo.model.AccountInfo;
 import com.netease.audioroom.demo.model.DemoRoomInfo;
 import com.netease.audioroom.demo.model.QueueInfo;
-import com.netease.audioroom.demo.util.CommonUtil;
 import com.netease.audioroom.demo.util.ToastHelper;
 import com.netease.audioroom.demo.widget.HeadImageView;
 import com.netease.nimlib.sdk.NIMClient;
@@ -36,6 +35,7 @@ import com.netease.nimlib.sdk.chatroom.model.ChatRoomTempMuteRemoveAttachment;
 import com.netease.nimlib.sdk.chatroom.model.EnterChatRoomData;
 import com.netease.nimlib.sdk.chatroom.model.EnterChatRoomResultData;
 import com.netease.nimlib.sdk.msg.MsgServiceObserve;
+import com.netease.nimlib.sdk.msg.constant.ChatRoomQueueChangeType;
 import com.netease.nimlib.sdk.msg.constant.MsgTypeEnum;
 import com.netease.nimlib.sdk.msg.constant.NotificationType;
 import com.netease.nimlib.sdk.msg.constant.SessionTypeEnum;
@@ -44,7 +44,6 @@ import com.netease.nimlib.sdk.util.Entry;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 
 /**
@@ -75,6 +74,8 @@ public abstract class BaseAudioActivity extends PermissionActivity {
     //聊天室队列（麦位）
     protected RecyclerView rcyQueueList;
 
+    protected QueueAdapter queueAdapter;
+
     //消息列表
     protected RecyclerView rcyChatMsgList;
 
@@ -85,8 +86,6 @@ public abstract class BaseAudioActivity extends PermissionActivity {
 
     // 聊天室服务
     protected ChatRoomService chatRoomService;
-
-    private QueueAdapter queueAdapter;
 
 
     private BaseAdapter.ItemClickListener<QueueInfo> itemClickListener = new BaseAdapter.ItemClickListener<QueueInfo>() {
@@ -119,7 +118,7 @@ public abstract class BaseAudioActivity extends PermissionActivity {
                 return;
             }
 
-            StringBuffer stringBuffer = new StringBuffer();
+            StringBuffer logInfo = new StringBuffer();
             for (ChatRoomMessage message : chatRoomMessages) {
 
                 if (message.getSessionType() != SessionTypeEnum.ChatRoom
@@ -130,47 +129,51 @@ public abstract class BaseAudioActivity extends PermissionActivity {
                 if (message.getAttachment() instanceof ChatRoomNotificationAttachment) {
                     NotificationType type = ((ChatRoomNotificationAttachment) message.getAttachment()).getType();
                     switch (type) {
-                        // 成员进入聊天室
+                        // 成员进入聊天室 , 自己进来也有通知 todo , 更新rcyChatMsgList
                         case ChatRoomMemberIn:
                             ChatRoomRoomMemberInAttachment memberIn = (ChatRoomRoomMemberInAttachment) message.getAttachment();
-                            stringBuffer.append("chat room member in :").append(memberIn.isMuted())
-                                    .append(", isTempMuted:").append(memberIn.isTempMuted())
-                                    .append(", temp muted time:").append(memberIn.getTempMutedTime()).append("///");
+                            logInfo.append("成员进入聊天室：nick =  ").append(memberIn.getOperatorNick())
+                                    .append(", account = ").append(memberIn.getOperator());
                             break;
 
-                        // 成员退出聊天室
-                        //{"opeNick":"wenD1","target":["wen01"],"tarNick":["wenD1"],"operator":"wen01"}
+                        // 成员退出聊天室 todo , 更新rcyChatMsgList
                         case ChatRoomMemberExit:
                             ChatRoomQueueChangeAttachment memberExit = (ChatRoomQueueChangeAttachment) message.getAttachment();
+                            logInfo.append("成员退出聊天室：nick = ").append(memberExit.getOperatorNick()).
+                                    append(",  account = ").append(memberExit.getOperator());
+
                             break;
 
                         //成员被禁言
                         case ChatRoomMemberTempMuteAdd:
                             ChatRoomTempMuteAddAttachment addMuteMember = (ChatRoomTempMuteAddAttachment) message.getAttachment();
-                            stringBuffer.append("chat room temp mute add :").append(addMuteMember.getMuteDuration());
+                            logInfo.append("成员被禁言：nick list =  ").append(addMuteMember.getTargetNicks()).
+                                    append(" , account list = ").append(addMuteMember.getTargets());
                             break;
 
                         //成员被解除禁言
                         case ChatRoomMemberTempMuteRemove:
                             ChatRoomTempMuteRemoveAttachment muteRemove = (ChatRoomTempMuteRemoveAttachment) message.getAttachment();
-                            stringBuffer.append("chat room temp mute remove :").append(muteRemove.getMuteDuration());
+                            logInfo.append("成员被解除禁言：nick list =  ").append(muteRemove.getTargetNicks()).
+                                    append(" , account list = ").append(muteRemove.getTargets());
                             break;
 
                         //队列变更
                         case ChatRoomQueueChange:
                             ChatRoomQueueChangeAttachment queueChange = (ChatRoomQueueChangeAttachment) message.getAttachment();
-                            stringBuffer.append("chat room queue change :").append(queueChange.getChatRoomQueueChangeType())
-                                    .append(", key:").append(queueChange.getKey())
-                                    .append(", content:").append(queueChange.getContent())
-                                    .append(", ext : ").append(queueChange.getExtension() == null ? " is null " : queueChange.getExtension().toString());
+                            logInfo.append("队列变更：type = ").append(queueChange.getChatRoomQueueChangeType())
+                                    .append(", key = ").append(queueChange.getKey())
+                                    .append(", value = ").append(queueChange.getContent());
+
+                            onQueueChange(queueChange);
                             break;
 
                         //队列批量变更，好像没用了
                         case ChatRoomQueueBatchChange:
                             ChatRoomPartClearAttachment queuePartClear = (ChatRoomPartClearAttachment) message.getAttachment();
-                            stringBuffer.append("chat room part clear :").append(queuePartClear.getChatRoomQueueChangeType());
+                            logInfo.append("队列批量变更：").append(queuePartClear.getChatRoomQueueChangeType());
                             for (String key : queuePartClear.getContentMap().keySet()) {
-                                stringBuffer.append("key= " + key + " and value= " + queuePartClear.getContentMap().get(key));
+                                logInfo.append("key = " + key + ", value= " + queuePartClear.getContentMap().get(key)).append(" ");
                             }
                             break;
                     }
@@ -178,11 +181,12 @@ public abstract class BaseAudioActivity extends PermissionActivity {
                     messageInComing(message);
                 }
             }
-            if (stringBuffer.length() > 0) {
-                Log.i(TAG, stringBuffer.toString());
+            if (logInfo.length() > 0) {
+                Log.i(TAG, logInfo.toString());
             }
         }
     };
+
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -244,7 +248,6 @@ public abstract class BaseAudioActivity extends PermissionActivity {
 
     private void setupBaseViewInner() {
 
-
         String name = roomInfo.getName();
         name = "房间：" + (TextUtils.isEmpty(name) ? roomInfo.getRoomId() : name) + "（" + roomInfo.getOnlineUserCount() + "人）";
 
@@ -273,13 +276,14 @@ public abstract class BaseAudioActivity extends PermissionActivity {
         }
 
         for (Entry<String, String> entry : entries) {
-            if (entry.key.startsWith(QueueInfo.QUEUE_KEY_PREFIX)) {
-                QueueInfo queueInfo = QueueInfo.fromJson(entry.value);
-                if (queueInfo == null) {
-                    continue;
-                }
-                queueInfoList.set(queueInfo.getIndex(), queueInfo);
+            if (TextUtils.isEmpty(entry.key) || !entry.key.startsWith(QueueInfo.QUEUE_KEY_PREFIX)) {
+                continue;
             }
+            if (TextUtils.isEmpty(entry.value)) {
+                continue;
+            }
+            QueueInfo queueInfo = new QueueInfo(entry.value);
+            queueInfoList.set(queueInfo.getIndex(), queueInfo);
 
         }
         queueAdapter.setItems(queueInfoList);
@@ -324,7 +328,6 @@ public abstract class BaseAudioActivity extends PermissionActivity {
 
 
         //todo  update rcyChatMsgList 聊天室消息
-
 
     }
 
@@ -394,6 +397,22 @@ public abstract class BaseAudioActivity extends PermissionActivity {
     protected abstract boolean onQueueItemLongClick(QueueInfo model, int position);
 
     protected abstract void receiveNotification(CustomNotification customNotification);
+
+    protected void onQueueChange(ChatRoomQueueChangeAttachment queueChange) {
+        ChatRoomQueueChangeType changeType = queueChange.getChatRoomQueueChangeType();
+        // 队列被清空
+        if (changeType == ChatRoomQueueChangeType.DROP) {
+            initQueue(null);
+            return;
+        }
+        String value = queueChange.getContent();
+        //新增元素或更新
+        if (changeType == ChatRoomQueueChangeType.OFFER && !TextUtils.isEmpty(value)) {
+            QueueInfo queueInfo = new QueueInfo(value);
+            queueAdapter.updateItem(queueInfo.getIndex(), queueInfo);
+            return;
+        }
+    }
 
 
 }

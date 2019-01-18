@@ -45,15 +45,15 @@ public interface IAudience {
     void beInvitedLink();
 
     /**
-     * 连麦过程中被踢
+     * 连麦过程中被踢/主动下麦
      */
-    void beRemoved();
+    void removed();
 
 
     /**
      * 主动下麦
      */
-    void cancelLink();
+    void cancelLink(QueueInfo queueInfo);
 
 
     /**
