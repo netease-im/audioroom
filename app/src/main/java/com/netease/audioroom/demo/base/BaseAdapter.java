@@ -43,7 +43,6 @@ public abstract class BaseAdapter<T> extends RecyclerView.Adapter {
         if (itemClickListener == null) {
             return;
         }
-
         T model = (T) itemView.getTag(R.id.base_adapter_model_tag);
         int position = (int) itemView.getTag(R.id.base_adapter_position_tag);
         itemClickListener.onItemClick(model, position);

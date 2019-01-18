@@ -191,9 +191,7 @@ public abstract class BaseAudioActivity extends PermissionActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         setContentView(getContentViewID());
-
         roomInfo = getIntent().getParcelableExtra(ROOM_INFO_KEY);
         if (roomInfo == null) {
             ToastHelper.showToast("聊天室信息不能为空");

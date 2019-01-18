@@ -1,6 +1,8 @@
 package com.netease.audioroom.demo.activity;
 
 
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
@@ -14,6 +16,7 @@ import com.netease.audioroom.demo.custom.CloseRoomAttach;
 import com.netease.audioroom.demo.custom.P2PNotificationHelper;
 import com.netease.audioroom.demo.http.ChatRoomHttpClient;
 import com.netease.audioroom.demo.model.AccountInfo;
+import com.netease.audioroom.demo.model.DemoRoomInfo;
 import com.netease.audioroom.demo.model.QueueMember;
 import com.netease.audioroom.demo.model.QueueInfo;
 import com.netease.audioroom.demo.permission.MPermission;
@@ -38,8 +41,14 @@ import java.util.List;
  */
 public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, View.OnClickListener {
 
-
     private static final String TAG = "AudioRoom";
+
+
+    public static void start(Context context, DemoRoomInfo demoRoomInfo) {
+        Intent intent = new Intent(context, AudioLiveActivity.class);
+        intent.putExtra(BaseAudioActivity.ROOM_INFO_KEY, demoRoomInfo);
+        context.startActivity(intent);
+    }
 
     //聊天室队列元素
     private HashMap<String, String> queueMap = new HashMap<>();
@@ -47,7 +56,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         requestLivePermission();
         enterChatRoom(roomInfo.getRoomId());
     }
@@ -60,7 +68,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
     @Override
     protected void setupBaseView() {
         ivCancelLink.setVisibility(View.GONE);
-
         ivMuteOtherText.setOnClickListener(this);
         ivAudioQuality.setOnClickListener(this);
         ivCloseSelfAudio.setOnClickListener(this);

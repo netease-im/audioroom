@@ -1,20 +1,17 @@
 package com.netease.audioroom.demo.activity;
 
-import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.View;
 import android.widget.TextView;
 
 import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.adapter.ChatRoomListAdapter;
 import com.netease.audioroom.demo.base.BaseActivity;
 import com.netease.audioroom.demo.base.BaseAdapter;
-import com.netease.audioroom.demo.base.BaseAudioActivity;
 import com.netease.audioroom.demo.cache.DemoCache;
 import com.netease.audioroom.demo.http.ChatRoomHttpClient;
 import com.netease.audioroom.demo.model.AccountInfo;
@@ -33,7 +30,7 @@ import com.netease.nimlib.sdk.auth.LoginInfo;
 
 import java.util.ArrayList;
 
-public class MainActivity extends BaseActivity implements View.OnClickListener, BaseAdapter.ItemClickListener<DemoRoomInfo> {
+public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickListener<DemoRoomInfo> {
 
 
     private static final String TAG = "MainActivity";
@@ -51,7 +48,6 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
         setupView();
         tryLogin();
         fetchChatRoomList();
-
     }
 
 
@@ -59,7 +55,6 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
         ivAvatar = findViewById(R.id.iv_self_avatar);
         tvNick = findViewById(R.id.tv_self_nick);
         RecyclerView rcyChatList = findViewById(R.id.rcy_chat_room_list);
-        findViewById(R.id.iv_create_chat_room).setOnClickListener(this);
         rcyChatList.setLayoutManager(new LinearLayoutManager(this));
         chatRoomListAdapter = new ChatRoomListAdapter(null, this);
         // 每个item 16dp 的间隔
@@ -168,68 +163,6 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
                 });
     }
 
-    @Override
-    public void onClick(View view) {
-        int id = view.getId();
-        if (id == R.id.iv_create_chat_room) {
-            showCreateChatRoomDialog();
-        }
-
-    }
-
-    private void showCreateChatRoomDialog() {
-        if (loginStatus != StatusCode.LOGINED) {
-            ToastHelper.showToast("登录失败，请杀掉APP重新登录");
-            return;
-        }
-
-        //todo 弹窗
-
-        createChatRoom("测试");
-
-    }
-
-    private void createChatRoom(String roomName) {
-
-        if (TextUtils.isEmpty(roomName) || roomName.trim().length() == 0) {
-            ToastHelper.showToast("房间名不能为空");
-            return;
-        }
-
-//        ChatRoomHttpClient.getInstance().createRoom(DemoCache.getAccountId(), roomName, new ChatRoomHttpClient.ChatRoomHttpCallback<DemoRoomInfo>() {
-//            @Override
-//            public void onSuccess(DemoRoomInfo roomInfo) {
-//                if (roomInfo == null) {
-//                    ToastHelper.showToast("创建房间失败，返回信息为空");
-//                    return;
-//                }
-//                if (isActivityPaused()) {
-//                    return;
-//                }
-//
-//                startLive(roomInfo);
-//            }
-//
-//            @Override
-//            public void onFailed(int code, String errorMsg) {
-//                ToastHelper.showToast("创建房间失败");
-//            }
-//        });
-
-
-        //todo  测试代码 ，直接改成自己创建的room 的id 即可
-        DemoRoomInfo demoRoomInfo = new DemoRoomInfo();
-        demoRoomInfo.setRoomId("60929944");
-        startLive(demoRoomInfo);
-
-
-    }
-
-    private void startLive(DemoRoomInfo demoRoomInfo) {
-        Intent intent = new Intent(MainActivity.this, AudioLiveActivity.class);
-        intent.putExtra(BaseAudioActivity.ROOM_INFO_KEY, demoRoomInfo);
-        startActivity(intent);
-    }
 
     @Override
     public void onItemClick(DemoRoomInfo model, int position) {
@@ -237,17 +170,12 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
             ToastHelper.showToast("登录失败，请杀掉APP重新登录");
             return;
         }
-
         //当前帐号创建的房间
-        if (TextUtils.equals(DemoCache.getAccountId(), model.getCreator())) {
-            startLive(model);
-            return;
+        if (TextUtils.equals(DemoCache.getAccountId(), model.getCreator()) && model != null) {
+            AudioLiveActivity.start(mContext, model);
+        } else {
+            AudienceActivity.start(mContext, model);
         }
-
-        Intent intent = new Intent(MainActivity.this, AudienceActivity.class);
-        intent.putExtra(BaseAudioActivity.ROOM_INFO_KEY, model);
-        startActivity(intent);
-
     }
 
 

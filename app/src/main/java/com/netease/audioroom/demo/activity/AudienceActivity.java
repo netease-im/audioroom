@@ -1,6 +1,8 @@
 package com.netease.audioroom.demo.activity;
 
 
+import android.content.Context;
+import android.content.Intent;
 import android.text.TextUtils;
 import android.view.View;
 
@@ -10,6 +12,7 @@ import com.netease.audioroom.demo.base.IAudience;
 import com.netease.audioroom.demo.cache.DemoCache;
 import com.netease.audioroom.demo.custom.CloseRoomAttach;
 import com.netease.audioroom.demo.custom.P2PNotificationHelper;
+import com.netease.audioroom.demo.model.DemoRoomInfo;
 import com.netease.audioroom.demo.model.QueueInfo;
 import com.netease.audioroom.demo.model.QueueMember;
 import com.netease.audioroom.demo.permission.MPermission;
@@ -48,17 +51,24 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
      */
     private boolean isCancelLink = false;
 
+
+    public static void start(Context context, DemoRoomInfo model) {
+        Intent intent = new Intent(context, AudienceActivity.class);
+        intent.putExtra(BaseAudioActivity.ROOM_INFO_KEY, model);
+        context.startActivity(intent);
+    }
+
     @Override
     protected void enterRoomSuccess(EnterChatRoomResultData resultData) {
         super.enterRoomSuccess(resultData);
-
         String creatorId = resultData.getRoomInfo().getCreator();
-        ArrayList<String> accountList = new ArrayList();
+        ArrayList<String> accountList = new ArrayList<>();
         accountList.add(creatorId);
         chatRoomService.fetchRoomMembersByIds(resultData.getRoomId(), accountList).setCallback(new RequestCallback<List<ChatRoomMember>>() {
             @Override
             public void onSuccess(List<ChatRoomMember> chatRoomMembers) {
 
+                loadService.showSuccess();
                 if (CommonUtil.isEmpty(chatRoomMembers)) {
                     ToastHelper.showToast("获取主播信息失败 ， 结果为空");
                     return;

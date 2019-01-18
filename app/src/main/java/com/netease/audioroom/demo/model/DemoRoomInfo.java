@@ -13,7 +13,7 @@ public class DemoRoomInfo implements Parcelable {
     private String creator;       // creator
     private String name;         // 聊天室名称
     private int onlineUserCount; // 当前在线用户数量
-    private String backgroundUrl; // 聊天室背景图
+    private String thumbnail; // 聊天室背景图
 
     public String getCreator() {
         return creator;
@@ -52,12 +52,12 @@ public class DemoRoomInfo implements Parcelable {
     }
 
 
-    public String getBackgroundUrl() {
-        return backgroundUrl;
+    public String getThumbnail() {
+        return thumbnail;
     }
 
-    public void setBackgroundUrl(String backgroundUrl) {
-        this.backgroundUrl = backgroundUrl;
+    public void setThumbnail(String thumbnail) {
+        this.thumbnail = thumbnail;
     }
 
 
