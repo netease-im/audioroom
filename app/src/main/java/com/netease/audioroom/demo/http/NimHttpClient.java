@@ -227,7 +227,6 @@ public class NimHttpClient {
     }
 
 
-
     private static class InstanceHolder {
         private static final NimHttpClient INSTANCE = new NimHttpClient();
     }
@@ -279,7 +278,7 @@ public class NimHttpClient {
 
 
     /**
-     * *********************** Http Task & Callback *************************
+     * *********************** Http Task & BaseCallback *************************
      */
     public interface NimHttpCallback {
         void onResponse(String response, int code, String errorMsg);

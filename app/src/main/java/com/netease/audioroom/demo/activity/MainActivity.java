@@ -23,6 +23,8 @@ import com.netease.audioroom.demo.util.ScreenUtil;
 import com.netease.audioroom.demo.util.ToastHelper;
 import com.netease.audioroom.demo.widget.HeadImageView;
 import com.netease.audioroom.demo.widget.VerticalItemDecoration;
+import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.EmptyCallback;
+import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.ErrorCallback;
 import com.netease.nimlib.sdk.NIMClient;
 import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.StatusCode;
@@ -37,7 +39,6 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
     private static final String TAG = "MainActivity";
     private HeadImageView ivAvatar;
     private TextView tvNick;
-
     private ChatRoomListAdapter chatRoomListAdapter;
 
     private StatusCode loginStatus = StatusCode.UNLOGIN;
@@ -48,32 +49,27 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setupView();
-
         tryLogin();
         fetchChatRoomList();
+
     }
 
 
     private void setupView() {
-
         ivAvatar = findViewById(R.id.iv_self_avatar);
         tvNick = findViewById(R.id.tv_self_nick);
         RecyclerView rcyChatList = findViewById(R.id.rcy_chat_room_list);
         findViewById(R.id.iv_create_chat_room).setOnClickListener(this);
-
         rcyChatList.setLayoutManager(new LinearLayoutManager(this));
-
         chatRoomListAdapter = new ChatRoomListAdapter(null, this);
         // 每个item 16dp 的间隔
         rcyChatList.addItemDecoration(new VerticalItemDecoration(Color.TRANSPARENT, ScreenUtil.dip2px(this, 16)));
         rcyChatList.setAdapter(chatRoomListAdapter);
         chatRoomListAdapter.setItemClickListener(this);
 
-
     }
 
     private void tryLogin() {
-
         final AccountInfo accountInfo = DemoCache.getAccountInfo();
         if (accountInfo == null) {
             fetchLoginAccount(null);
@@ -84,16 +80,19 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
         NIMClient.getService(AuthService.class).login(loginInfo).setCallback(new RequestCallback() {
             @Override
             public void onSuccess(Object o) {
+//
                 afterLogin(accountInfo);
             }
 
             @Override
             public void onFailed(int i) {
+                loadService.showCallback(ErrorCallback.class);
                 fetchLoginAccount(accountInfo.account);
             }
 
             @Override
             public void onException(Throwable throwable) {
+                loadService.showCallback(ErrorCallback.class);
                 fetchLoginAccount(accountInfo.account);
             }
         });
@@ -101,8 +100,6 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
     }
 
     private void fetchLoginAccount(String preAccount) {
-
-
         ChatRoomHttpClient.getInstance().fetchAccount(preAccount, new ChatRoomHttpClient.ChatRoomHttpCallback<AccountInfo>() {
             @Override
             public void onSuccess(AccountInfo accountInfo) {
@@ -111,7 +108,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
 
             @Override
             public void onFailed(int code, String errorMsg) {
-                ToastHelper.showToast("获取登陆帐号失败 ， code = " + code);
+                ToastHelper.showToast("获取登录帐号失败 ， code = " + code);
             }
         });
     }
@@ -121,23 +118,26 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
         NIMClient.getService(AuthService.class).login(loginInfo).setCallback(new RequestCallback() {
             @Override
             public void onSuccess(Object o) {
+                loadService.showCallback(EmptyCallback.class);
                 afterLogin(accountInfo);
             }
 
             @Override
             public void onFailed(int i) {
+                loadService.showCallback(ErrorCallback.class);
                 ToastHelper.showToast("SDK登录失败 , code = " + i);
             }
 
             @Override
             public void onException(Throwable throwable) {
+                loadService.showCallback(ErrorCallback.class);
                 ToastHelper.showToast("SDK登录异常 , e = " + throwable);
             }
         });
     }
 
     private void afterLogin(AccountInfo accountInfo) {
-        ToastHelper.showToast("登陆成功");
+        ToastHelper.showToast("登录成功");
         DemoCache.setAccountId(accountInfo.account);
         DemoCache.saveAccountInfo(accountInfo);
         ivAvatar.loadAvatar(accountInfo.avatar);
@@ -148,18 +148,24 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
 
 
     private void fetchChatRoomList() {
+        ChatRoomHttpClient.getInstance().fetchChatRoomList(0, 20
+                , new ChatRoomHttpClient.ChatRoomHttpCallback<ArrayList<DemoRoomInfo>>() {
+                    @Override
+                    public void onSuccess(ArrayList<DemoRoomInfo> roomList) {
+                        if (roomList.size() > 0) {
+                            loadService.showSuccess();
+                            chatRoomListAdapter.appendItems(roomList);
+                        } else {
+                            loadService.showCallback(EmptyCallback.class);
+                        }
+                    }
 
-        ChatRoomHttpClient.getInstance().fetchChatRoomList(0, 20, new ChatRoomHttpClient.ChatRoomHttpCallback<ArrayList<DemoRoomInfo>>() {
-            @Override
-            public void onSuccess(ArrayList<DemoRoomInfo> roomList) {
-                chatRoomListAdapter.appendItems(roomList);
-            }
-
-            @Override
-            public void onFailed(int code, String errorMsg) {
-                ToastHelper.showToast("获取聊天室列表失败 ， code = " + code);
-            }
-        });
+                    @Override
+                    public void onFailed(int code, String errorMsg) {
+                        loadService.showCallback(ErrorCallback.class);
+                        ToastHelper.showToast("获取聊天室列表失败 ， code = " + code);
+                    }
+                });
     }
 
     @Override
@@ -173,7 +179,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
 
     private void showCreateChatRoomDialog() {
         if (loginStatus != StatusCode.LOGINED) {
-            ToastHelper.showToast("登陆失败，请杀掉APP重新登陆");
+            ToastHelper.showToast("登录失败，请杀掉APP重新登录");
             return;
         }
 
@@ -228,7 +234,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
     @Override
     public void onItemClick(DemoRoomInfo model, int position) {
         if (loginStatus != StatusCode.LOGINED) {
-            ToastHelper.showToast("登陆失败，请杀掉APP重新登陆");
+            ToastHelper.showToast("登录失败，请杀掉APP重新登录");
             return;
         }
 
