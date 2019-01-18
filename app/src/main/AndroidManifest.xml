@@ -18,6 +18,11 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
 
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+
 
     <!-- SDK 权限申明, 第三方 APP 接入时，请将 com.netease.audioroom.demo 替换为自己的包名 -->
     <!-- 和下面的 uses-permission 一起加入到你的 AndroidManifest 文件中。 -->
@@ -59,6 +64,11 @@
             android:launchMode="singleTop"
             android:screenOrientation="portrait" />
 
+
+        <!--0fbb6ba3ef9a98004153e3ff75ef1a2d-->
+
+        <!-- demo -->
+        <!--45c6af3c98409b18a84451215d0bdd6e-->
         <meta-data
             android:name="com.netease.nim.appKey"
             android:value="0fbb6ba3ef9a98004153e3ff75ef1a2d" />

@@ -13,10 +13,13 @@ import android.widget.TextView;
 
 import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.adapter.QueueAdapter;
+import com.netease.audioroom.demo.audio.SimpleNRtcCallback;
 import com.netease.audioroom.demo.cache.DemoCache;
 import com.netease.audioroom.demo.model.AccountInfo;
 import com.netease.audioroom.demo.model.DemoRoomInfo;
 import com.netease.audioroom.demo.model.QueueInfo;
+import com.netease.audioroom.demo.model.QueueMember;
+import com.netease.audioroom.demo.util.CommonUtil;
 import com.netease.audioroom.demo.util.ToastHelper;
 import com.netease.audioroom.demo.widget.HeadImageView;
 import com.netease.nimlib.sdk.NIMClient;
@@ -41,6 +44,10 @@ import com.netease.nimlib.sdk.msg.constant.NotificationType;
 import com.netease.nimlib.sdk.msg.constant.SessionTypeEnum;
 import com.netease.nimlib.sdk.msg.model.CustomNotification;
 import com.netease.nimlib.sdk.util.Entry;
+import com.netease.nrtc.engine.rawapi.RtcRole;
+import com.netease.nrtc.sdk.NRtc;
+import com.netease.nrtc.sdk.NRtcEx;
+import com.netease.nrtc.sdk.NRtcParameters;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,6 +77,8 @@ public abstract class BaseAudioActivity extends PermissionActivity {
 
     private EditText edtInput;
 
+    //自己的麦位，只有观众有
+    protected QueueInfo selfQueue;
 
     //聊天室队列（麦位）
     protected RecyclerView rcyQueueList;
@@ -79,7 +88,6 @@ public abstract class BaseAudioActivity extends PermissionActivity {
     //消息列表
     protected RecyclerView rcyChatMsgList;
 
-
     // 聊天室信息
     protected DemoRoomInfo roomInfo;
 
@@ -87,6 +95,10 @@ public abstract class BaseAudioActivity extends PermissionActivity {
     // 聊天室服务
     protected ChatRoomService chatRoomService;
 
+
+    //音视频接口
+    protected NRtcEx nrtcEx;
+    protected long audioUid;
 
     private BaseAdapter.ItemClickListener<QueueInfo> itemClickListener = new BaseAdapter.ItemClickListener<QueueInfo>() {
         @Override
@@ -199,6 +211,11 @@ public abstract class BaseAudioActivity extends PermissionActivity {
             return;
         }
         chatRoomService = NIMClient.getService(ChatRoomService.class);
+
+//        "45c6af3c98409b18a84451215d0bdd6e"
+        nrtcEx = (NRtcEx) NRtc.create(this, CommonUtil.readAppKey(), new SimpleNRtcCallback());
+        nrtcEx.setParameter(NRtcParameters.KEY_SESSION_MULTI_MODE, true);
+        audioUid = System.nanoTime();
         enterChatRoom(roomInfo.getRoomId());
         findBaseView();
         setupBaseViewInner();
@@ -206,6 +223,11 @@ public abstract class BaseAudioActivity extends PermissionActivity {
 
     }
 
+    @Override
+    protected void onDestroy() {
+        release();
+        super.onDestroy();
+    }
 
     private void findBaseView() {
 
@@ -282,6 +304,10 @@ public abstract class BaseAudioActivity extends PermissionActivity {
             }
             QueueInfo queueInfo = new QueueInfo(entry.value);
             queueInfoList.set(queueInfo.getIndex(), queueInfo);
+            QueueMember member = queueInfo.getQueueMember();
+            if (member != null && TextUtils.equals(member.getAccount(), DemoCache.getAccountId())) {
+                selfQueue = queueInfo;
+            }
 
         }
         queueAdapter.setItems(queueInfoList);
@@ -383,6 +409,56 @@ public abstract class BaseAudioActivity extends PermissionActivity {
 
         NIMClient.getService(MsgServiceObserve.class).observeCustomNotification(customNotification, register);
         NIMClient.getService(ChatRoomServiceObserver.class).observeReceiveMessage(messageObserver, register);
+    }
+
+
+    @Override
+    protected void onLivePermissionGranted() {
+
+    }
+
+    /**
+     * 加入音视频 频道
+     */
+    protected boolean joinChannel(long selfUid) {
+        if (nrtcEx == null) {
+            return false;
+        }
+        return nrtcEx.joinChannel(null, roomInfo.getRoomId(), selfUid) == 0;
+    }
+
+    /**
+     * 关闭自己的语音
+     */
+    protected void muteSelfAudio(boolean isMutex) {
+        nrtcEx.muteLocalAudioStream(isMutex);
+    }
+
+    /**
+     * 关闭聊天室的语音
+     */
+    protected void muteRoomAudio(boolean isMutex) {
+        nrtcEx.muteAllRemoteAudioStream(isMutex);
+    }
+
+    /**
+     * 设置观众模式，主播和连麦者都属于非观众
+     */
+    protected boolean enableAudienceRole(boolean enable) {
+        if (nrtcEx == null) {
+            return false;
+        }
+        return nrtcEx.setRole(enable ? RtcRole.AUDIENCE : RtcRole.NORMAL) == 0;
+    }
+
+
+    protected void release() {
+        if (nrtcEx == null) {
+            return;
+        }
+        nrtcEx.leaveChannel();
+        nrtcEx.dispose();
+        nrtcEx = null;
     }
 
 

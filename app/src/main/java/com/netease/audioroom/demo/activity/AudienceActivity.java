@@ -1,7 +1,8 @@
 package com.netease.audioroom.demo.activity;
 
 
-import android.app.Activity;
+import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.content.Context;
 import android.content.Intent;
 import android.text.TextUtils;
@@ -28,6 +29,7 @@ import com.netease.nimlib.sdk.chatroom.model.EnterChatRoomResultData;
 import com.netease.nimlib.sdk.msg.attachment.MsgAttachment;
 import com.netease.nimlib.sdk.msg.constant.ChatRoomQueueChangeType;
 import com.netease.nimlib.sdk.msg.model.CustomNotification;
+import com.netease.nimlib.sdk.util.Entry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,9 +39,6 @@ import java.util.List;
  * 观众页
  */
 public class AudienceActivity extends BaseAudioActivity implements IAudience, View.OnClickListener {
-
-
-    private QueueInfo selfQueue;
 
     /**
      * 是否正在申请连麦中
@@ -53,12 +52,20 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     private boolean isCancelLink = false;
 
 
+    @Override
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        enableAudienceRole(true);
+        joinChannel(audioUid);
+
+    }
+
+
     public static void start(Context context, DemoRoomInfo model) {
         Intent intent = new Intent(context, AudienceActivity.class);
         intent.putExtra(BaseAudioActivity.ROOM_INFO_KEY, model);
         context.startActivity(intent);
-        ((Activity) context).overridePendingTransition(R.anim.anim_side_enter, R.anim.anim_side_exit);
-
     }
 
     @Override
@@ -138,6 +145,13 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
 
     }
 
+    @Override
+    protected void initQueue(List<Entry<String, String>> entries) {
+        super.initQueue(entries);
+        if (selfQueue != null) {
+            //todo
+        }
+    }
 
     @Override
     public void requestLink(QueueInfo model) {
@@ -255,7 +269,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
 
 
     protected void onLivePermissionGranted() {
-
+        super.onLivePermissionGranted();
         ToastHelper.showToast("授权成功");
 
     }
@@ -289,6 +303,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
 
         } else if (view == ivExistRoom) {
             //todo
+            release();
             chatRoomService.exitChatRoom(roomInfo.getRoomId());
             finish();
         }

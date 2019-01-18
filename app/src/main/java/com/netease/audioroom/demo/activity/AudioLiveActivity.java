@@ -32,6 +32,7 @@ import com.netease.nimlib.sdk.chatroom.model.ChatRoomQueueChangeAttachment;
 import com.netease.nimlib.sdk.chatroom.model.EnterChatRoomResultData;
 import com.netease.nimlib.sdk.msg.model.CustomNotification;
 
+
 import org.json.JSONObject;
 
 import java.util.HashMap;
@@ -60,6 +61,10 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         super.onCreate(savedInstanceState);
         requestLivePermission();
         enterChatRoom(roomInfo.getRoomId());
+
+        enableAudienceRole(false);
+        joinChannel(audioUid);
+
     }
 
     @Override
@@ -133,6 +138,8 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         ivLiverAvatar.loadAvatar(accountInfo.avatar);
         tvLiverNick.setText(accountInfo.nick);
         initQueue(null);
+
+
     }
 
     @Override
@@ -224,6 +231,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
 
 
     protected void onLivePermissionGranted() {
+        super.onLivePermissionGranted();
         ToastHelper.showToast("授权成功");
     }
 
@@ -259,6 +267,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         } else if (view == ivCloseRoomAudio) {
 
         } else if (view == ivExistRoom) {
+            release();
             ChatRoomMessage closeRoomMessage = ChatRoomMessageBuilder.createChatRoomCustomMessage(roomInfo.getRoomId(), new CloseRoomAttach());
             chatRoomService.sendMessage(closeRoomMessage, false).setCallback(new RequestCallbackWrapper<Void>() {
                 @Override

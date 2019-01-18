@@ -297,20 +297,6 @@ public class ChatRoomHttpClient {
         });
     }
 
-    private String readAppKey() {
-        try {
-            ApplicationInfo appInfo = DemoCache
-                    .getContext()
-                    .getPackageManager()
-                    .getApplicationInfo(DemoCache.getContext().getPackageName(), PackageManager.GET_META_DATA);
-            if (appInfo != null) {
-                return appInfo.metaData.getString("com.netease.nim.appKey");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
 
     private String getServer() {
 
