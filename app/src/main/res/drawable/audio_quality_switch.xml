@@ -3,5 +3,5 @@
 
 
     <item android:drawable="@drawable/audio_quality_low" android:state_selected="true" />
-    <item android:drawable="@drawable/audio_quality_high"  />
+    <item android:drawable="@drawable/audio_quality_high" />
 </selector>

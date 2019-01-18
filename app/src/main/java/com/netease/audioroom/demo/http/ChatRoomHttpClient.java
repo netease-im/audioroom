@@ -124,7 +124,7 @@ public class ChatRoomHttpClient {
                                 roomInfo.setRoomId(object.optString(RESULT_KEY_ROOM_ID));
                                 roomInfo.setName(object.optString(RESULT_KEY_NAME));
                                 roomInfo.setOnlineUserCount(object.optInt(RESULT_KEY_ONLINE_USER_COUNT));
-                                roomInfo.setBackgroundUrl(object.optString(RESULT_KEY_BACKGROUND_URL));
+                                roomInfo.setThumbnail(object.optString(RESULT_KEY_BACKGROUND_URL));
                                 roomInfo.setCreator(object.optString(RESULT_KEY_CREATOR));
                                 demoRoomInfoList.add(roomInfo);
                             }
@@ -161,7 +161,6 @@ public class ChatRoomHttpClient {
         NimHttpClient.getInstance().execute(url, headers, body, new NimHttpClient.NimHttpCallback() {
             @Override
             public void onResponse(String response, int code, String errorMsg) {
-
                 if (fetchAccountCallBack == null) {
                     return;
                 }

@@ -7,6 +7,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 
 
 import com.netease.audioroom.demo.R;
@@ -42,7 +43,6 @@ public abstract class BaseAdapter<T> extends RecyclerView.Adapter {
         if (itemClickListener == null) {
             return;
         }
-
         T model = (T) itemView.getTag(R.id.base_adapter_model_tag);
         int position = (int) itemView.getTag(R.id.base_adapter_position_tag);
         itemClickListener.onItemClick(model, position);
