@@ -25,7 +25,7 @@ import java.util.Map;
  */
 public class ChatRoomHttpClient {
 
-    private static final String TAG = ChatRoomHttpClient.class.getSimpleName();
+    private static final String TAG = "AudioRoom";
 
     // code
     private static final int RESULT_CODE_SUCCESS = 200;
@@ -36,12 +36,14 @@ public class ChatRoomHttpClient {
     private static final String API_CHAT_ROOM_LIST = "room/list";
     private static final String API_GET_USER = "user/get";
     private static final String API_CREATE_ROOM = "room/create";
+    private static final String API_CLOSE_ROOM = "room/dissolve";
 
 
-    private static final String HEADER_KEY_CONTENT_TYPE = "Content-type";
+    private static final String HEADER_KEY_CONTENT_TYPE = "Content-Type";
 
     // result
     private static final String RESULT_KEY_RES = "code";
+    private static final String RESULT_KEY_MSG = "msg";
     private static final String RESULT_KEY_DATA = "data";
 
     // room list result
@@ -49,14 +51,14 @@ public class ChatRoomHttpClient {
     private static final String RESULT_KEY_ROOM_ID = "roomId";
     private static final String RESULT_KEY_NAME = "name";
     private static final String RESULT_KEY_ONLINE_USER_COUNT = "onlineUserCount";
-    private static final String RESULT_KEY_BACKGROUND_URL = "backgrounurl";
+    private static final String RESULT_KEY_BACKGROUND_URL = "thumbnail";
     private static final String RESULT_KEY_CREATOR = "creator";
 
     //user account result
     private static final String RESULT_KEY_ACCOUNT = "accid";
     private static final String RESULT_KEY_NICK = "nickname";
     private static final String RESULT_KEY_TOKEN = "imToken";
-    private static final String RESULT_KEY_AVATAR = "avatar";
+    private static final String RESULT_KEY_AVATAR = "icon";
 
     // request
     private static final String REQUEST_LIMIT = "limit";
@@ -88,7 +90,10 @@ public class ChatRoomHttpClient {
             body = REQUEST_OFFSET + "=" + offset + "&" +
                     REQUEST_LIMIT + "=" + limit;
         }
-        NimHttpClient.getInstance().execute(url, null, body, new NimHttpClient.NimHttpCallback() {
+        Map<String, String> headers = new HashMap<>(1);
+        headers.put(HEADER_KEY_CONTENT_TYPE, "application/x-www-form-urlencoded;charset=utf-8");
+
+        NimHttpClient.getInstance().execute(url, headers, body, new NimHttpClient.NimHttpCallback() {
             @Override
             public void onResponse(String response, int code, String errorMsg) {
                 if (callback == null) {
@@ -103,7 +108,8 @@ public class ChatRoomHttpClient {
                 Log.i(TAG, "fetchChatRoomList  : response = " + response);
                 try {
                     JSONObject res = new JSONObject(response);
-                    int resCode = res.getInt(RESULT_KEY_RES);
+                    int resCode = res.optInt(RESULT_KEY_RES);
+                    errorMsg = res.optString(RESULT_KEY_MSG, null);
                     if (resCode == RESULT_CODE_SUCCESS) {
                         JSONObject data = res.getJSONObject(RESULT_KEY_DATA);
                         ArrayList<DemoRoomInfo> demoRoomInfoList = new ArrayList<>();
@@ -127,11 +133,13 @@ public class ChatRoomHttpClient {
                         return;
                     }
 
-                    callback.onFailed(resCode, null);
+                    callback.onFailed(resCode, errorMsg);
 
                 } catch (JSONException e) {
+                    e.printStackTrace();
                     callback.onFailed(-1, e.getMessage());
                 } catch (Exception e) {
+                    e.printStackTrace();
                     callback.onFailed(-2, e.getMessage());
                 }
             }
@@ -148,7 +156,9 @@ public class ChatRoomHttpClient {
         if (accountId != null) {
             body = REQUEST_SID + "=" + accountId;
         }
-        NimHttpClient.getInstance().execute(url, null, body, new NimHttpClient.NimHttpCallback() {
+        Map<String, String> headers = new HashMap<>(1);
+        headers.put(HEADER_KEY_CONTENT_TYPE, "application/x-www-form-urlencoded;charset=utf-8");
+        NimHttpClient.getInstance().execute(url, headers, body, new NimHttpClient.NimHttpCallback() {
             @Override
             public void onResponse(String response, int code, String errorMsg) {
 
@@ -163,7 +173,8 @@ public class ChatRoomHttpClient {
                 }
                 try {
                     JSONObject res = new JSONObject(response);
-                    int resCode = res.getInt(RESULT_KEY_RES);
+                    int resCode = res.optInt(RESULT_KEY_RES);
+                    errorMsg = res.optString(RESULT_KEY_MSG, null);
                     if (resCode == RESULT_CODE_SUCCESS) {
                         JSONObject data = res.getJSONObject(RESULT_KEY_DATA);
                         String account = data.optString(RESULT_KEY_ACCOUNT);
@@ -174,11 +185,11 @@ public class ChatRoomHttpClient {
                         fetchAccountCallBack.onSuccess(accountInfo);
                         return;
                     }
-                    fetchAccountCallBack.onFailed(resCode, null);
+                    fetchAccountCallBack.onFailed(resCode, errorMsg);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-                fetchAccountCallBack.onFailed(-1, null);
+                fetchAccountCallBack.onFailed(-1, errorMsg);
 
             }
         });
@@ -214,7 +225,8 @@ public class ChatRoomHttpClient {
                 Log.i(TAG, "createRoom  : response = " + response);
                 try {
                     JSONObject res = new JSONObject(response);
-                    int resCode = res.getInt(RESULT_KEY_RES);
+                    int resCode = res.optInt(RESULT_KEY_RES);
+                    errorMsg = res.optString(RESULT_KEY_MSG, null);
 
                     if (resCode == RESULT_CODE_SUCCESS) {
                         JSONObject msg = res.getJSONObject(RESULT_KEY_DATA);
@@ -232,12 +244,56 @@ public class ChatRoomHttpClient {
 
 
                     Log.e(TAG, "createRoom failed : code = " + code);
-                    callback.onFailed(resCode, null);
+                    callback.onFailed(resCode, errorMsg);
 
                 } catch (JSONException e) {
-                    Log.e(TAG, "NimHttpClient onResponse on JSONException, e=" + e.getMessage());
+                    e.printStackTrace();
                     callback.onFailed(-1, e.getMessage());
                 }
+            }
+        });
+    }
+
+
+    public void closeRoom(String account, String roomID, final ChatRoomHttpCallback callback) {
+
+        String url = getServer() + API_CLOSE_ROOM;
+        Map<String, String> headers = new HashMap<>(2);
+        headers.put(HEADER_KEY_CONTENT_TYPE, "application/x-www-form-urlencoded;charset=utf-8");
+
+        String bodyString = REQUEST_SID + "=" + account + "&" +
+                RESULT_KEY_ROOM_ID + "=" + roomID;
+        NimHttpClient.getInstance().execute(url, headers, bodyString, new NimHttpClient.NimHttpCallback() {
+            @Override
+            public void onResponse(String response, int code, String errorMsg) {
+
+                if (callback == null) {
+                    return;
+                }
+                if (code != 0) {
+                    Log.e(TAG, "closeRoom failed : code = " + code + ", errorMsg = " + errorMsg);
+                    callback.onFailed(code, errorMsg);
+                    return;
+                }
+                Log.i(TAG, "closeRoom  : response = " + response);
+                try {
+                    JSONObject res = new JSONObject(response);
+                    int resCode = res.optInt(RESULT_KEY_RES);
+                    errorMsg = res.optString(RESULT_KEY_MSG, null);
+
+                    if (resCode == RESULT_CODE_SUCCESS) {
+                        callback.onSuccess(null);
+                        return;
+                    }
+
+                    Log.e(TAG, "closeRoom failed : code = " + code);
+                    callback.onFailed(resCode, errorMsg);
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    callback.onFailed(-1, e.getMessage());
+                }
+
             }
         });
     }

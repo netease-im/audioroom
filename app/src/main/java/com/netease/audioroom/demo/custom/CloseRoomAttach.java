@@ -8,8 +8,8 @@ import org.json.JSONObject;
 public class CloseRoomAttach extends CustomAttachment {
 
 
-    CloseRoomAttach(int type) {
-        super(type);
+    public CloseRoomAttach() {
+        super(CustomAttachmentType.CLOSER_ROOM);
     }
 
     @Override

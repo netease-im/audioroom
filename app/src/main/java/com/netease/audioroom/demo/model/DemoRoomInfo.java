@@ -67,7 +67,9 @@ public class DemoRoomInfo implements Parcelable {
     private DemoRoomInfo(Parcel in) {
         roomId = in.readString();
         name = in.readString();
+        creator = in.readString();
         onlineUserCount = in.readInt();
+
     }
 
     @Override
@@ -79,6 +81,7 @@ public class DemoRoomInfo implements Parcelable {
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(roomId);
         dest.writeString(name);
+        dest.writeString(creator);
         dest.writeInt(onlineUserCount);
     }
 
