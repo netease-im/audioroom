@@ -52,14 +52,12 @@
         <activity
             android:name=".activity.AudienceActivity"
             android:launchMode="singleTop"
-            android:screenOrientation="portrait"
-            android:theme="@style/ActivityStyle" />
+            android:screenOrientation="portrait" />
 
         <activity
             android:name=".activity.AudioLiveActivity"
             android:launchMode="singleTop"
-            android:screenOrientation="portrait"
-            android:theme="@style/ActivityStyle" />
+            android:screenOrientation="portrait" />
 
         <meta-data
             android:name="com.netease.nim.appKey"

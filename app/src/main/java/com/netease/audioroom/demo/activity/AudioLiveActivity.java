@@ -1,6 +1,7 @@
 package com.netease.audioroom.demo.activity;
 
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -48,6 +49,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         Intent intent = new Intent(context, AudioLiveActivity.class);
         intent.putExtra(BaseAudioActivity.ROOM_INFO_KEY, demoRoomInfo);
         context.startActivity(intent);
+        ((Activity) context).overridePendingTransition(R.anim.anim_side_enter, R.anim.anim_side_exit);
     }
 
     //聊天室队列元素

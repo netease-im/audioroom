@@ -1,6 +1,7 @@
 package com.netease.audioroom.demo.activity;
 
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.text.TextUtils;
@@ -56,6 +57,8 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         Intent intent = new Intent(context, AudienceActivity.class);
         intent.putExtra(BaseAudioActivity.ROOM_INFO_KEY, model);
         context.startActivity(intent);
+        ((Activity) context).overridePendingTransition(R.anim.anim_side_enter, R.anim.anim_side_exit);
+
     }
 
     @Override
