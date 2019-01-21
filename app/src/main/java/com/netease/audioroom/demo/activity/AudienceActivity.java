@@ -1,6 +1,7 @@
 package com.netease.audioroom.demo.activity;
 
 
+import android.app.Activity;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.content.Context;
@@ -55,7 +56,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         enableAudienceRole(true);
         joinChannel(audioUid);
 
@@ -66,6 +66,9 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         Intent intent = new Intent(context, AudienceActivity.class);
         intent.putExtra(BaseAudioActivity.ROOM_INFO_KEY, model);
         context.startActivity(intent);
+        if (context instanceof Activity) {
+            ((Activity) context).overridePendingTransition(R.anim.in_from_right, R.anim.out_from_left);
+        }
     }
 
     @Override

@@ -46,10 +46,16 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setupView();
-        tryLogin();
-        fetchChatRoomList();
     }
 
+
+    @Override
+    protected void onNetWork() {
+        super.onNetWork();
+        tryLogin();
+        fetchChatRoomList();
+
+    }
 
     private void setupView() {
         ivAvatar = findViewById(R.id.iv_self_avatar);
@@ -158,7 +164,6 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
                     @Override
                     public void onFailed(int code, String errorMsg) {
                         loadService.showCallback(ErrorCallback.class);
-                        ToastHelper.showToast("获取聊天室列表失败 ， code = " + code);
                     }
                 });
     }

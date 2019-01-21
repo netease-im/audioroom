@@ -52,9 +52,7 @@
     <!-- dialogfragment出现消失动画 -->
     <style name="Animation" parent="@android:style/Animation.Activity">
         <item name="android:windowEnterAnimation">@anim/anim_enter</item>
-        <item name="android:windowExitAnimation">@anim/anim_enter</item>
-        <item name="android:activityOpenEnterAnimation">@anim/anim_side_enter</item>
-        <item name="android:activityOpenExitAnimation">@anim/anim_side_exit</item>
+        <item name="android:windowExitAnimation">@anim/anim_exit</item>
     </style>
 
     <style name="dialog_fragment">
@@ -64,27 +62,5 @@
         <item name="android:windowAnimationStyle">@style/Animation</item>
     </style>
 
-
-    <!--Activity跳转文件-->
-
-    <style name="ActivityStyle" mce_bogus="1">
-        <item name="android:windowAnimationStyle">@style/AnimationActivity</item>
-        <item name="android:windowNoTitle">true</item>
-           
-    </style>
-
-       
-
-    <style name="AnimationActivity" mce_bogus="1" parent="@android:style/Animation.Activity">
-               
-        <item name="android:activityOpenEnterAnimation">@anim/anim_enter</item>
-               
-        <item name="android:activityOpenExitAnimation">@anim/anim_exit</item>
-               
-        <item name="android:activityCloseEnterAnimation">@anim/back_enter</item>
-               
-        <item name="android:activityCloseExitAnimation">@anim/back_exit</item>
-           
-    </style>
 
 </resources>

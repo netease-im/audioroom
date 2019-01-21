@@ -18,8 +18,8 @@ import com.netease.audioroom.demo.custom.P2PNotificationHelper;
 import com.netease.audioroom.demo.http.ChatRoomHttpClient;
 import com.netease.audioroom.demo.model.AccountInfo;
 import com.netease.audioroom.demo.model.DemoRoomInfo;
-import com.netease.audioroom.demo.model.QueueMember;
 import com.netease.audioroom.demo.model.QueueInfo;
+import com.netease.audioroom.demo.model.QueueMember;
 import com.netease.audioroom.demo.permission.MPermission;
 import com.netease.audioroom.demo.permission.MPermissionUtil;
 import com.netease.audioroom.demo.util.JsonUtil;
@@ -31,7 +31,6 @@ import com.netease.nimlib.sdk.chatroom.model.ChatRoomMessage;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomQueueChangeAttachment;
 import com.netease.nimlib.sdk.chatroom.model.EnterChatRoomResultData;
 import com.netease.nimlib.sdk.msg.model.CustomNotification;
-
 
 import org.json.JSONObject;
 
@@ -50,7 +49,9 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         Intent intent = new Intent(context, AudioLiveActivity.class);
         intent.putExtra(BaseAudioActivity.ROOM_INFO_KEY, demoRoomInfo);
         context.startActivity(intent);
-        ((Activity) context).overridePendingTransition(R.anim.anim_side_enter, R.anim.anim_side_exit);
+        if (context instanceof Activity) {
+            ((Activity) context).overridePendingTransition(R.anim.in_from_right, R.anim.out_from_left);
+        }
     }
 
     //聊天室队列元素

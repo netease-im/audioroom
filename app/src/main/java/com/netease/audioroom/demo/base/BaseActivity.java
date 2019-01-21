@@ -22,6 +22,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     protected Context mContext;
     protected LoadService loadService;//通用页面
 
+
     //监听登录状态
     private Observer<StatusCode> onlineStatusObserver = new Observer<StatusCode>() {
         @Override
@@ -29,6 +30,7 @@ public abstract class BaseActivity extends AppCompatActivity {
             onLoginEvent(statusCode);
         }
     };
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,11 +43,15 @@ public abstract class BaseActivity extends AppCompatActivity {
         super.onStart();
         loadService = LoadSir.getDefault().register(BaseActivityManager.getInstance().getCurrentActivity(),
                 (v) -> loadService.showSuccess());
-        //网络判断
         if (!NetworkUtil.isNetAvailable(mContext)) {
             loadService.showCallback(NetErrCallback.class);
-            return;
+        } else {
+            onNetWork();
         }
+
+    }
+
+    protected void onNetWork() {
     }
 
     @Override
@@ -82,4 +88,6 @@ public abstract class BaseActivity extends AppCompatActivity {
     public final boolean isActivityPaused() {
         return isPaused;
     }
+
+
 }

@@ -1,13 +1,17 @@
 package com.netease.audioroom.demo.http;
 
+import android.app.ActivityManager;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.util.Log;
 
 
+import com.netease.audioroom.demo.base.BaseActivityManager;
 import com.netease.audioroom.demo.cache.DemoCache;
 import com.netease.audioroom.demo.model.AccountInfo;
 import com.netease.audioroom.demo.model.DemoRoomInfo;
+import com.netease.audioroom.demo.util.NetworkUtil;
+import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.NetErrCallback;
 
 
 import org.json.JSONArray;
@@ -82,6 +86,9 @@ public class ChatRoomHttpClient {
      * 向网易云信Demo应用服务器请求聊天室列表
      */
     public void fetchChatRoomList(int offset, int limit, final ChatRoomHttpCallback<ArrayList<DemoRoomInfo>> callback) {
+        if (!NetworkUtil.isNetAvailable(DemoCache.getContext())) {
+            return;
+        }
 
         String url = getServer() + API_CHAT_ROOM_LIST;
         String body = null;
@@ -150,6 +157,9 @@ public class ChatRoomHttpClient {
      * 获取帐号
      */
     public void fetchAccount(String accountId, final ChatRoomHttpCallback<AccountInfo> fetchAccountCallBack) {
+        if (!NetworkUtil.isNetAvailable(DemoCache.getContext())) {
+            return;
+        }
         String url = getServer() + API_GET_USER;
         String body = null;
 
@@ -200,6 +210,9 @@ public class ChatRoomHttpClient {
      * 主播创建直播间
      */
     public void createRoom(String account, String roomName, final ChatRoomHttpCallback<DemoRoomInfo> callback) {
+        if (!NetworkUtil.isNetAvailable(DemoCache.getContext())) {
+            return;
+        }
 
         String url = getServer() + API_CREATE_ROOM;
 
@@ -255,7 +268,9 @@ public class ChatRoomHttpClient {
 
 
     public void closeRoom(String account, String roomID, final ChatRoomHttpCallback callback) {
-
+        if (!NetworkUtil.isNetAvailable(DemoCache.getContext())) {
+            return;
+        }
         String url = getServer() + API_CLOSE_ROOM;
         Map<String, String> headers = new HashMap<>(2);
         headers.put(HEADER_KEY_CONTENT_TYPE, "application/x-www-form-urlencoded;charset=utf-8");
@@ -299,7 +314,6 @@ public class ChatRoomHttpClient {
 
 
     private String getServer() {
-
         return isTest ? API_TEST_SERVER : API__REL_SERVER;
     }
 
