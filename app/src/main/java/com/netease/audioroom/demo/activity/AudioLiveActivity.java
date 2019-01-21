@@ -316,6 +316,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         if (TextUtils.equals(memberIn.getOperator(), DemoCache.getAccountId())) {
             return;
         }
-        RoomMemberCache.getInstance().fetchMember(roomInfo.getRoomId(), memberIn.getOperator());
+        RoomMemberCache.getInstance().fetchMember(roomInfo.getRoomId(), memberIn.getOperator(), null);
     }
 }
