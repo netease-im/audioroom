@@ -49,7 +49,6 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
 
     private StatusCode loginStatus = StatusCode.UNLOGIN;
 
-
     @Override
     protected int getContentViewID() {
         return R.layout.activity_main;
@@ -59,7 +58,9 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
     protected void onRestart() {
         super.onRestart();
         loadService.showSuccess();
+        fetchChatRoomList();
     }
+
 
     @Override
     protected void initView() {
@@ -222,7 +223,6 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
             AudienceActivity.start(mContext, model);
         }
     }
-
 
 
     //重写返回键事件

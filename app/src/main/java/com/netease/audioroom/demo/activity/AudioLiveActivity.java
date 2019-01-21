@@ -34,6 +34,9 @@ import com.netease.nimlib.sdk.RequestCallbackWrapper;
 import com.netease.nimlib.sdk.chatroom.ChatRoomMessageBuilder;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMessage;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomQueueChangeAttachment;
+import com.netease.nimlib.sdk.chatroom.model.ChatRoomRoomMemberInAttachment;
+import com.netease.nimlib.sdk.chatroom.model.ChatRoomTempMuteAddAttachment;
+import com.netease.nimlib.sdk.chatroom.model.ChatRoomTempMuteRemoveAttachment;
 import com.netease.nimlib.sdk.chatroom.model.EnterChatRoomResultData;
 import com.netease.nimlib.sdk.msg.model.CustomNotification;
 
@@ -147,7 +150,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         ivLiverAvatar.loadAvatar(accountInfo.avatar);
         tvLiverNick.setText(accountInfo.nick);
         initQueue(null);
-        RoomMemberCache.getInstance().fetchMembers(roomInfo.getRoomId(), 0, 100);
+        RoomMemberCache.getInstance().fetchMembers(roomInfo.getRoomId(), 0, 100, null);
     }
 
     @Override
@@ -290,5 +293,29 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
             finish();
         }
 
+    }
+
+    protected void memberMuteRemove(ChatRoomTempMuteRemoveAttachment muteRemove) {
+        super.memberMuteRemove(muteRemove);
+        RoomMemberCache.getInstance().muteChange(roomInfo.getRoomId(), muteRemove.getTargets(), false);
+
+    }
+
+    protected void memberMuteAdd(ChatRoomTempMuteAddAttachment addMuteMember) {
+        super.memberMuteAdd(addMuteMember);
+        RoomMemberCache.getInstance().muteChange(roomInfo.getRoomId(), addMuteMember.getTargets(), true);
+    }
+
+    protected void memberExit(ChatRoomQueueChangeAttachment memberExit) {
+        super.memberExit(memberExit);
+        RoomMemberCache.getInstance().removeMember(roomInfo.getRoomId(), memberExit.getOperator());
+    }
+
+    protected void memberIn(ChatRoomRoomMemberInAttachment memberIn) {
+        super.memberIn(memberIn);
+        if (TextUtils.equals(memberIn.getOperator(), DemoCache.getAccountId())) {
+            return;
+        }
+        RoomMemberCache.getInstance().fetchMember(roomInfo.getRoomId(), memberIn.getOperator());
     }
 }
