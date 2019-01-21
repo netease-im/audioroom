@@ -141,11 +141,13 @@ public abstract class BaseAudioActivity extends BaseActivity {
                 if (message.getAttachment() instanceof ChatRoomNotificationAttachment) {
                     NotificationType type = ((ChatRoomNotificationAttachment) message.getAttachment()).getType();
                     switch (type) {
-                        // 成员进入聊天室 , 自己进来也有通知 todo , 更新rcyChatMsgList
+                        // 成员进入聊天室 , 自己进来也有通知
                         case ChatRoomMemberIn:
                             ChatRoomRoomMemberInAttachment memberIn = (ChatRoomRoomMemberInAttachment) message.getAttachment();
                             logInfo.append("成员进入聊天室：nick =  ").append(memberIn.getOperatorNick())
                                     .append(", account = ").append(memberIn.getOperator());
+
+                            memberIn(memberIn);
                             break;
 
                         // 成员退出聊天室 todo , 更新rcyChatMsgList
@@ -153,7 +155,7 @@ public abstract class BaseAudioActivity extends BaseActivity {
                             ChatRoomQueueChangeAttachment memberExit = (ChatRoomQueueChangeAttachment) message.getAttachment();
                             logInfo.append("成员退出聊天室：nick = ").append(memberExit.getOperatorNick()).
                                     append(",  account = ").append(memberExit.getOperator());
-
+                            memberExit(memberExit);
                             break;
 
                         //成员被禁言
@@ -161,6 +163,7 @@ public abstract class BaseAudioActivity extends BaseActivity {
                             ChatRoomTempMuteAddAttachment addMuteMember = (ChatRoomTempMuteAddAttachment) message.getAttachment();
                             logInfo.append("成员被禁言：nick list =  ").append(addMuteMember.getTargetNicks()).
                                     append(" , account list = ").append(addMuteMember.getTargets());
+                            memberMuteAdd(addMuteMember);
                             break;
 
                         //成员被解除禁言
@@ -168,6 +171,7 @@ public abstract class BaseAudioActivity extends BaseActivity {
                             ChatRoomTempMuteRemoveAttachment muteRemove = (ChatRoomTempMuteRemoveAttachment) message.getAttachment();
                             logInfo.append("成员被解除禁言：nick list =  ").append(muteRemove.getTargetNicks()).
                                     append(" , account list = ").append(muteRemove.getTargets());
+                            memberMuteRemove(muteRemove);
                             break;
 
                         //队列变更
@@ -198,6 +202,20 @@ public abstract class BaseAudioActivity extends BaseActivity {
             }
         }
     };
+
+    protected void memberMuteRemove(ChatRoomTempMuteRemoveAttachment muteRemove) {
+    }
+
+    protected void memberMuteAdd(ChatRoomTempMuteAddAttachment addMuteMember) {
+    }
+
+    protected void memberExit(ChatRoomQueueChangeAttachment memberExit) {
+        //        todo , 更新rcyChatMsgList
+    }
+
+    protected void memberIn(ChatRoomRoomMemberInAttachment memberIn) {
+//        todo , 更新rcyChatMsgList
+    }
 
 
     @Override
