@@ -191,6 +191,14 @@ public class RoomMemberCache {
         fetchMembers(roomID, accountList, callback);
     }
 
+
+    /**
+     * 清空某一个聊天室的所有缓存
+     */
+    public void removeCache(String roomId) {
+        memberCache.remove(roomId);
+    }
+
     private RoomMemberCache() {
 
     }

@@ -290,6 +290,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
                     ChatRoomHttpClient.getInstance().closeRoom(DemoCache.getAccountId(), roomInfo.getRoomId(), null);
                 }
             });
+            RoomMemberCache.getInstance().removeCache(roomInfo.getRoomId());
             finish();
         }
 
