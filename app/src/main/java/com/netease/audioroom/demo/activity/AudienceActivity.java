@@ -20,6 +20,9 @@ import com.netease.audioroom.demo.model.QueueInfo;
 import com.netease.audioroom.demo.model.QueueMember;
 import com.netease.audioroom.demo.permission.MPermission;
 import com.netease.audioroom.demo.permission.MPermissionUtil;
+import com.netease.audioroom.demo.permission.annotation.OnMPermissionDenied;
+import com.netease.audioroom.demo.permission.annotation.OnMPermissionGranted;
+import com.netease.audioroom.demo.permission.annotation.OnMPermissionNeverAskAgain;
 import com.netease.audioroom.demo.util.CommonUtil;
 import com.netease.audioroom.demo.util.ToastHelper;
 import com.netease.nimlib.sdk.RequestCallback;
@@ -58,7 +61,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         super.onCreate(savedInstanceState);
         enableAudienceRole(true);
         joinChannel(audioUid);
-
+        requestLivePermission();
     }
 
     @Override
@@ -273,19 +276,22 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
 
     }
 
-
+    @OnMPermissionGranted(LIVE_PERMISSION_REQUEST_CODE)
     protected void onLivePermissionGranted() {
-        super.onLivePermissionGranted();
+        isPermissionGrant = true;
         ToastHelper.showToast("授权成功");
 
     }
 
+    @OnMPermissionDenied(LIVE_PERMISSION_REQUEST_CODE)
     protected void onLivePermissionDenied() {
         List<String> deniedPermissions = MPermission.getDeniedPermissions(this, LIVE_PERMISSIONS);
         String tip = "您拒绝了权限" + MPermissionUtil.toString(deniedPermissions) + "，无法开启直播";
         ToastHelper.showToast(tip);
     }
 
+
+    @OnMPermissionNeverAskAgain(LIVE_PERMISSION_REQUEST_CODE)
     protected void onLivePermissionDeniedAsNeverAskAgain() {
         List<String> deniedPermissions = MPermission.getDeniedPermissionsWithoutNeverAskAgain(this, LIVE_PERMISSIONS);
         List<String> neverAskAgainPermission = MPermission.getNeverAskAgainPermissions(this, LIVE_PERMISSIONS);

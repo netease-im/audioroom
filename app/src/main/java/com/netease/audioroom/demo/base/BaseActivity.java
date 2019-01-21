@@ -1,5 +1,6 @@
 package com.netease.audioroom.demo.base;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -8,9 +9,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.KeyEvent;
 
-import com.netease.audioroom.demo.util.Network;
-import com.netease.audioroom.demo.util.NetworkChange;
-import com.netease.audioroom.demo.util.NetworkWatcher;
+import com.netease.audioroom.demo.util.NetworkUtil;
+import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.NetErrCallback;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.core.LoadService;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.core.LoadSir;
 import com.netease.nimlib.sdk.NIMClient;
@@ -53,6 +53,25 @@ public abstract class BaseActivity extends AppCompatActivity {
     };
 
 
+    protected static final int LIVE_PERMISSION_REQUEST_CODE = 1001;
+    protected boolean isPermissionGrant = false;
+
+    // 权限控制
+    protected static final String[] LIVE_PERMISSIONS = new String[]{
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.CAMERA,
+            Manifest.permission.RECORD_AUDIO,
+            Manifest.permission.READ_PHONE_STATE};
+
+    protected void requestLivePermission() {
+        MPermission.with(this)
+                .addRequestCode(LIVE_PERMISSION_REQUEST_CODE)
+                .permissions(LIVE_PERMISSIONS)
+                .request();
+    }
+
+
     //监听登录状态
     private Observer<StatusCode> onlineStatusObserver = new Observer<StatusCode>() {
         @Override
@@ -72,10 +91,6 @@ public abstract class BaseActivity extends AppCompatActivity {
         initView();
         loadService = LoadSir.getDefault().register(BaseActivityManager.getInstance().getCurrentActivity());
     }
-
-    protected abstract int getContentViewID();
-
-    protected abstract void initView();
 
     @Override
     protected void onStart() {
@@ -98,7 +113,6 @@ public abstract class BaseActivity extends AppCompatActivity {
     protected void onPause() {
         isPaused = true;
         super.onPause();
-        NetworkChange.getInstance().deleteObserver(watcher);
     }
 
 
@@ -127,5 +141,9 @@ public abstract class BaseActivity extends AppCompatActivity {
 
     public void setNetworkReconnection(NetworkReconnection networkReconnection) {
         this.networkReconnection = networkReconnection;
+    }
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        MPermission.onRequestPermissionsResult(this, requestCode, permissions, grantResults);
     }
 }

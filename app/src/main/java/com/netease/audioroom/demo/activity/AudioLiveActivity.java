@@ -14,6 +14,7 @@ import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.base.BaseAudioActivity;
 import com.netease.audioroom.demo.base.IAudioLive;
 import com.netease.audioroom.demo.cache.DemoCache;
+import com.netease.audioroom.demo.cache.RoomMemberCache;
 import com.netease.audioroom.demo.custom.CloseRoomAttach;
 import com.netease.audioroom.demo.custom.P2PNotificationHelper;
 import com.netease.audioroom.demo.http.ChatRoomHttpClient;
@@ -23,6 +24,9 @@ import com.netease.audioroom.demo.model.QueueInfo;
 import com.netease.audioroom.demo.model.QueueMember;
 import com.netease.audioroom.demo.permission.MPermission;
 import com.netease.audioroom.demo.permission.MPermissionUtil;
+import com.netease.audioroom.demo.permission.annotation.OnMPermissionDenied;
+import com.netease.audioroom.demo.permission.annotation.OnMPermissionGranted;
+import com.netease.audioroom.demo.permission.annotation.OnMPermissionNeverAskAgain;
 import com.netease.audioroom.demo.util.JsonUtil;
 import com.netease.audioroom.demo.util.ToastHelper;
 import com.netease.nimlib.sdk.RequestCallback;
@@ -143,8 +147,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         ivLiverAvatar.loadAvatar(accountInfo.avatar);
         tvLiverNick.setText(accountInfo.nick);
         initQueue(null);
-
-
+        RoomMemberCache.getInstance().fetchMembers(roomInfo.getRoomId(), 0, 100);
     }
 
     @Override
@@ -232,18 +235,20 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
 
     }
 
-
+    @OnMPermissionGranted(LIVE_PERMISSION_REQUEST_CODE)
     protected void onLivePermissionGranted() {
-        super.onLivePermissionGranted();
+        isPermissionGrant = true;
         ToastHelper.showToast("授权成功");
     }
 
+    @OnMPermissionDenied(LIVE_PERMISSION_REQUEST_CODE)
     protected void onLivePermissionDenied() {
         List<String> deniedPermissions = MPermission.getDeniedPermissions(this, LIVE_PERMISSIONS);
         String tip = "您拒绝了权限" + MPermissionUtil.toString(deniedPermissions) + "，无法开启直播";
         ToastHelper.showToast(tip);
     }
 
+    @OnMPermissionNeverAskAgain(LIVE_PERMISSION_REQUEST_CODE)
     protected void onLivePermissionDeniedAsNeverAskAgain() {
         List<String> deniedPermissions = MPermission.getDeniedPermissionsWithoutNeverAskAgain(this, LIVE_PERMISSIONS);
         List<String> neverAskAgainPermission = MPermission.getNeverAskAgainPermissions(this, LIVE_PERMISSIONS);

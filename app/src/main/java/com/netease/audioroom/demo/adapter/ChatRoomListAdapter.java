@@ -34,7 +34,7 @@ public class ChatRoomListAdapter extends BaseAdapter<DemoRoomInfo> {
         if (demoRoomInfo == null) {
             return;
         }
-        CommonUtil.loadImage(context, demoRoomInfo.getThumbnail(), roomHolder.ivBg);
+        CommonUtil.loadImage(context, demoRoomInfo.getThumbnail(), roomHolder.ivBg, R.drawable.chat_room_default_bg, 0);
         roomHolder.tvRoomName.setText(demoRoomInfo.getName());
         roomHolder.tvMember.setText(demoRoomInfo.getOnlineUserCount() + "人");
     }
