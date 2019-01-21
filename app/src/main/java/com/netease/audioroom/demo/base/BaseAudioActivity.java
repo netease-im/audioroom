@@ -56,7 +56,7 @@ import java.util.List;
 /**
  * 主播与观众基础页，包含所有的基本UI元素
  */
-public abstract class BaseAudioActivity extends PermissionActivity {
+public abstract class BaseAudioActivity extends BaseActivity {
 
     public static final String ROOM_INFO_KEY = "room_info_key";
     private static final String TAG = "AudioRoom";
@@ -409,12 +409,6 @@ public abstract class BaseAudioActivity extends PermissionActivity {
 
         NIMClient.getService(MsgServiceObserve.class).observeCustomNotification(customNotification, register);
         NIMClient.getService(ChatRoomServiceObserver.class).observeReceiveMessage(messageObserver, register);
-    }
-
-
-    @Override
-    protected void onLivePermissionGranted() {
-
     }
 
     /**
