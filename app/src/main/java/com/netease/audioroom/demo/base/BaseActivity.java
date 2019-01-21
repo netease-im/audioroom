@@ -8,8 +8,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
 import com.netease.audioroom.demo.permission.MPermission;
-import com.netease.audioroom.demo.util.NetworkUtil;
-import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.NetErrCallback;
+import com.netease.audioroom.demo.util.Network;
+import com.netease.audioroom.demo.util.NetworkChange;
+import com.netease.audioroom.demo.util.NetworkWatcher;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.core.LoadService;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.core.LoadSir;
 import com.netease.nimlib.sdk.NIMClient;
@@ -17,12 +18,39 @@ import com.netease.nimlib.sdk.Observer;
 import com.netease.nimlib.sdk.StatusCode;
 import com.netease.nimlib.sdk.auth.AuthServiceObserver;
 
-public abstract class BaseActivity extends AppCompatActivity {
+import java.util.Observable;
 
+public abstract class BaseActivity extends AppCompatActivity {
     private static final String TAG = "AudioRoom";
     protected boolean isPaused = true;
     protected Context mContext;
     protected LoadService loadService;//通用页面
+
+
+    protected interface NetworkReconnection {
+        void onNetworkReconnection();
+
+        void onNetworkInterrupt();
+    }
+
+    NetworkReconnection networkReconnection;
+
+    //网络状态监听
+    private NetworkWatcher watcher = new NetworkWatcher() {
+        @Override
+        public void update(Observable observable, Object data) {
+            super.update(observable, data);
+            //观察者接受到被观察者的通知，来更新自己的数据操作。
+            Network network = (Network) data;
+            if (network.isConnected()) {
+                networkReconnection.onNetworkReconnection();
+            } else {
+                networkReconnection.onNetworkInterrupt();
+            }
+
+        }
+
+    };
 
 
     protected static final int LIVE_PERMISSION_REQUEST_CODE = 1001;
@@ -52,27 +80,30 @@ public abstract class BaseActivity extends AppCompatActivity {
         }
     };
 
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         registerObserver(true);
+        NetworkChange.getInstance().addObserver(watcher);
         mContext = this;
+        setContentView(getContentViewID());
+        initView();
+        loadService = LoadSir.getDefault().register(BaseActivityManager.getInstance().getCurrentActivity());
     }
+
+    protected abstract int getContentViewID();
+
+    protected abstract void initView();
 
     @Override
     protected void onStart() {
         super.onStart();
-        loadService = LoadSir.getDefault().register(BaseActivityManager.getInstance().getCurrentActivity(),
-                (v) -> loadService.showSuccess());
-        if (!NetworkUtil.isNetAvailable(mContext)) {
-            loadService.showCallback(NetErrCallback.class);
-        } else {
-            onNetWork();
-        }
 
     }
 
     protected void onNetWork() {
+
     }
 
     @Override
@@ -110,6 +141,10 @@ public abstract class BaseActivity extends AppCompatActivity {
         return isPaused;
     }
 
+
+    public void setNetworkReconnection(NetworkReconnection networkReconnection) {
+        this.networkReconnection = networkReconnection;
+    }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {

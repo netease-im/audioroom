@@ -55,12 +55,23 @@
         <item name="android:windowExitAnimation">@anim/anim_exit</item>
     </style>
 
-    <style name="dialog_fragment">
-        <item name="android:windowBackground">@color/color_10_000000</item>
+    <style name="create_dialog_fragment">
+        <item name="android:windowBackground">@color/color_e6000000</item>
         <item name="android:colorBackgroundCacheHint">@null</item>
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowAnimationStyle">@style/Animation</item>
     </style>
 
+    <style name="request_dialog_Animation" parent="@android:style/Animation.Activity">
+        <item name="android:windowEnterAnimation">@anim/anim_enter</item>
+        <item name="android:windowExitAnimation">@anim/anim_exit</item>
+    </style>
+
+    <style name="request_dialog_fragment">
+        <item name="android:windowBackground">@color/color_00000000</item>
+        <item name="android:colorBackgroundCacheHint">@null</item>
+        <item name="android:windowIsTranslucent">false</item>
+        <item name="android:windowAnimationStyle">@style/request_dialog_Animation</item>
+    </style>
 
 </resources>

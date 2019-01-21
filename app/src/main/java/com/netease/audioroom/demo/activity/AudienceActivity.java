@@ -64,6 +64,10 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         requestLivePermission();
     }
 
+    @Override
+    protected void initView() {
+
+    }
 
     public static void start(Context context, DemoRoomInfo model) {
         Intent intent = new Intent(context, AudienceActivity.class);
@@ -113,6 +117,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     protected int getContentViewID() {
         return R.layout.activity_audience;
     }
+
 
     @Override
     protected void setupBaseView() {
@@ -165,10 +170,8 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         P2PNotificationHelper.requestLink(model, DemoCache.getAccountInfo(), roomInfo.getCreator(), new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
-                //todo 请求连接成功，等待主播同意
                 isRequestingLink = true;
                 ToastHelper.showToast("请求连麦成功");
-
             }
 
             @Override

@@ -1,11 +1,16 @@
 package com.netease.audioroom.demo.activity;
 
+import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.KeyEvent;
+import android.view.View;
 import android.widget.TextView;
 
 import com.netease.audioroom.demo.R;
@@ -16,12 +21,16 @@ import com.netease.audioroom.demo.cache.DemoCache;
 import com.netease.audioroom.demo.http.ChatRoomHttpClient;
 import com.netease.audioroom.demo.model.AccountInfo;
 import com.netease.audioroom.demo.model.DemoRoomInfo;
+import com.netease.audioroom.demo.util.Network;
 import com.netease.audioroom.demo.util.ScreenUtil;
 import com.netease.audioroom.demo.util.ToastHelper;
 import com.netease.audioroom.demo.widget.HeadImageView;
 import com.netease.audioroom.demo.widget.VerticalItemDecoration;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.EmptyCallback;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.ErrorCallback;
+import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.LoadingCallback;
+import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.NetErrCallback;
+import com.netease.audioroom.demo.widget.unitepage.loadsir.core.Transport;
 import com.netease.nimlib.sdk.NIMClient;
 import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.StatusCode;
@@ -42,22 +51,18 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
 
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        setupView();
+    protected int getContentViewID() {
+        return R.layout.activity_main;
     }
-
 
     @Override
-    protected void onNetWork() {
-        super.onNetWork();
-        tryLogin();
-        fetchChatRoomList();
-
+    protected void onRestart() {
+        super.onRestart();
+        loadService.showSuccess();
     }
 
-    private void setupView() {
+    @Override
+    protected void initView() {
         ivAvatar = findViewById(R.id.iv_self_avatar);
         tvNick = findViewById(R.id.tv_self_nick);
         RecyclerView rcyChatList = findViewById(R.id.rcy_chat_room_list);
@@ -67,8 +72,42 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
         rcyChatList.addItemDecoration(new VerticalItemDecoration(Color.TRANSPARENT, ScreenUtil.dip2px(this, 16)));
         rcyChatList.setAdapter(chatRoomListAdapter);
         chatRoomListAdapter.setItemClickListener(this);
+        setNetworkReconnection(new NetworkReconnection() {
+            @Override
+            public void onNetworkReconnection() {
+                loadService.showCallback(LoadingCallback.class);
+                onNetWork();
+            }
+
+            @Override
+            public void onNetworkInterrupt() {
+                loadService.showCallback(NetErrCallback.class);
+                loadService.setCallBack(NetErrCallback.class, new Transport() {
+                    @Override
+                    public void order(Context context, View view) {
+                        view.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                if (new Network().isConnected()) {
+                                    onNetWork();
+                                }
+                            }
+                        });
+                    }
+                });
+            }
+        });
 
     }
+
+
+    @Override
+    protected void onNetWork() {
+        super.onNetWork();
+        tryLogin();
+        fetchChatRoomList();
+    }
+
 
     private void tryLogin() {
         final AccountInfo accountInfo = DemoCache.getAccountInfo();
@@ -81,7 +120,6 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
         NIMClient.getService(AuthService.class).login(loginInfo).setCallback(new RequestCallback() {
             @Override
             public void onSuccess(Object o) {
-//
                 afterLogin(accountInfo);
             }
 
@@ -104,6 +142,7 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
         ChatRoomHttpClient.getInstance().fetchAccount(preAccount, new ChatRoomHttpClient.ChatRoomHttpCallback<AccountInfo>() {
             @Override
             public void onSuccess(AccountInfo accountInfo) {
+
                 login(accountInfo);
             }
 
@@ -138,7 +177,7 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
     }
 
     private void afterLogin(AccountInfo accountInfo) {
-        ToastHelper.showToast("登录成功");
+//        ToastHelper.showToast("登录成功");
         DemoCache.setAccountId(accountInfo.account);
         DemoCache.saveAccountInfo(accountInfo);
         ivAvatar.loadAvatar(accountInfo.avatar);
@@ -154,6 +193,7 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
                     @Override
                     public void onSuccess(ArrayList<DemoRoomInfo> roomList) {
                         if (roomList.size() > 0) {
+                            chatRoomListAdapter.clearAll();
                             loadService.showSuccess();
                             chatRoomListAdapter.appendItems(roomList);
                         } else {
@@ -183,6 +223,21 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
         }
     }
 
+
+
+    //重写返回键事件
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            Intent home = new Intent(Intent.ACTION_MAIN);
+            home.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            home.addCategory(Intent.CATEGORY_HOME);
+            startActivity(home);
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+
+    }
 
     @Override
     protected void onLoginEvent(StatusCode statusCode) {

@@ -59,7 +59,7 @@ import java.util.List;
 public abstract class BaseAudioActivity extends BaseActivity {
 
     public static final String ROOM_INFO_KEY = "room_info_key";
-    private static final String TAG = "AudioRoom";
+    public static final String TAG = "AudioRoom";
 
     //主播基础信息
     protected HeadImageView ivLiverAvatar;
@@ -230,7 +230,6 @@ public abstract class BaseAudioActivity extends BaseActivity {
     }
 
     private void findBaseView() {
-
         View baseAudioView = findViewById(R.id.rl_base_audio_ui);
 
         if (baseAudioView == null) {

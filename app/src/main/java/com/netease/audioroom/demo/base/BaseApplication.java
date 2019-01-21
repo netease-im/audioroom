@@ -3,8 +3,10 @@ package com.netease.audioroom.demo.base;
 import android.app.Activity;
 import android.app.Application;
 
+import android.content.IntentFilter;
 import android.os.Bundle;
 
+import com.netease.audioroom.demo.receiver.NetworkConnectChangedReceiver;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.EmptyCallback;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.ErrorCallback;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.LoadingCallback;
@@ -13,6 +15,8 @@ import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.TimeoutCallb
 import com.netease.audioroom.demo.widget.unitepage.loadsir.core.LoadSir;
 
 public class BaseApplication extends Application {
+    private NetworkConnectChangedReceiver networkConnectChangedReceiver = new NetworkConnectChangedReceiver();
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -25,6 +29,7 @@ public class BaseApplication extends Application {
                 .addCallback(new TimeoutCallback())
                 .setDefaultCallback(LoadingCallback.class)
                 .commit();
+
         //监听activity生命周期
         registerActivityLifecycleCallbacks(new ActivityLifecycleCallbacks() {
             @Override
@@ -62,5 +67,15 @@ public class BaseApplication extends Application {
                 BaseActivityManager.getInstance().removeActivity(activity);
             }
         });
+
+        //网络变化观察者
+        IntentFilter filter = new IntentFilter();
+        filter.addAction("android.net.conn.CONNECTIVITY_CHANGE");
+        filter.addAction("android.net.wifi.WIFI_STATE_CHANGE");
+        filter.addAction("android.net.conn.STATE_CHANGE");
+
+        registerReceiver(networkConnectChangedReceiver, filter);
+
+
     }
 }

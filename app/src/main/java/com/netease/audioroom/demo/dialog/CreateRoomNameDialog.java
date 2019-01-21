@@ -14,7 +14,7 @@ import android.widget.Button;
 import android.widget.EditText;
 
 import com.netease.audioroom.demo.R;
-import com.netease.audioroom.demo.activity.AudienceActivity;
+import com.netease.audioroom.demo.activity.AudioLiveActivity;
 import com.netease.audioroom.demo.cache.DemoCache;
 import com.netease.audioroom.demo.http.ChatRoomHttpClient;
 import com.netease.audioroom.demo.model.DemoRoomInfo;
@@ -30,7 +30,7 @@ public class CreateRoomNameDialog extends DialogFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setStyle(android.app.DialogFragment.STYLE_NO_TITLE, R.style.dialog_fragment);
+        setStyle(android.app.DialogFragment.STYLE_NO_TITLE, R.style.create_dialog_fragment);
 
     }
 
@@ -94,7 +94,8 @@ public class CreateRoomNameDialog extends DialogFragment {
                     ToastHelper.showToast("创建房间失败，返回信息为空");
                 } else {
                     dismiss();
-                    AudienceActivity.start(getContext(), roomInfo);
+                    //开启主播页
+                    AudioLiveActivity.start(getContext(), roomInfo);
                 }
 
             }

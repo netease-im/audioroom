@@ -113,6 +113,7 @@
             android:authorities="com.netease.audioroom.demo.ipc.provider"
             android:exported="false"
             android:process=":core" />
+        <receiver android:name=".util.NetworkWatcher" />s
     </application>
 
 </manifest>

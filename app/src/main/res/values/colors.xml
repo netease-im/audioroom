@@ -9,7 +9,9 @@
     <color name="color_525252">#525252</color>
     <color name="color_1a1a23">#1a1a23</color>
     <color name="color_000000">#000000</color>
-    <color name="color_10_000000">#e6000000</color>
+    <color name="color_e6000000">#e6000000</color>
+    <color name="color_e61D1D24">#e61D1D24</color>
+
 
     <color name="color_0888ff">#0888ff</color>
     <color name="color_37d4ff">#37d4ff</color>
