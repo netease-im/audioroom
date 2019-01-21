@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 
 import com.netease.audioroom.demo.R;
@@ -42,9 +43,6 @@ import java.util.List;
  */
 public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, View.OnClickListener {
 
-    private static final String TAG = "AudioRoom";
-
-
     public static void start(Context context, DemoRoomInfo demoRoomInfo) {
         Intent intent = new Intent(context, AudioLiveActivity.class);
         intent.putExtra(BaseAudioActivity.ROOM_INFO_KEY, demoRoomInfo);
@@ -62,9 +60,14 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         super.onCreate(savedInstanceState);
         requestLivePermission();
         enterChatRoom(roomInfo.getRoomId());
-
         enableAudienceRole(false);
         joinChannel(audioUid);
+        Log.e(BaseAudioActivity.TAG, "主播页");
+
+    }
+
+    @Override
+    protected void initView() {
 
     }
 
@@ -112,6 +115,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
             String nick = jsonObject.optString(P2PNotificationHelper.NICK);
             String avatar = jsonObject.optString(P2PNotificationHelper.AVATAR);
             QueueMember queueMember = new QueueMember(customNotification.getFromAccount(), nick, avatar, false);
+
             linkRequest(queueMember, index);
             return;
         }
@@ -146,8 +150,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
     @Override
     public void linkRequest(QueueMember queueMember, int index) {
         //todo UI呈现
-
-
         //同意连麦
         QueueInfo queueInfo = new QueueInfo(queueMember);
         queueInfo.setIndex(index);
@@ -257,7 +259,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
 
     @Override
     public void onClick(View view) {
-
         if (view == ivMuteOtherText) {
 
 
