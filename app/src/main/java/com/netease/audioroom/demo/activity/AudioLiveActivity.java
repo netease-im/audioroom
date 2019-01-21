@@ -82,8 +82,8 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         ivCancelLink.setVisibility(View.GONE);
         ivMuteOtherText.setOnClickListener(this);
         ivAudioQuality.setOnClickListener(this);
-        ivCloseSelfAudio.setOnClickListener(this);
-        ivCloseRoomAudio.setOnClickListener(this);
+        ivSelfAudioSwitch.setOnClickListener(this);
+        ivRoomAudioSwitch.setOnClickListener(this);
         ivExistRoom.setOnClickListener(this);
     }
 
@@ -268,10 +268,15 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
 
         } else if (view == ivAudioQuality) {
 
-        } else if (view == ivCloseSelfAudio) {
+        } else if (view == ivSelfAudioSwitch) {
+            boolean mutex = ivSelfAudioSwitch.isSelected();
+            ivSelfAudioSwitch.setSelected(!mutex);
+            muteSelfAudio(!mutex);
 
-        } else if (view == ivCloseRoomAudio) {
-
+        } else if (view == ivRoomAudioSwitch) {
+            boolean close = ivRoomAudioSwitch.isSelected();
+            ivRoomAudioSwitch.setSelected(!close);
+            muteRoomAudio(!close);
         } else if (view == ivExistRoom) {
             release();
             ChatRoomMessage closeRoomMessage = ChatRoomMessageBuilder.createChatRoomCustomMessage(roomInfo.getRoomId(), new CloseRoomAttach());

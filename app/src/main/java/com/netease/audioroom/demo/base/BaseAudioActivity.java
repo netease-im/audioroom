@@ -15,7 +15,6 @@ import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.adapter.QueueAdapter;
 import com.netease.audioroom.demo.audio.SimpleNRtcCallback;
 import com.netease.audioroom.demo.cache.DemoCache;
-import com.netease.audioroom.demo.cache.RoomMemberCache;
 import com.netease.audioroom.demo.model.AccountInfo;
 import com.netease.audioroom.demo.model.DemoRoomInfo;
 import com.netease.audioroom.demo.model.QueueInfo;
@@ -71,8 +70,8 @@ public abstract class BaseAudioActivity extends BaseActivity {
     // 各种控制开关
     protected ImageView ivMuteOtherText;
     protected ImageView ivAudioQuality;
-    protected ImageView ivCloseSelfAudio;
-    protected ImageView ivCloseRoomAudio;
+    protected ImageView ivSelfAudioSwitch;
+    protected ImageView ivRoomAudioSwitch;
     protected ImageView ivCancelLink;
     protected ImageView ivExistRoom;
 
@@ -246,8 +245,8 @@ public abstract class BaseAudioActivity extends BaseActivity {
 
         ivMuteOtherText = baseAudioView.findViewById(R.id.iv_mute_other_text);
         ivAudioQuality = baseAudioView.findViewById(R.id.iv_audio_quality_switch);
-        ivCloseSelfAudio = baseAudioView.findViewById(R.id.iv_close_self_audio_switch);
-        ivCloseRoomAudio = baseAudioView.findViewById(R.id.iv_close_room_audio_switch);
+        ivSelfAudioSwitch = baseAudioView.findViewById(R.id.iv_close_self_audio_switch);
+        ivRoomAudioSwitch = baseAudioView.findViewById(R.id.iv_close_room_audio_switch);
         ivCancelLink = baseAudioView.findViewById(R.id.iv_cancel_link);
         ivExistRoom = baseAudioView.findViewById(R.id.iv_exist_room);
 

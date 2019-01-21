@@ -118,11 +118,12 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     protected void setupBaseView() {
         ivMuteOtherText.setVisibility(View.GONE);
         ivAudioQuality.setVisibility(View.GONE);
-        ivCloseSelfAudio.setVisibility(View.GONE);
+        ivSelfAudioSwitch.setVisibility(View.GONE);
         ivCancelLink.setVisibility(View.GONE);
 
-        ivCloseSelfAudio.setOnClickListener(this);
+        ivSelfAudioSwitch.setOnClickListener(this);
         ivCancelLink.setOnClickListener(this);
+        ivRoomAudioSwitch.setOnClickListener(this);
         ivExistRoom.setOnClickListener(this);
     }
 
@@ -306,12 +307,18 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     @Override
     public void onClick(View view) {
 
-        if (view == ivCloseSelfAudio) {
-
+        if (view == ivSelfAudioSwitch) {
+            boolean mutex = ivSelfAudioSwitch.isSelected();
+            ivSelfAudioSwitch.setSelected(!mutex);
+            muteSelfAudio(!mutex);
         } else if (view == ivCancelLink) {
-
-        } else if (view == ivExistRoom) {
             //todo
+        } else if (view == ivRoomAudioSwitch) {
+            boolean close = ivRoomAudioSwitch.isSelected();
+            ivRoomAudioSwitch.setSelected(!close);
+            muteRoomAudio(!close);
+        } else if (view == ivExistRoom) {
+
             release();
             chatRoomService.exitChatRoom(roomInfo.getRoomId());
             finish();
@@ -322,11 +329,9 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     @Override
     protected void messageInComing(ChatRoomMessage message) {
         super.messageInComing(message);
-
-        //
         MsgAttachment msgAttachment = message.getAttachment();
         if (msgAttachment != null && msgAttachment instanceof CloseRoomAttach) {
-            //todo UI & 释放资源
+            release();
             ToastHelper.showToast("主播关闭了房间");
             finish();
             return;
