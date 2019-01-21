@@ -33,7 +33,7 @@ import java.util.ArrayList;
 public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickListener<DemoRoomInfo> {
 
 
-    private static final String TAG = "MainActivity";
+    private static final String TAG = "AudioRoom";
     private HeadImageView ivAvatar;
     private TextView tvNick;
     private ChatRoomListAdapter chatRoomListAdapter;

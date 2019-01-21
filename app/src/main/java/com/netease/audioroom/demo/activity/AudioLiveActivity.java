@@ -13,6 +13,7 @@ import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.base.BaseAudioActivity;
 import com.netease.audioroom.demo.base.IAudioLive;
 import com.netease.audioroom.demo.cache.DemoCache;
+import com.netease.audioroom.demo.cache.RoomMemberCache;
 import com.netease.audioroom.demo.custom.CloseRoomAttach;
 import com.netease.audioroom.demo.custom.P2PNotificationHelper;
 import com.netease.audioroom.demo.http.ChatRoomHttpClient;
@@ -142,8 +143,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         ivLiverAvatar.loadAvatar(accountInfo.avatar);
         tvLiverNick.setText(accountInfo.nick);
         initQueue(null);
-
-
+        RoomMemberCache.getInstance().fetchMembers(roomInfo.getRoomId(), 0, 100);
     }
 
     @Override

@@ -15,6 +15,7 @@ import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.adapter.QueueAdapter;
 import com.netease.audioroom.demo.audio.SimpleNRtcCallback;
 import com.netease.audioroom.demo.cache.DemoCache;
+import com.netease.audioroom.demo.cache.RoomMemberCache;
 import com.netease.audioroom.demo.model.AccountInfo;
 import com.netease.audioroom.demo.model.DemoRoomInfo;
 import com.netease.audioroom.demo.model.QueueInfo;
@@ -398,7 +399,6 @@ public abstract class BaseAudioActivity extends BaseActivity {
                 ToastHelper.showToast("获取队列异常，  e = " + throwable);
             }
         });
-
 
     }
 
