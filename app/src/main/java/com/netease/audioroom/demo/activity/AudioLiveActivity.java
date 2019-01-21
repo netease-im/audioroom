@@ -133,6 +133,23 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
     }
 
     @Override
+    protected void exitRoom() {
+        release();
+        if (roomInfo != null) {
+            ChatRoomMessage closeRoomMessage = ChatRoomMessageBuilder.createChatRoomCustomMessage(roomInfo.getRoomId(), new CloseRoomAttach());
+            chatRoomService.sendMessage(closeRoomMessage, false).setCallback(new RequestCallbackWrapper<Void>() {
+                @Override
+                public void onResult(int i, Void aVoid, Throwable throwable) {
+                    ChatRoomHttpClient.getInstance().closeRoom(DemoCache.getAccountId(), roomInfo.getRoomId(), null);
+                }
+            });
+            RoomMemberCache.getInstance().removeCache(roomInfo.getRoomId());
+            roomInfo = null;
+        }
+        finish();
+    }
+
+    @Override
     protected void onQueueChange(ChatRoomQueueChangeAttachment queueChange) {
         super.onQueueChange(queueChange);
 
@@ -282,16 +299,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
             ivRoomAudioSwitch.setSelected(!close);
             muteRoomAudio(!close);
         } else if (view == ivExistRoom) {
-            release();
-            ChatRoomMessage closeRoomMessage = ChatRoomMessageBuilder.createChatRoomCustomMessage(roomInfo.getRoomId(), new CloseRoomAttach());
-            chatRoomService.sendMessage(closeRoomMessage, false).setCallback(new RequestCallbackWrapper<Void>() {
-                @Override
-                public void onResult(int i, Void aVoid, Throwable throwable) {
-                    ChatRoomHttpClient.getInstance().closeRoom(DemoCache.getAccountId(), roomInfo.getRoomId(), null);
-                }
-            });
-            RoomMemberCache.getInstance().removeCache(roomInfo.getRoomId());
-            finish();
+            exitRoom();
         }
 
     }

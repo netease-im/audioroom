@@ -158,6 +158,16 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     }
 
     @Override
+    protected void exitRoom() {
+        release();
+        if (roomInfo != null) {
+            chatRoomService.exitChatRoom(roomInfo.getRoomId());
+            roomInfo = null;
+        }
+        finish();
+    }
+
+    @Override
     protected void initQueue(List<Entry<String, String>> entries) {
         super.initQueue(entries);
         if (selfQueue != null) {
@@ -321,10 +331,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             ivRoomAudioSwitch.setSelected(!close);
             muteRoomAudio(!close);
         } else if (view == ivExistRoom) {
-
-            release();
-            chatRoomService.exitChatRoom(roomInfo.getRoomId());
-            finish();
+            exitRoom();
         }
 
     }
