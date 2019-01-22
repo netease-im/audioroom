@@ -24,6 +24,7 @@ import com.netease.audioroom.demo.permission.annotation.OnMPermissionDenied;
 import com.netease.audioroom.demo.permission.annotation.OnMPermissionGranted;
 import com.netease.audioroom.demo.permission.annotation.OnMPermissionNeverAskAgain;
 import com.netease.audioroom.demo.util.CommonUtil;
+import com.netease.audioroom.demo.util.JsonUtil;
 import com.netease.audioroom.demo.util.ToastHelper;
 import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMember;
@@ -34,6 +35,8 @@ import com.netease.nimlib.sdk.msg.attachment.MsgAttachment;
 import com.netease.nimlib.sdk.msg.constant.ChatRoomQueueChangeType;
 import com.netease.nimlib.sdk.msg.model.CustomNotification;
 import com.netease.nimlib.sdk.util.Entry;
+
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -138,6 +141,10 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         if (model.getStatus() != QueueInfo.INIT_STATUS) {
             return;
         }
+        if (isRequestingLink) {
+            ToastHelper.showToast("你已经请求连麦了，等待主播回复");
+            return;
+        }
 
         //自己已经在麦上了
         if (selfQueue != null) {
@@ -153,7 +160,24 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
 
     @Override
     protected void receiveNotification(CustomNotification customNotification) {
-        //todo
+
+        if (!TextUtils.equals(customNotification.getFromAccount(), roomInfo.getCreator())) {
+            return;
+        }
+
+        String content = customNotification.getContent();
+        if (TextUtils.isEmpty(content)) {
+            return;
+        }
+        JSONObject jsonObject = JsonUtil.parse(content);
+        if (jsonObject == null) {
+            return;
+        }
+        int command = jsonObject.optInt(P2PNotificationHelper.COMMAND, 0);
+        if (command == P2PNotificationHelper.REJECT_LINK) {
+            linkBeRejected();
+            return;
+        }
 
     }
 
@@ -216,24 +240,12 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             return;
         }
         int status = queueInfo.getStatus();
-
         if (status == QueueInfo.NORMAL_STATUS) {
-            selfQueue = queueInfo;
-            if (isRequestingLink) {
-                //TODO 主播同意了你连麦请求
-                ToastHelper.showToast("主播同意了你连麦请求");
-            } else {
-                //TODO 你被主播抱麦
-                ToastHelper.showToast("你被主播抱麦");
-            }
-
+            queueLinkNormal(queueInfo);
         } else if (status == QueueInfo.BE_MUTED_AUDIO_STATUS) {
-            selfQueue = queueInfo;
-            //TODO 主播屏蔽了你的语音
-            ToastHelper.showToast("主播屏蔽了你的语音");
-        } else if (status == QueueInfo.INIT_STATUS && selfQueue != null) {
-            removed();
-            selfQueue = null;
+            beMutedAudio(queueInfo);
+        } else if (status == QueueInfo.INIT_STATUS) {
+            removed(queueInfo);
         }
 
 
@@ -242,39 +254,94 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
 
     @Override
     public void cancelLinkRequest() {
-        isRequestingLink = false;
+        //todo
+        P2PNotificationHelper.cancelLinkRequest(DemoCache.getAccountId(), roomInfo.getCreator(), new RequestCallback<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                ToastHelper.showToast("成功取消连麦请求");
+                isRequestingLink = false;
+            }
+
+            @Override
+            public void onFailed(int i) {
+
+            }
+
+            @Override
+            public void onException(Throwable throwable) {
+
+            }
+        });
+
+
     }
 
     @Override
     public void linkBeRejected() {
         isRequestingLink = false;
+        ToastHelper.showToast("主播拒绝了你的连麦请求");
     }
 
     @Override
-    public void linkBeAccept() {
-        //todo
+    public void queueLinkNormal(QueueInfo queueInfo) {
+        if (isRequestingLink) {
+            //TODO 主播同意了你连麦请求
+            ToastHelper.showToast("主播同意了你的连麦请求");
+        } else if (selfQueue == null) {
+            //TODO 你被主播抱麦
+            ToastHelper.showToast("你被主播抱麦");
+        } else if (selfQueue.getStatus() == QueueInfo.BE_MUTED_AUDIO_STATUS) {
+            //todo 主播解除对你的语音屏蔽
+            ToastHelper.showToast("主播解除对你的语音屏蔽");
+        }
+
+        ivCancelLink.setVisibility(View.VISIBLE);
+        enableAudienceRole(false);
+        selfQueue = queueInfo;
+        isCancelLink = false;
         isRequestingLink = false;
     }
 
-    @Override
-    public void beInvitedLink() {
-
-    }
 
     @Override
-    public void removed() {
-        //TODO 下麦
+    public void removed(QueueInfo queueInfo) {
         if (isCancelLink) {
             ToastHelper.showToast("主动下麦成功");
             isCancelLink = false;
         } else {
             ToastHelper.showToast("你被主播下麦");
         }
+        ivCancelLink.setVisibility(View.GONE);
+        enableAudienceRole(true);
+        selfQueue = null;
     }
 
     @Override
-    public void cancelLink(QueueInfo info) {
+    public void cancelLink() {
+        if (selfQueue == null) {
+            return;
+        }
         isCancelLink = true;
+        P2PNotificationHelper.cancelLink(selfQueue.getIndex(),
+                DemoCache.getAccountInfo().account,
+                roomInfo.getCreator(),
+                new RequestCallback<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        ToastHelper.showToast("申请下麦成功");
+                    }
+
+                    @Override
+                    public void onFailed(int i) {
+
+                    }
+
+                    @Override
+                    public void onException(Throwable throwable) {
+
+                    }
+                });
+
     }
 
     @Override
@@ -283,7 +350,11 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     }
 
     @Override
-    public void beMutedAudio() {
+    public void beMutedAudio(QueueInfo queueInfo) {
+        //TODO 主播屏蔽了你的语音
+        ToastHelper.showToast("主播屏蔽了你的语音");
+        selfQueue = queueInfo;
+        enableAudienceRole(true);
 
     }
 
@@ -325,7 +396,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             ivSelfAudioSwitch.setSelected(!mutex);
             muteSelfAudio(!mutex);
         } else if (view == ivCancelLink) {
-            //todo
+            cancelLink();
         } else if (view == ivRoomAudioSwitch) {
             boolean close = ivRoomAudioSwitch.isSelected();
             ivRoomAudioSwitch.setSelected(!close);

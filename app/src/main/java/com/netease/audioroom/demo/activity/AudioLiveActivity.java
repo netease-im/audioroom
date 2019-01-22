@@ -38,6 +38,7 @@ import com.netease.nimlib.sdk.chatroom.model.ChatRoomRoomMemberInAttachment;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomTempMuteAddAttachment;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomTempMuteRemoveAttachment;
 import com.netease.nimlib.sdk.chatroom.model.EnterChatRoomResultData;
+import com.netease.nimlib.sdk.msg.constant.ChatRoomQueueChangeType;
 import com.netease.nimlib.sdk.msg.model.CustomNotification;
 
 import org.json.JSONObject;
@@ -60,7 +61,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
     }
 
     //聊天室队列元素
-    private HashMap<String, String> queueMap = new HashMap<>();
+    private HashMap<String, QueueInfo> queueMap = new HashMap<>();
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -122,12 +123,33 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
             String nick = jsonObject.optString(P2PNotificationHelper.NICK);
             String avatar = jsonObject.optString(P2PNotificationHelper.AVATAR);
             QueueMember queueMember = new QueueMember(customNotification.getFromAccount(), nick, avatar, false);
-
+            ToastHelper.showToast("有人请求连麦");
             linkRequest(queueMember, index);
             return;
         }
 
-        //todo
+
+        //有人请求下麦
+        if (command == P2PNotificationHelper.CANCEL_LINK) {
+            int index = jsonObject.optInt(P2PNotificationHelper.INDEX, -1);
+            QueueInfo queueInfo = queueMap.get(QueueInfo.getKeyByIndex(index));
+            if (queueInfo != null) {
+                queueInfo.setStatus(QueueInfo.INIT_STATUS);
+                chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString());
+                ToastHelper.showToast("有人请求下麦");
+            }
+
+            return;
+        }
+
+
+        //有人取消连麦请求
+        if (command == P2PNotificationHelper.CANCEL_REQUEST_LINK) {
+
+            //谁取消了连麦请求
+            String fromAccount = customNotification.getFromAccount();
+            //todo
+        }
 
 
     }
@@ -153,7 +175,21 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
     protected void onQueueChange(ChatRoomQueueChangeAttachment queueChange) {
         super.onQueueChange(queueChange);
 
-
+        ChatRoomQueueChangeType changeType = queueChange.getChatRoomQueueChangeType();
+        // 队列被清空
+        if (changeType == ChatRoomQueueChangeType.DROP) {
+            queueMap.clear();
+            return;
+        }
+        String value = queueChange.getContent();
+        //新增元素或更新
+        if (changeType == ChatRoomQueueChangeType.OFFER && !TextUtils.isEmpty(value)) {
+            QueueInfo queueInfo = new QueueInfo(value);
+            if (queueInfo.getIndex() != -1) {
+                queueMap.put(queueInfo.getKey(), queueInfo);
+            }
+            return;
+        }
     }
 
 
@@ -188,14 +224,35 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
 
     @Override
     public void rejectLink(QueueMember queueMember) {
+
+        P2PNotificationHelper.rejectLink(DemoCache.getAccountId(), queueMember.getAccount(), new RequestCallback<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                ToastHelper.showToast("拒绝连麦成功");
+            }
+
+            @Override
+            public void onFailed(int i) {
+
+            }
+
+            @Override
+            public void onException(Throwable throwable) {
+
+            }
+        });
+
+
         //todo
 
     }
 
     @Override
     public void acceptLink(QueueInfo queueInfo) {
+
+        QueueInfo oldQueue = queueMap.get(queueInfo.getKey());
         //当前麦位有人了
-        if (queueMap.get(queueInfo.getKey()) != null) {
+        if (oldQueue != null && oldQueue.getStatus() != QueueInfo.INIT_STATUS) {
             rejectLink(queueInfo.getQueueMember());
             return;
         }

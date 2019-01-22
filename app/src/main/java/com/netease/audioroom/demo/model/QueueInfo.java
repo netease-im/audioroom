@@ -95,7 +95,7 @@ public class QueueInfo implements Serializable {
 
 
     public String getKey() {
-        return QUEUE_KEY_PREFIX + index;
+        return getKeyByIndex(index);
     }
 
     @Nullable
@@ -142,4 +142,7 @@ public class QueueInfo implements Serializable {
     }
 
 
+    public static String getKeyByIndex(int index) {
+        return QUEUE_KEY_PREFIX + index;
+    }
 }
