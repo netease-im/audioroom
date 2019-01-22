@@ -483,6 +483,9 @@ public abstract class BaseAudioActivity extends BaseActivity {
 
     protected abstract void receiveNotification(CustomNotification customNotification);
 
+
+    protected abstract void exitRoom();
+
     protected void onQueueChange(ChatRoomQueueChangeAttachment queueChange) {
         ChatRoomQueueChangeType changeType = queueChange.getChatRoomQueueChangeType();
         // 队列被清空

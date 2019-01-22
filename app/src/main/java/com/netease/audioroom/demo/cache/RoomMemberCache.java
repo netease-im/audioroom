@@ -184,10 +184,18 @@ public class RoomMemberCache {
     /**
      * 拉取单个成员的信息
      */
-    public void fetchMember(String roomID, String accountID) {
+    public void fetchMember(String roomID, String accountID, RequestCallback<List<ChatRoomMember>> callback) {
         ArrayList<String> accountList = new ArrayList<>(1);
         accountList.add(accountID);
-        fetchMembers(roomID, accountList, null);
+        fetchMembers(roomID, accountList, callback);
+    }
+
+
+    /**
+     * 清空某一个聊天室的所有缓存
+     */
+    public void removeCache(String roomId) {
+        memberCache.remove(roomId);
     }
 
     private RoomMemberCache() {

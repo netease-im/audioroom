@@ -34,26 +34,24 @@ public interface IAudience {
 
 
     /**
-     * 主播同意连麦（上麦）
+     * 上麦
+     * @param queueInfo
      */
-    void linkBeAccept();
+    void queueLinkNormal(QueueInfo queueInfo);
 
-
-    /**
-     * 被主播抱麦（不可拒绝）
-     */
-    void beInvitedLink();
 
     /**
      * 连麦过程中被踢/主动下麦
+     *
+     * @param queueInfo
      */
-    void removed();
+    void removed(QueueInfo queueInfo);
 
 
     /**
      * 主动下麦
      */
-    void cancelLink(QueueInfo queueInfo);
+    void cancelLink();
 
 
     /**
@@ -64,6 +62,8 @@ public interface IAudience {
 
     /**
      * 被主播屏蔽语音
+     *
+     * @param queueInfo
      */
-    void beMutedAudio();
+    void beMutedAudio(QueueInfo queueInfo);
 }

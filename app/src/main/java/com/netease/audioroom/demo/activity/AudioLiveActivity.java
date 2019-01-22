@@ -17,7 +17,6 @@ import com.netease.audioroom.demo.cache.DemoCache;
 import com.netease.audioroom.demo.cache.RoomMemberCache;
 import com.netease.audioroom.demo.custom.CloseRoomAttach;
 import com.netease.audioroom.demo.custom.P2PNotificationHelper;
-import com.netease.audioroom.demo.dialog.RequestLinkDialog;
 import com.netease.audioroom.demo.http.ChatRoomHttpClient;
 import com.netease.audioroom.demo.model.AccountInfo;
 import com.netease.audioroom.demo.model.DemoRoomInfo;
@@ -30,7 +29,6 @@ import com.netease.audioroom.demo.permission.annotation.OnMPermissionGranted;
 import com.netease.audioroom.demo.permission.annotation.OnMPermissionNeverAskAgain;
 import com.netease.audioroom.demo.util.JsonUtil;
 import com.netease.audioroom.demo.util.ToastHelper;
-import com.netease.audioroom.demo.widget.SemicircleView;
 import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.RequestCallbackWrapper;
 import com.netease.nimlib.sdk.chatroom.ChatRoomMessageBuilder;
@@ -44,10 +42,8 @@ import com.netease.nimlib.sdk.msg.model.CustomNotification;
 
 import org.json.JSONObject;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-
 
 /**
  * 主播页
@@ -64,7 +60,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
     }
 
     //聊天室队列元素
-    private HashMap<String, String> queueMap = new HashMap<>();
+    private HashMap<String, QueueInfo> queueMap = new HashMap<>();
 
     SemicircleView semicircleView;
     List<QueueMember> queueMemberList;//申请麦位列表
@@ -79,7 +75,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         Log.e(BaseAudioActivity.TAG, "主播页");
 
     }
-
 
     @Override
     protected void initView() {
@@ -100,7 +95,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         ivSelfAudioSwitch.setOnClickListener(this);
         ivRoomAudioSwitch.setOnClickListener(this);
         ivExistRoom.setOnClickListener(this);
-        semicircleView.setOnClickListener(this);
     }
 
 
@@ -125,32 +119,89 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
             return;
         }
         int command = jsonObject.optInt(P2PNotificationHelper.COMMAND, 0);
+
         //有人请求连麦
         if (command == P2PNotificationHelper.REQUEST_LINK) {
             int index = jsonObject.optInt(P2PNotificationHelper.INDEX);
             String nick = jsonObject.optString(P2PNotificationHelper.NICK);
             String avatar = jsonObject.optString(P2PNotificationHelper.AVATAR);
             QueueMember queueMember = new QueueMember(customNotification.getFromAccount(), nick, avatar, false);
+            ToastHelper.showToast("有人请求连麦");
             linkRequest(queueMember, index);
             return;
         }
 
-        //todo
+
+        //有人请求下麦
+        if (command == P2PNotificationHelper.CANCEL_LINK) {
+            int index = jsonObject.optInt(P2PNotificationHelper.INDEX, -1);
+            QueueInfo queueInfo = queueMap.get(QueueInfo.getKeyByIndex(index));
+            if (queueInfo != null) {
+                queueInfo.setStatus(QueueInfo.INIT_STATUS);
+                chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString());
+                ToastHelper.showToast("有人请求下麦");
+            }
+
+            return;
+        }
 
 
+        //有人取消连麦请求
+        if (command == P2PNotificationHelper.CANCEL_REQUEST_LINK) {
+
+            //谁取消了连麦请求
+            String fromAccount = customNotification.getFromAccount();
+            //todo
+        }
+
+
+    }
+
+    @Override
+    protected void exitRoom() {
+        release();
+        if (roomInfo != null) {
+            ChatRoomMessage closeRoomMessage = ChatRoomMessageBuilder.createChatRoomCustomMessage(roomInfo.getRoomId(), new CloseRoomAttach());
+            chatRoomService.sendMessage(closeRoomMessage, false).setCallback(new RequestCallbackWrapper<Void>() {
+                @Override
+                public void onResult(int i, Void aVoid, Throwable throwable) {
+                    ChatRoomHttpClient.getInstance().closeRoom(DemoCache.getAccountId(), roomInfo.getRoomId(), null);
+                }
+            });
+            RoomMemberCache.getInstance().removeCache(roomInfo.getRoomId());
+            roomInfo = null;
+        }
+        finish();
     }
 
     @Override
     protected void onQueueChange(ChatRoomQueueChangeAttachment queueChange) {
         super.onQueueChange(queueChange);
+
+        ChatRoomQueueChangeType changeType = queueChange.getChatRoomQueueChangeType();
+        // 队列被清空
+        if (changeType == ChatRoomQueueChangeType.DROP) {
+            queueMap.clear();
+            return;
+        }
+        String value = queueChange.getContent();
+        //新增元素或更新
+        if (changeType == ChatRoomQueueChangeType.OFFER && !TextUtils.isEmpty(value)) {
+            QueueInfo queueInfo = new QueueInfo(value);
+            if (queueInfo.getIndex() != -1) {
+                queueMap.put(queueInfo.getKey(), queueInfo);
+            }
+            return;
+        }
     }
 
-    //进入房间
+
     @Override
     protected void enterRoomSuccess(EnterChatRoomResultData resultData) {
 //        super.enterRoomSuccess(resultData);
         // 主播进房间先清除一下原来的队列元素
         chatRoomService.dropQueue(roomInfo.getRoomId());
+
         AccountInfo accountInfo = DemoCache.getAccountInfo();
         ivLiverAvatar.loadAvatar(accountInfo.avatar);
         tvLiverNick.setText(accountInfo.nick);
@@ -158,7 +209,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         RoomMemberCache.getInstance().fetchMembers(roomInfo.getRoomId(), 0, 100, null);
     }
 
-    //得到申请
     @Override
     public void linkRequest(QueueMember queueMember, int index) {
         //todo UI呈现
@@ -174,14 +224,35 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
 
     @Override
     public void rejectLink(QueueMember queueMember) {
+
+        P2PNotificationHelper.rejectLink(DemoCache.getAccountId(), queueMember.getAccount(), new RequestCallback<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                ToastHelper.showToast("拒绝连麦成功");
+            }
+
+            @Override
+            public void onFailed(int i) {
+
+            }
+
+            @Override
+            public void onException(Throwable throwable) {
+
+            }
+        });
+
+
         //todo
 
     }
 
     @Override
     public void acceptLink(QueueInfo queueInfo) {
+
+        QueueInfo oldQueue = queueMap.get(queueInfo.getKey());
         //当前麦位有人了
-        if (queueMap.get(queueInfo.getKey()) != null) {
+        if (oldQueue != null && oldQueue.getStatus() != QueueInfo.INIT_STATUS) {
             rejectLink(queueInfo.getQueueMember());
             return;
         }
@@ -208,6 +279,11 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
 
     }
 
+
+    @Override
+    public void mutedAudio() {
+
+    }
 
     @OnMPermissionGranted(LIVE_PERMISSION_REQUEST_CODE)
     protected void onLivePermissionGranted() {
