@@ -6,7 +6,6 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-
     <com.netease.audioroom.demo.widget.HeadImageView
         android:id="@+id/iv_liver_avatar"
         android:layout_width="60dp"
@@ -159,5 +158,6 @@
         android:text="发送"
         android:textColor="@color/color_ffffff"
         android:textSize="16sp" />
+
 
 </RelativeLayout>

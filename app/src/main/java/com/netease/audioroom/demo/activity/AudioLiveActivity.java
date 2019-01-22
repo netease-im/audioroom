@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 
 import com.netease.audioroom.demo.R;
@@ -23,6 +24,7 @@ import com.netease.audioroom.demo.model.AccountInfo;
 import com.netease.audioroom.demo.model.DemoRoomInfo;
 import com.netease.audioroom.demo.model.QueueInfo;
 import com.netease.audioroom.demo.model.QueueMember;
+import com.netease.audioroom.demo.model.RequestMember;
 import com.netease.audioroom.demo.permission.MPermission;
 import com.netease.audioroom.demo.permission.MPermissionUtil;
 import com.netease.audioroom.demo.permission.annotation.OnMPermissionDenied;
@@ -49,6 +51,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import static com.netease.audioroom.demo.dialog.RequestLinkDialog.QUEUEINFOLIST;
+
 /**
  * 主播页
  */
@@ -67,7 +71,8 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
     private HashMap<String, QueueInfo> queueMap = new HashMap<>();
 
     SemicircleView semicircleView;
-    List<QueueMember> queueMemberList;//申请麦位列表
+
+    ArrayList<RequestMember> requestMemberList;//申请麦位列表
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -83,7 +88,9 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
     @Override
     protected void initView() {
         semicircleView = findViewById(R.id.semicircleView);
-        queueMemberList = new ArrayList<>();
+        requestMemberList = new ArrayList<>();
+//        semicircleView.setVisibility(View.GONE);
+        semicircleView.setClickable(true);
     }
 
     @Override
@@ -99,6 +106,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         ivSelfAudioSwitch.setOnClickListener(this);
         ivRoomAudioSwitch.setOnClickListener(this);
         ivExistRoom.setOnClickListener(this);
+        semicircleView.setOnClickListener(this);
     }
 
 
@@ -204,8 +212,8 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
     protected void enterRoomSuccess(EnterChatRoomResultData resultData) {
 //        super.enterRoomSuccess(resultData);
         // 主播进房间先清除一下原来的队列元素
+        loadService.showSuccess();
         chatRoomService.dropQueue(roomInfo.getRoomId());
-
         AccountInfo accountInfo = DemoCache.getAccountInfo();
         ivLiverAvatar.loadAvatar(accountInfo.avatar);
         tvLiverNick.setText(accountInfo.nick);
@@ -216,8 +224,14 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
     @Override
     public void linkRequest(QueueMember queueMember, int index) {
         //todo UI呈现
-        queueMemberList.add(queueMember);
+        requestMemberList.add(new RequestMember(queueMember, index));
+        if (requestMemberList.size() > 0) {
+            semicircleView.setVisibility(View.VISIBLE);
+//            semicircleView.setText(requestMemberList.size() + "");
+        } else {
+            semicircleView.setVisibility(View.GONE);
 
+        }
 
     }
 
@@ -314,8 +328,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
     @Override
     public void onClick(View view) {
         if (view == ivMuteOtherText) {
-
-
         } else if (view == ivAudioQuality) {
 
         } else if (view == ivSelfAudioSwitch) {
@@ -339,10 +351,11 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
             finish();
         } else if (view == semicircleView) {
             //TODO 弹出请求上麦列表
+            ToastHelper.showToast("点我了");
             RequestLinkDialog requestLinkDialog = new RequestLinkDialog();
             Bundle bundle = new Bundle();
-//            bundle.putParcelable(QUEUEINFOLIST, );
-
+            bundle.putParcelableArrayList(QUEUEINFOLIST, requestMemberList);
+            requestLinkDialog.setArguments(bundle);
             requestLinkDialog.show(getFragmentManager(), "RequestLinkDialog");
 
         }

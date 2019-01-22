@@ -11,17 +11,18 @@ import android.widget.TextView;
 import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.base.BaseAdapter;
 import com.netease.audioroom.demo.model.QueueMember;
+import com.netease.audioroom.demo.model.RequestMember;
 import com.netease.audioroom.demo.util.CommonUtil;
 import com.netease.audioroom.demo.util.ToastHelper;
 import com.netease.audioroom.demo.widget.HeadImageView;
 
 import java.util.ArrayList;
 
-public class RequestlinkAdapter extends BaseAdapter<QueueMember> {
+public class RequestlinkAdapter extends BaseAdapter<RequestMember> {
 
 
-    public RequestlinkAdapter(ArrayList<QueueMember> queueInfoList, Context context) {
-        super(queueInfoList, context);
+    public RequestlinkAdapter(ArrayList<RequestMember> queueMemberList, Context context) {
+        super(queueMemberList, context);
     }
 
 
@@ -32,13 +33,14 @@ public class RequestlinkAdapter extends BaseAdapter<QueueMember> {
 
     @Override
     protected void onBindBaseViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        QueueMember queueMember = getItem(position);
+        RequestMember queueMember = getItem(position);
         if (queueMember == null) {
             return;
         }
         QueueViewHolder viewHolder = (QueueViewHolder) holder;
-        CommonUtil.loadImage(context, queueMember.getAvatar(), viewHolder.ivAvatar, R.drawable.chat_room_default_bg, 0);
-        viewHolder.tvContent.setText(queueMember.getNick() + "\t申请麦位" + "");
+        QueueMember member = queueMember.getQueueMember();
+        CommonUtil.loadImage(context, member.getAvatar(), viewHolder.ivAvatar, R.drawable.chat_room_default_bg, 0);
+        viewHolder.tvContent.setText(member.getNick() + "\t申请麦位(" + queueMember.getIndex() + ")");
         viewHolder.ivRefuse.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -50,7 +52,6 @@ public class RequestlinkAdapter extends BaseAdapter<QueueMember> {
         viewHolder.ivAfree.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
                 mItemInnerDeleteListener.onItemInnerDeleteClick(position);
                 ToastHelper.showToast("同意请求");
 
@@ -59,8 +60,6 @@ public class RequestlinkAdapter extends BaseAdapter<QueueMember> {
     }
 
     private class QueueViewHolder extends RecyclerView.ViewHolder {
-
-
         HeadImageView ivAvatar;
         ImageView ivRefuse;
         ImageView ivAfree;
@@ -69,8 +68,8 @@ public class RequestlinkAdapter extends BaseAdapter<QueueMember> {
         public QueueViewHolder(@NonNull View itemView) {
             super(itemView);
             ivAvatar = itemView.findViewById(R.id.item_requestlink_headicon);
-            ivRefuse = itemView.findViewById(R.id.requester);
-            ivAfree = itemView.findViewById(R.id.refuse);
+            ivRefuse = itemView.findViewById(R.id.refuse);
+            ivAfree = itemView.findViewById(R.id.agree);
             tvContent = itemView.findViewById(R.id.item_requestlink_content);
         }
     }

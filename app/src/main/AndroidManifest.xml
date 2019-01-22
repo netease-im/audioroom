@@ -56,10 +56,12 @@
 
         <activity
             android:name=".activity.AudienceActivity"
+            android:launchMode="singleTop"
             android:screenOrientation="portrait" />
 
         <activity
             android:name=".activity.AudioLiveActivity"
+            android:launchMode="singleTop"
             android:screenOrientation="portrait" />
 
 
@@ -113,7 +115,9 @@
             android:authorities="com.netease.audioroom.demo.ipc.provider"
             android:exported="false"
             android:process=":core" />
-        <receiver android:name=".util.NetworkWatcher" />s
+
+        <receiver android:name=".receiver.NetworkConnectChangedReceiver" />
+
     </application>
 
 </manifest>

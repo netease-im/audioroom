@@ -10,6 +10,7 @@ import android.graphics.PorterDuffXfermode;
 import android.graphics.Shader;
 import android.graphics.Xfermode;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.View;
 
@@ -36,24 +37,26 @@ public class SemicircleView extends View {
         this.context = context;
     }
 
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+    }
+
 
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
-
         width = getWidth();
         radius = width / 2;
     }
+
 
     @Override
     protected void onDraw(Canvas canvas) {
         paint.setColor(getResources().getColor(R.color.color_FF3257));
         paint.setAntiAlias(true);
         canvas.drawCircle(radius, 0, radius, paint);
-
         super.onDraw(canvas);
-
-
         //获取paint中的字体信息  settextSize要在他前面
         Paint.FontMetrics fontMetrics = paint.getFontMetrics();
         // 计算文字高度
@@ -63,18 +66,22 @@ public class SemicircleView extends View {
                 - fontMetrics.bottom;
 
         //获取字体的长度
-        float fontWidth = paint.measureText(text);
-        //计算文字长度的baseline
-        float textBaseX = radius - fontWidth / 2;
-        paint.setColor(getResources().getColor(R.color.color_d9d9d9));
-        paint.setTextAlign(Paint.Align.CENTER);
-        paint.setTextSize(40);
-        paint.setFakeBoldText(true);
-        canvas.drawText(text, textBaseX, textBaseY, paint);
+        if (!TextUtils.isEmpty(text)) {
+            float fontWidth = paint.measureText(text);
+            //计算文字长度的baseline
+            float textBaseX = radius - fontWidth / 2;
+            paint.setColor(getResources().getColor(R.color.color_d9d9d9));
+            paint.setTextAlign(Paint.Align.CENTER);
+            paint.setTextSize(40);
+            paint.setFakeBoldText(true);
+            canvas.drawText(text, textBaseX, textBaseY, paint);
+        }
 
     }
 
     public void setText(String text) {
         this.text = text;
+        //TODO 没有调用onDraw方法 一脸懵～～～～
+        invalidate();
     }
 }
