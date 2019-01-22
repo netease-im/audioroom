@@ -17,6 +17,7 @@ import com.netease.audioroom.demo.cache.DemoCache;
 import com.netease.audioroom.demo.cache.RoomMemberCache;
 import com.netease.audioroom.demo.custom.CloseRoomAttach;
 import com.netease.audioroom.demo.custom.P2PNotificationHelper;
+import com.netease.audioroom.demo.dialog.RequestLinkDialog;
 import com.netease.audioroom.demo.http.ChatRoomHttpClient;
 import com.netease.audioroom.demo.model.AccountInfo;
 import com.netease.audioroom.demo.model.DemoRoomInfo;
@@ -29,6 +30,7 @@ import com.netease.audioroom.demo.permission.annotation.OnMPermissionGranted;
 import com.netease.audioroom.demo.permission.annotation.OnMPermissionNeverAskAgain;
 import com.netease.audioroom.demo.util.JsonUtil;
 import com.netease.audioroom.demo.util.ToastHelper;
+import com.netease.audioroom.demo.widget.SemicircleView;
 import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.RequestCallbackWrapper;
 import com.netease.nimlib.sdk.chatroom.ChatRoomMessageBuilder;
@@ -38,10 +40,12 @@ import com.netease.nimlib.sdk.chatroom.model.ChatRoomRoomMemberInAttachment;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomTempMuteAddAttachment;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomTempMuteRemoveAttachment;
 import com.netease.nimlib.sdk.chatroom.model.EnterChatRoomResultData;
+import com.netease.nimlib.sdk.msg.constant.ChatRoomQueueChangeType;
 import com.netease.nimlib.sdk.msg.model.CustomNotification;
 
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -280,11 +284,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
     }
 
 
-    @Override
-    public void mutedAudio() {
-
-    }
-
     @OnMPermissionGranted(LIVE_PERMISSION_REQUEST_CODE)
     protected void onLivePermissionGranted() {
         isPermissionGrant = true;
@@ -371,7 +370,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         if (TextUtils.equals(memberIn.getOperator(), DemoCache.getAccountId())) {
             return;
         }
-        RoomMemberCache.getInstance().fetchMember(roomInfo.getRoomId(), memberIn.getOperator());
+        RoomMemberCache.getInstance().fetchMember(roomInfo.getRoomId(), memberIn.getOperator(), null);
     }
 
     @Override
