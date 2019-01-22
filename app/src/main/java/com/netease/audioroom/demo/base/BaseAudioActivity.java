@@ -173,7 +173,6 @@ public abstract class BaseAudioActivity extends BaseActivity {
                                     append(" , account list = ").append(muteRemove.getTargets());
                             memberMuteRemove(muteRemove);
                             break;
-
                         //队列变更
                         case ChatRoomQueueChange:
                             ChatRoomQueueChangeAttachment queueChange = (ChatRoomQueueChangeAttachment) message.getAttachment();
@@ -387,11 +386,13 @@ public abstract class BaseAudioActivity extends BaseActivity {
             @Override
             public void onFailed(int i) {
                 ToastHelper.showToast("进入聊天室失败 ， code = " + i);
+                finish();
             }
 
             @Override
             public void onException(Throwable throwable) {
                 ToastHelper.showToast("进入聊天室异常 ，  e = " + throwable);
+                finish();
             }
         });
 

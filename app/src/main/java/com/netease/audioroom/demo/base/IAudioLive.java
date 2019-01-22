@@ -19,6 +19,7 @@ public interface IAudioLive {
 
     /**
      * 有人请求连麦
+     *
      * @param queueMember
      * @param index
      */
@@ -33,6 +34,7 @@ public interface IAudioLive {
 
     /**
      * 拒绝连麦
+     *
      * @param queueMember
      */
     void rejectLink(QueueMember queueMember);
@@ -40,6 +42,7 @@ public interface IAudioLive {
 
     /**
      * 同意连麦
+     *
      * @param queueInfo
      */
     void acceptLink(QueueInfo queueInfo);

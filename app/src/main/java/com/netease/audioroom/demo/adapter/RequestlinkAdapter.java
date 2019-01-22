@@ -12,6 +12,7 @@ import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.base.BaseAdapter;
 import com.netease.audioroom.demo.model.QueueMember;
 import com.netease.audioroom.demo.util.CommonUtil;
+import com.netease.audioroom.demo.util.ToastHelper;
 import com.netease.audioroom.demo.widget.HeadImageView;
 
 import java.util.ArrayList;
@@ -38,8 +39,23 @@ public class RequestlinkAdapter extends BaseAdapter<QueueMember> {
         QueueViewHolder viewHolder = (QueueViewHolder) holder;
         CommonUtil.loadImage(context, queueMember.getAvatar(), viewHolder.ivAvatar, R.drawable.chat_room_default_bg, 0);
         viewHolder.tvContent.setText(queueMember.getNick() + "\t申请麦位" + "");
+        viewHolder.ivRefuse.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mItemInnerDeleteListener.onItemInnerDeleteClick(position);
+                ToastHelper.showToast("拒绝请求");
 
+            }
+        });
+        viewHolder.ivAfree.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
 
+                mItemInnerDeleteListener.onItemInnerDeleteClick(position);
+                ToastHelper.showToast("同意请求");
+
+            }
+        });
     }
 
     private class QueueViewHolder extends RecyclerView.ViewHolder {

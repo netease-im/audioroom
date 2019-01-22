@@ -142,6 +142,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         //自己已经在麦上了
         if (selfQueue != null) {
             return;
+            //下麦
         }
         requestLink(model);
     }

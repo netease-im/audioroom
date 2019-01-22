@@ -23,7 +23,6 @@ public class RoomMemberCache {
 
 
     public static RoomMemberCache getInstance() {
-
         return InstanceHolder.INSTANCE;
     }
 

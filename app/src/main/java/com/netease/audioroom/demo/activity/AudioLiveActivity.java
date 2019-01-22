@@ -17,6 +17,7 @@ import com.netease.audioroom.demo.cache.DemoCache;
 import com.netease.audioroom.demo.cache.RoomMemberCache;
 import com.netease.audioroom.demo.custom.CloseRoomAttach;
 import com.netease.audioroom.demo.custom.P2PNotificationHelper;
+import com.netease.audioroom.demo.dialog.RequestLinkDialog;
 import com.netease.audioroom.demo.http.ChatRoomHttpClient;
 import com.netease.audioroom.demo.model.AccountInfo;
 import com.netease.audioroom.demo.model.DemoRoomInfo;
@@ -29,6 +30,7 @@ import com.netease.audioroom.demo.permission.annotation.OnMPermissionGranted;
 import com.netease.audioroom.demo.permission.annotation.OnMPermissionNeverAskAgain;
 import com.netease.audioroom.demo.util.JsonUtil;
 import com.netease.audioroom.demo.util.ToastHelper;
+import com.netease.audioroom.demo.widget.SemicircleView;
 import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.RequestCallbackWrapper;
 import com.netease.nimlib.sdk.chatroom.ChatRoomMessageBuilder;
@@ -42,8 +44,10 @@ import com.netease.nimlib.sdk.msg.model.CustomNotification;
 
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+
 
 /**
  * 主播页
@@ -62,6 +66,9 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
     //聊天室队列元素
     private HashMap<String, String> queueMap = new HashMap<>();
 
+    SemicircleView semicircleView;
+    List<QueueMember> queueMemberList;//申请麦位列表
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -73,9 +80,11 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
 
     }
 
+
     @Override
     protected void initView() {
-
+        semicircleView = findViewById(R.id.semicircleView);
+        queueMemberList = new ArrayList<>();
     }
 
     @Override
@@ -91,6 +100,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         ivSelfAudioSwitch.setOnClickListener(this);
         ivRoomAudioSwitch.setOnClickListener(this);
         ivExistRoom.setOnClickListener(this);
+        semicircleView.setOnClickListener(this);
     }
 
 
@@ -115,14 +125,12 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
             return;
         }
         int command = jsonObject.optInt(P2PNotificationHelper.COMMAND, 0);
-
         //有人请求连麦
         if (command == P2PNotificationHelper.REQUEST_LINK) {
             int index = jsonObject.optInt(P2PNotificationHelper.INDEX);
             String nick = jsonObject.optString(P2PNotificationHelper.NICK);
             String avatar = jsonObject.optString(P2PNotificationHelper.AVATAR);
             QueueMember queueMember = new QueueMember(customNotification.getFromAccount(), nick, avatar, false);
-
             linkRequest(queueMember, index);
             return;
         }
@@ -135,17 +143,14 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
     @Override
     protected void onQueueChange(ChatRoomQueueChangeAttachment queueChange) {
         super.onQueueChange(queueChange);
-
-
     }
 
-
+    //进入房间
     @Override
     protected void enterRoomSuccess(EnterChatRoomResultData resultData) {
 //        super.enterRoomSuccess(resultData);
         // 主播进房间先清除一下原来的队列元素
         chatRoomService.dropQueue(roomInfo.getRoomId());
-
         AccountInfo accountInfo = DemoCache.getAccountInfo();
         ivLiverAvatar.loadAvatar(accountInfo.avatar);
         tvLiverNick.setText(accountInfo.nick);
@@ -153,13 +158,11 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         RoomMemberCache.getInstance().fetchMembers(roomInfo.getRoomId(), 0, 100, null);
     }
 
+    //得到申请
     @Override
     public void linkRequest(QueueMember queueMember, int index) {
         //todo UI呈现
-        //同意连麦
-        QueueInfo queueInfo = new QueueInfo(queueMember);
-        queueInfo.setIndex(index);
-        acceptLink(queueInfo);
+        queueMemberList.add(queueMember);
 
 
     }
@@ -182,8 +185,9 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
             rejectLink(queueInfo.getQueueMember());
             return;
         }
-
         queueInfo.setStatus(QueueInfo.NORMAL_STATUS);
+        //TODO 弹框
+
         chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString()).setCallback(new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
@@ -202,41 +206,8 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         });
 
 
-//        chatRoomService.fetchQueue()
-
-
     }
 
-    @Override
-    public void invitedLink() {
-
-    }
-
-    @Override
-    public void removeLink() {
-
-    }
-
-    @Override
-    public void linkCanceled() {
-
-    }
-
-    @Override
-    public void mutedText() {
-
-    }
-
-    @Override
-    public void muteTextAll() {
-
-    }
-
-
-    @Override
-    public void mutedAudio() {
-
-    }
 
     @OnMPermissionGranted(LIVE_PERMISSION_REQUEST_CODE)
     protected void onLivePermissionGranted() {
@@ -291,6 +262,14 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
                 }
             });
             finish();
+        } else if (view == semicircleView) {
+            //TODO 弹出请求上麦列表
+            RequestLinkDialog requestLinkDialog = new RequestLinkDialog();
+            Bundle bundle = new Bundle();
+//            bundle.putParcelable(QUEUEINFOLIST, );
+
+            requestLinkDialog.show(getFragmentManager(), "RequestLinkDialog");
+
         }
 
     }
@@ -317,5 +296,36 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
             return;
         }
         RoomMemberCache.getInstance().fetchMember(roomInfo.getRoomId(), memberIn.getOperator());
+    }
+
+    @Override
+    public void invitedLink() {
+
+    }
+
+    @Override
+    public void removeLink() {
+
+    }
+
+    @Override
+    public void linkCanceled() {
+
+    }
+
+    @Override
+    public void mutedText() {
+
+    }
+
+    @Override
+    public void muteTextAll() {
+
+    }
+
+
+    @Override
+    public void mutedAudio() {
+
     }
 }

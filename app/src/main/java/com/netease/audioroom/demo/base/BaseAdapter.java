@@ -22,6 +22,7 @@ public abstract class BaseAdapter<T> extends RecyclerView.Adapter {
 
     private ItemClickListener<T> itemClickListener;
     private ItemLongClickListener<T> itemLongClickListener;
+    protected ItemInnerDeleteListener mItemInnerDeleteListener;
 
     private View.OnClickListener clickListenerInner = new View.OnClickListener() {
         @Override
@@ -38,6 +39,12 @@ public abstract class BaseAdapter<T> extends RecyclerView.Adapter {
             return onLongClickInner(view);
         }
     };
+
+
+    public void setOnItemDeleteClickListener(ItemInnerDeleteListener mItemInnerDeleteListener) {
+        this.mItemInnerDeleteListener = mItemInnerDeleteListener;
+    }
+
 
     private void onClickInner(View itemView) {
         if (itemClickListener == null) {
@@ -176,4 +183,10 @@ public abstract class BaseAdapter<T> extends RecyclerView.Adapter {
     }
 
 
+    /**
+     * item内部的删除监听接口
+     */
+    public interface ItemInnerDeleteListener {
+        void onItemInnerDeleteClick(int position);
+    }
 }
