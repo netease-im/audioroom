@@ -181,7 +181,7 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
         DemoCache.saveAccountInfo(accountInfo);
         ivAvatar.loadAvatar(accountInfo.avatar);
         tvNick.setText(accountInfo.nick);
-        Log.i(TAG, "after login  , account = " + accountInfo.account);
+        Log.i(TAG, "after login  , account = " + accountInfo.account + " , nick = " + accountInfo.nick);
 
     }
 
