@@ -16,13 +16,17 @@ import java.util.ArrayList;
 
 public abstract class BaseAdapter<T> extends RecyclerView.Adapter {
 
+    public static final int TYPE_HEADER = 0;
+    public static final int TYPE_NORMAL = 1;
+
     private final ArrayList<T> dataList;
     protected Context context;
     protected LayoutInflater layoutInflater;
 
+    private View mHeaderView;
+
     private ItemClickListener<T> itemClickListener;
     private ItemLongClickListener<T> itemLongClickListener;
-    protected ItemInnerDeleteListener mItemInnerDeleteListener;
 
     private View.OnClickListener clickListenerInner = new View.OnClickListener() {
         @Override
@@ -39,11 +43,6 @@ public abstract class BaseAdapter<T> extends RecyclerView.Adapter {
             return onLongClickInner(view);
         }
     };
-
-
-    public void setOnItemDeleteClickListener(ItemInnerDeleteListener mItemInnerDeleteListener) {
-        this.mItemInnerDeleteListener = mItemInnerDeleteListener;
-    }
 
 
     private void onClickInner(View itemView) {
@@ -182,11 +181,19 @@ public abstract class BaseAdapter<T> extends RecyclerView.Adapter {
         boolean onItemLongClick(T model, int position);
     }
 
+    @Override
+    public int getItemViewType(int position) {
+        if (mHeaderView == null) return TYPE_NORMAL;
+        if (position == 0) return TYPE_HEADER;
+        return TYPE_NORMAL;
+    }
 
-    /**
-     * item内部的删除监听接口
-     */
-    public interface ItemInnerDeleteListener {
-        void onItemInnerDeleteClick(int position);
+    public void setHeaderView(View headerView) {
+        mHeaderView = headerView;
+        notifyItemInserted(0);
+    }
+
+    public View getHeaderView() {
+        return mHeaderView;
     }
 }

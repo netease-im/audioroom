@@ -2,18 +2,19 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <com.netease.audioroom.demo.widget.SemicircleView
+
+    <TextView
         android:id="@+id/semicircleView"
         android:layout_width="@dimen/dimen_50"
-        android:layout_height="@dimen/dimen_25"
-        android:clickable="true"
-        android:layout_gravity="center_horizontal" />
+        android:layout_height="@dimen/dimen_50"
+        android:layout_gravity="center_horizontal"
+        android:background="@drawable/semicircle"
+        android:clickable="true" />
 
     <include
         layout="@layout/base_audio_ui"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
-
 
 
 </FrameLayout>

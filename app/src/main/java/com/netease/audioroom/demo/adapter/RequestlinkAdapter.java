@@ -13,13 +13,19 @@ import com.netease.audioroom.demo.base.BaseAdapter;
 import com.netease.audioroom.demo.model.QueueMember;
 import com.netease.audioroom.demo.model.RequestMember;
 import com.netease.audioroom.demo.util.CommonUtil;
-import com.netease.audioroom.demo.util.ToastHelper;
 import com.netease.audioroom.demo.widget.HeadImageView;
 
 import java.util.ArrayList;
 
 public class RequestlinkAdapter extends BaseAdapter<RequestMember> {
+    public interface IRequestAction {
+        void refuse(RequestMember request);
 
+        void agree(RequestMember request);
+
+    }
+
+    IRequestAction requestAction;
 
     public RequestlinkAdapter(ArrayList<RequestMember> queueMemberList, Context context) {
         super(queueMemberList, context);
@@ -40,23 +46,9 @@ public class RequestlinkAdapter extends BaseAdapter<RequestMember> {
         QueueViewHolder viewHolder = (QueueViewHolder) holder;
         QueueMember member = queueMember.getQueueMember();
         CommonUtil.loadImage(context, member.getAvatar(), viewHolder.ivAvatar, R.drawable.chat_room_default_bg, 0);
-        viewHolder.tvContent.setText(member.getNick() + "\t申请麦位(" + queueMember.getIndex() + ")");
-        viewHolder.ivRefuse.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mItemInnerDeleteListener.onItemInnerDeleteClick(position);
-                ToastHelper.showToast("拒绝请求");
-
-            }
-        });
-        viewHolder.ivAfree.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mItemInnerDeleteListener.onItemInnerDeleteClick(position);
-                ToastHelper.showToast("同意请求");
-
-            }
-        });
+        viewHolder.tvContent.setText(member.getNick() + "\t申请麦位(" + queueMember.getIndex() + 1 + ")");
+        viewHolder.ivRefuse.setOnClickListener((v) -> requestAction.refuse(queueMember));
+        viewHolder.ivAfree.setOnClickListener((v) -> requestAction.agree(queueMember));
     }
 
     private class QueueViewHolder extends RecyclerView.ViewHolder {
@@ -74,4 +66,7 @@ public class RequestlinkAdapter extends BaseAdapter<RequestMember> {
         }
     }
 
+    public void setRequestAction(IRequestAction requestAction) {
+        this.requestAction = requestAction;
+    }
 }

@@ -81,7 +81,7 @@ public abstract class BaseAudioActivity extends BaseActivity {
     protected QueueInfo selfQueue;
 
     //聊天室队列（麦位）
-    protected RecyclerView rcyQueueList;
+    protected RecyclerView rcyQueueRecyclerView;
 
     protected QueueAdapter queueAdapter;
 
@@ -266,7 +266,7 @@ public abstract class BaseAudioActivity extends BaseActivity {
         ivExistRoom = baseAudioView.findViewById(R.id.iv_exist_room);
 
 
-        rcyQueueList = baseAudioView.findViewById(R.id.rcy_queue_list);
+        rcyQueueRecyclerView = baseAudioView.findViewById(R.id.rcy_queue_list);
         rcyChatMsgList = baseAudioView.findViewById(R.id.rcy_chat_message_list);
 
         edtInput = baseAudioView.findViewById(R.id.edt_input_text);
@@ -288,9 +288,9 @@ public abstract class BaseAudioActivity extends BaseActivity {
 
         tvRoomName.setText(name);
 
-        rcyQueueList.setLayoutManager(new GridLayoutManager(this, 4));
+        rcyQueueRecyclerView.setLayoutManager(new GridLayoutManager(this, 4));
         queueAdapter = new QueueAdapter(null, this);
-        rcyQueueList.setAdapter(queueAdapter);
+        rcyQueueRecyclerView.setAdapter(queueAdapter);
 
         queueAdapter.setItemClickListener(itemClickListener);
         queueAdapter.setItemLongClickListener(itemLongClickListener);

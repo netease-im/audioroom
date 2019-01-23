@@ -27,6 +27,14 @@ public class RequestLinkDialog extends DialogFragment {
     ArrayList<RequestMember> queueMemberList;
     View view;
 
+    public interface IRequestAction {
+        void refuse(RequestMember request);
+
+        void agree(RequestMember request);
+
+    }
+
+    IRequestAction requestAction;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -62,12 +70,14 @@ public class RequestLinkDialog extends DialogFragment {
     public void onResume() {
         super.onResume();
         initView();
+        initListener();
+
     }
+
 
     private void initView() {
         requesterRecyclerView = view.findViewById(R.id.requesterRecyclerView);
         requesterRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-
         buidHeadView();
     }
 
@@ -79,17 +89,24 @@ public class RequestLinkDialog extends DialogFragment {
         adapter = new RequestlinkAdapter(queueMemberList, getActivity());
         requesterRecyclerView.setAdapter(adapter);
 
+    }
+
+    public void initListener() {
+        adapter.setRequestAction(new RequestlinkAdapter.IRequestAction() {
+            @Override
+            public void refuse(RequestMember request) {
+                requestAction.refuse(request);
+            }
+
+            @Override
+            public void agree(RequestMember request) {
+                requestAction.agree(request);
+            }
+        });
 
     }
 
-
-    private void initLisener() {
-
+    public void setRequestAction(IRequestAction requestAction) {
+        this.requestAction = requestAction;
     }
-
-    public void updateData() {
-
-    }
-
-
 }

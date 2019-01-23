@@ -1,16 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="200dp"
-    android:layout_gravity="center_horizontal"
-    android:layout_marginLeft="@dimen/dimen_20"
-    android:layout_marginRight="@dimen/dimen_20"
-    android:background="@drawable/dialog_requestlink_bg"
+    android:layout_height="match_parent"
     android:orientation="vertical">
 
     <android.support.v7.widget.RecyclerView
-        android:id="@+id/requesterRecyclerView"
+        android:id="@+id/dialog_bottom_menu_recyclerView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
-
 </LinearLayout>

@@ -8,8 +8,8 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.TextView;
 
 import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.base.BaseAudioActivity;
@@ -18,6 +18,7 @@ import com.netease.audioroom.demo.cache.DemoCache;
 import com.netease.audioroom.demo.cache.RoomMemberCache;
 import com.netease.audioroom.demo.custom.CloseRoomAttach;
 import com.netease.audioroom.demo.custom.P2PNotificationHelper;
+import com.netease.audioroom.demo.dialog.BottomMenuDialog;
 import com.netease.audioroom.demo.dialog.RequestLinkDialog;
 import com.netease.audioroom.demo.http.ChatRoomHttpClient;
 import com.netease.audioroom.demo.model.AccountInfo;
@@ -32,7 +33,6 @@ import com.netease.audioroom.demo.permission.annotation.OnMPermissionGranted;
 import com.netease.audioroom.demo.permission.annotation.OnMPermissionNeverAskAgain;
 import com.netease.audioroom.demo.util.JsonUtil;
 import com.netease.audioroom.demo.util.ToastHelper;
-import com.netease.audioroom.demo.widget.SemicircleView;
 import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.RequestCallbackWrapper;
 import com.netease.nimlib.sdk.chatroom.ChatRoomMessageBuilder;
@@ -70,9 +70,10 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
     //聊天室队列元素
     private HashMap<String, QueueInfo> queueMap = new HashMap<>();
 
-    SemicircleView semicircleView;
+    TextView semicircleView;
 
     ArrayList<RequestMember> requestMemberList;//申请麦位列表
+
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -89,7 +90,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
     protected void initView() {
         semicircleView = findViewById(R.id.semicircleView);
         requestMemberList = new ArrayList<>();
-//        semicircleView.setVisibility(View.GONE);
+        semicircleView.setVisibility(View.GONE);
         semicircleView.setClickable(true);
     }
 
@@ -107,12 +108,27 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         ivRoomAudioSwitch.setOnClickListener(this);
         ivExistRoom.setOnClickListener(this);
         semicircleView.setOnClickListener(this);
+
+
     }
 
 
     @Override
     protected void onQueueItemClick(QueueInfo model, int position) {
+        QueueInfo oldQueue = queueMap.get(position);
+        //当前麦位有人了
+        if (oldQueue != null && oldQueue.getStatus() != QueueInfo.INIT_STATUS) {
+            ToastHelper.showToast("当前麦位有人");
+            removeLink(oldQueue);
+        } else {     //没人
+            String array[] = {"", "", ""};
+            BottomMenuDialog bottomMenuDialog = new BottomMenuDialog();
+            Bundle bundle = new Bundle();
+//            bundle.putParcelableArrayList();
+            ToastHelper.showToast("当前麦位没人");
 
+
+        }
     }
 
     @Override
@@ -173,13 +189,15 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
     protected void exitRoom() {
         release();
         if (roomInfo != null) {
-            ChatRoomMessage closeRoomMessage = ChatRoomMessageBuilder.createChatRoomCustomMessage(roomInfo.getRoomId(), new CloseRoomAttach());
-            chatRoomService.sendMessage(closeRoomMessage, false).setCallback(new RequestCallbackWrapper<Void>() {
-                @Override
-                public void onResult(int i, Void aVoid, Throwable throwable) {
-                    ChatRoomHttpClient.getInstance().closeRoom(DemoCache.getAccountId(), roomInfo.getRoomId(), null);
-                }
-            });
+            ChatRoomMessage closeRoomMessage = ChatRoomMessageBuilder
+                    .createChatRoomCustomMessage(roomInfo.getRoomId(), new CloseRoomAttach());
+            chatRoomService.sendMessage(closeRoomMessage, false)
+                    .setCallback(new RequestCallbackWrapper<Void>() {
+                        @Override
+                        public void onResult(int i, Void aVoid, Throwable throwable) {
+                            ChatRoomHttpClient.getInstance().closeRoom(DemoCache.getAccountId(), roomInfo.getRoomId(), null);
+                        }
+                    });
             RoomMemberCache.getInstance().removeCache(roomInfo.getRoomId());
             roomInfo = null;
         }
@@ -227,10 +245,9 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         requestMemberList.add(new RequestMember(queueMember, index));
         if (requestMemberList.size() > 0) {
             semicircleView.setVisibility(View.VISIBLE);
-//            semicircleView.setText(requestMemberList.size() + "");
+            semicircleView.setText(requestMemberList.size() + "");
         } else {
             semicircleView.setVisibility(View.GONE);
-
         }
 
     }
@@ -242,7 +259,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
 
     @Override
     public void rejectLink(QueueMember queueMember) {
-
         P2PNotificationHelper.rejectLink(DemoCache.getAccountId(), queueMember.getAccount(), new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
@@ -275,8 +291,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
             return;
         }
         queueInfo.setStatus(QueueInfo.NORMAL_STATUS);
-        //TODO 弹框
-
         chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString()).setCallback(new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
@@ -350,13 +364,27 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
             });
             finish();
         } else if (view == semicircleView) {
-            //TODO 弹出请求上麦列表
-            ToastHelper.showToast("点我了");
             RequestLinkDialog requestLinkDialog = new RequestLinkDialog();
             Bundle bundle = new Bundle();
             bundle.putParcelableArrayList(QUEUEINFOLIST, requestMemberList);
             requestLinkDialog.setArguments(bundle);
             requestLinkDialog.show(getFragmentManager(), "RequestLinkDialog");
+            requestLinkDialog.setRequestAction(new RequestLinkDialog.IRequestAction() {
+                @Override
+                public void refuse(RequestMember request) {
+                    //拒绝上麦
+                    rejectLink(request.getQueueMember());
+                    requestMemberList.remove(request);
+                }
+
+                @Override
+                public void agree(RequestMember request) {
+                    //同意上麦
+                    acceptLink(new QueueInfo(request.getQueueMember()));
+                    requestMemberList.remove(request);
+
+                }
+            });
 
         }
 
@@ -392,7 +420,25 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
     }
 
     @Override
-    public void removeLink() {
+    public void removeLink(QueueInfo queueInfo) {
+        queueInfo.setStatus(QueueInfo.INIT_STATUS);
+        chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString()).setCallback(new RequestCallback<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                //TODO 踢了一个人下麦（不知道这样写对不对）
+                ToastHelper.showToast(" 踢了一个人下麦（不知道这样写对不对）");
+            }
+
+            @Override
+            public void onFailed(int i) {
+                ToastHelper.showToast("通过连麦请求失败 ， code = " + i);
+            }
+
+            @Override
+            public void onException(Throwable throwable) {
+                ToastHelper.showToast("通过连麦请求异常 ， e = " + throwable);
+            }
+        });
 
     }
 

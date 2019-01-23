@@ -56,7 +56,7 @@ public interface IAudioLive {
     /**
      * 踢人下麦
      */
-    void removeLink();
+    void removeLink(QueueInfo queueInfo);
 
 
     /**
