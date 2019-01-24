@@ -48,6 +48,12 @@ public class QueueInfo implements Serializable {
      */
     public static final int CLOSE_SELF_AUDIO_STATUS = 4;
 
+    /**
+     * 主播关闭了该麦位
+     */
+
+    public static final int CLOSE_AUDIO_STATUS = 5;
+
 
     private static final String STATUS_KEY = "status";
     private static final String MEMBER_KEY = "member";

@@ -1,7 +1,7 @@
 package com.netease.audioroom.demo.base;
 
-import com.netease.audioroom.demo.model.QueueMember;
 import com.netease.audioroom.demo.model.QueueInfo;
+import com.netease.audioroom.demo.model.QueueMember;
 
 /**
  * 主播行为
@@ -80,5 +80,13 @@ public interface IAudioLive {
     /**
      * 屏蔽某个麦位的语音
      */
-    void mutedAudio(QueueInfo queueInfo, int position);
+    void mutedAudio(QueueInfo queueInfo);
+
+    /**
+     * 关闭麦位
+     * 对于“空麦位”而言，可以关闭麦位，关闭后，该麦位不可以抱人上麦，观众也不可以申请上麦。
+     * <p>
+     * • 如果“空麦位”处于“屏蔽状态”，则同样可以关闭麦位，关闭后只要显示“关闭状态”即可，不需要显示“屏蔽状态”。关闭后的麦位，其屏蔽状态会被清空，再次打开麦位后，该麦位应该处于“未屏蔽状态”
+     */
+    void closeAudio(QueueInfo queueInfo);
 }

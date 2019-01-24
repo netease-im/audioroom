@@ -75,6 +75,10 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
 
     ArrayList<RequestMember> requestMemberList;//申请麦位列表
 
+    BottomMenuDialog bottomMenuDialog;
+
+    ArrayList<String> mune;
+
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -89,10 +93,12 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
 
     @Override
     protected void initView() {
+        bottomMenuDialog = new BottomMenuDialog();
         semicircleView = findViewById(R.id.semicircleView);
         requestMemberList = new ArrayList<>();
         semicircleView.setVisibility(View.GONE);
         semicircleView.setClickable(true);
+        mune = new ArrayList<>();
     }
 
     @Override
@@ -113,13 +119,12 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
 
 
     @Override
-    protected void onQueueItemClick(QueueInfo model, int position) {
-        QueueInfo oldQueue = queueMap.get(position);
-        BottomMenuDialog bottomMenuDialog = new BottomMenuDialog();
+    protected void onQueueItemClick(QueueInfo queueInfo, int position) {
+
+        Bundle bundle = new Bundle();
         //当前麦位有人了
-        if (oldQueue != null && oldQueue.getStatus() != QueueInfo.INIT_STATUS) {
-            Bundle bundle = new Bundle();
-            ArrayList<String> mune = new ArrayList<>();
+        if (helper.hasOccupancy(queueMap, queueInfo)) {
+            mune.clear();
             mune.add("将TA踢下麦位");
             mune.add("屏蔽麦位");
             mune.add("取消");
@@ -128,10 +133,10 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
             bottomMenuDialog.setItemClickListener((d, p) -> {
                 switch (d.get(p)) {
                     case "将TA踢下麦位":
-                        removeLink(oldQueue);
+                        removeLink(queueInfo);
                         break;
                     case "屏蔽麦位":
-                        ToastHelper.showToast("屏蔽麦位");
+                        mutedAudio(queueInfo);
                         break;
                     case "取消":
                         bottomMenuDialog.dismiss();
@@ -140,9 +145,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
             });
             bottomMenuDialog.show(getFragmentManager(), BOTTOMMENUS);
         } else {     //没人
-
-            Bundle bundle = new Bundle();
-            ArrayList<String> mune = new ArrayList<>();
+            mune.clear();
             mune.add("将成员抱上麦位");
             mune.add("屏蔽麦位");
             mune.add("关闭麦位");
@@ -152,13 +155,17 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
             bottomMenuDialog.setItemClickListener((d, p) -> {
                 switch (d.get(p)) {
                     case "将成员抱上麦位":
-                        invitedLink(oldQueue);
+                        //TODO 进入成员选择页
+
+                        invitedLink(queueInfo);
                         break;
                     case "屏蔽麦位":
-                        ToastHelper.showToast("屏蔽麦位");
+                        mutedAudio(queueInfo);
                         break;
                     case "关闭麦位":
-                        ToastHelper.showToast("关闭麦位");
+                        //禁言
+                        mutedText();
+
                         break;
                     case "取消":
                         bottomMenuDialog.dismiss();
@@ -246,7 +253,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
     @Override
     protected void onQueueChange(ChatRoomQueueChangeAttachment queueChange) {
         super.onQueueChange(queueChange);
-
         ChatRoomQueueChangeType changeType = queueChange.getChatRoomQueueChangeType();
         // 队列被清空
         if (changeType == ChatRoomQueueChangeType.DROP) {
@@ -322,15 +328,14 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
 
     @Override
     public void acceptLink(QueueInfo queueInfo) {
-
-        QueueInfo oldQueue = queueMap.get(queueInfo.getKey());
         //当前麦位有人了
-        if (oldQueue != null && oldQueue.getStatus() != QueueInfo.INIT_STATUS) {
+        if (helper.hasOccupancy(queueMap, queueInfo)) {
             rejectLink(queueInfo.getQueueMember());
             return;
         }
         queueInfo.setStatus(QueueInfo.NORMAL_STATUS);
-        chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString()).setCallback(new RequestCallback<Void>() {
+        chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(),
+                queueInfo.toString()).setCallback(new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
                 ToastHelper.showToast("成功通过连麦请求");
@@ -512,48 +517,29 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
     @Override
     public void muteTextAll() {
 
+
     }
 
-
     @Override
-    public void mutedAudio(QueueInfo queueInfo, int position) {
-        if (hasOccupancy(position)) {
+    public void closeAudio(QueueInfo queueInfo) {
+        if (helper.hasOccupancy(queueMap, queueInfo)) {
             queueInfo.setStatus(QueueInfo.BE_MUTED_AUDIO_STATUS);
         } else {
             queueInfo.setStatus(QueueInfo.FORBID_STATUS);
         }
-        updateQueueStatus(queueInfo);
-
+        helper.updateQueueStatus(chatRoomService, roomInfo, queueInfo);
     }
 
-    //判断当前麦位是否有人
-    private boolean hasOccupancy(int position) {
-        QueueInfo oldQueue = queueMap.get(position);
-        if (oldQueue != null && oldQueue.getStatus() != QueueInfo.INIT_STATUS) {
-            return false;
+    @Override
+    public void mutedAudio(QueueInfo queueInfo) {
+        if (helper.hasOccupancy(queueMap, queueInfo)) {
+            queueInfo.setStatus(QueueInfo.BE_MUTED_AUDIO_STATUS);
         } else {
-            return false;
+            queueInfo.setStatus(QueueInfo.FORBID_STATUS);
         }
+        helper.updateQueueStatus(chatRoomService, roomInfo, queueInfo);
 
     }
 
-    //更新麦的状态
-    private void updateQueueStatus(QueueInfo queueInfo) {
-        chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString()).setCallback(new RequestCallback<Void>() {
-            @Override
-            public void onSuccess(Void aVoid) {
-                ToastHelper.showToast("成功通过连麦请求");
-            }
 
-            @Override
-            public void onFailed(int i) {
-                ToastHelper.showToast("通过连麦请求失败 ， code = " + i);
-            }
-
-            @Override
-            public void onException(Throwable throwable) {
-                ToastHelper.showToast("通过连麦请求异常 ， e = " + throwable);
-            }
-        });
-    }
 }

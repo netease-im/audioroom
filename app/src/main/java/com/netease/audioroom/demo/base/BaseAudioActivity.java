@@ -20,6 +20,7 @@ import com.netease.audioroom.demo.adapter.MessageListAdapter;
 import com.netease.audioroom.demo.adapter.QueueAdapter;
 import com.netease.audioroom.demo.audio.SimpleNRtcCallback;
 import com.netease.audioroom.demo.cache.DemoCache;
+import com.netease.audioroom.demo.helper.AudioHelper;
 import com.netease.audioroom.demo.model.AccountInfo;
 import com.netease.audioroom.demo.model.DemoRoomInfo;
 import com.netease.audioroom.demo.model.QueueInfo;
@@ -113,6 +114,8 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
 
     private int rootViewVisibleHeight;
     private View rootView;
+
+    protected AudioHelper helper;
 
     private BaseAdapter.ItemClickListener<QueueInfo> itemClickListener = new BaseAdapter.ItemClickListener<QueueInfo>() {
         @Override
@@ -253,6 +256,7 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        helper = new AudioHelper();
         roomInfo = getIntent().getParcelableExtra(ROOM_INFO_KEY);
         if (roomInfo == null) {
             ToastHelper.showToast("聊天室信息不能为空");
