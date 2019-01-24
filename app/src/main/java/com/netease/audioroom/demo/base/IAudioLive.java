@@ -51,7 +51,7 @@ public interface IAudioLive {
     /**
      * 抱麦（对方不可拒绝）
      */
-    void invitedLink();
+    void invitedLink(QueueInfo queueInfo);
 
     /**
      * 踢人下麦
@@ -80,5 +80,5 @@ public interface IAudioLive {
     /**
      * 屏蔽某个麦位的语音
      */
-    void mutedAudio();
+    void mutedAudio(QueueInfo queueInfo, int position);
 }

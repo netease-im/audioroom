@@ -2,9 +2,11 @@ package com.netease.audioroom.demo.dialog;
 
 import android.app.DialogFragment;
 import android.content.Context;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -16,6 +18,8 @@ import android.widget.TextView;
 
 import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.base.BaseAdapter;
+import com.netease.audioroom.demo.util.ScreenUtil;
+import com.netease.audioroom.demo.widget.VerticalItemDecoration;
 
 import java.util.ArrayList;
 
@@ -28,8 +32,8 @@ public class BottomMenuDialog extends DialogFragment {
     RecyclerView recyclerView;
     MyAdapter adapter;
 
-    interface ItemClickListener {
-        void onItemClick(String model, int position);
+    public interface ItemClickListener {
+        void onItemClick(ArrayList<String> dataArray, int position);
     }
 
     ItemClickListener itemClickListener;
@@ -37,7 +41,7 @@ public class BottomMenuDialog extends DialogFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setStyle(android.app.DialogFragment.STYLE_NO_TITLE, R.style.create_dialog_fragment);
+        setStyle(android.app.DialogFragment.STYLE_NO_TITLE, R.style.request_dialog_fragment);
 
     }
 
@@ -45,15 +49,18 @@ public class BottomMenuDialog extends DialogFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
         rootView = inflater.inflate(R.layout.dialog_bottom_menu, container, false);
+
+        if (getArguments() != null) {
+            dataList = getArguments().getStringArrayList(BOTTOMMENUS);
+        }
         final Window window = getDialog().getWindow();
+        window.setBackgroundDrawableResource(android.R.color.transparent);
+        window.getDecorView().setPadding(0, 0, 0, 0);
         WindowManager.LayoutParams wlp = window.getAttributes();
         wlp.gravity = Gravity.BOTTOM;
         wlp.width = WindowManager.LayoutParams.MATCH_PARENT;
         wlp.height = WindowManager.LayoutParams.WRAP_CONTENT;
         window.setAttributes(wlp);
-        if (getArguments() != null) {
-            dataList = getArguments().getStringArrayList(BOTTOMMENUS);
-        }
         return rootView;
     }
 
@@ -65,13 +72,15 @@ public class BottomMenuDialog extends DialogFragment {
 
     private void initView() {
         recyclerView = rootView.findViewById(R.id.dialog_bottom_menu_recyclerView);
-        if (dataList != null) {
+        if (dataList != null && dataList.size() != 0) {
             adapter = new MyAdapter(dataList, getActivity());
+            recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+            recyclerView.addItemDecoration(new VerticalItemDecoration(Color.GRAY, 1));
             recyclerView.setAdapter(adapter);
             adapter.setItemClickListener(new BaseAdapter.ItemClickListener<String>() {
                 @Override
                 public void onItemClick(String model, int position) {
-                    itemClickListener.onItemClick(model, position);
+                    itemClickListener.onItemClick(dataList, position);
                 }
             });
         }
@@ -89,20 +98,14 @@ public class BottomMenuDialog extends DialogFragment {
 
         @Override
         protected RecyclerView.ViewHolder onCreateBaseViewHolder(ViewGroup parent, int viewType) {
-
-            TextView textView = new TextView(getActivity());
-            textView.setTextColor(getActivity().getResources().getColor(R.color.color_000000));
-            textView.setGravity(Gravity.CENTER);
-            textView.setTextSize(16);
-
-            return new MyViewHolder(textView);
+            return new MyViewHolder(layoutInflater.inflate(R.layout.dialog_bottom_menu_item,
+                    parent, false));
         }
 
         @Override
         protected void onBindBaseViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
             MyViewHolder myViewHolder = (MyViewHolder) holder;
             myViewHolder.textView.setText(getItem(position));
-
         }
 
         private class MyViewHolder extends RecyclerView.ViewHolder {
@@ -110,7 +113,11 @@ public class BottomMenuDialog extends DialogFragment {
 
             public MyViewHolder(View itemView) {
                 super(itemView);
-                textView = (TextView) itemView;
+                textView = itemView.findViewById(R.id.dialog_bottom_menu_textview);
+                textView.setTextColor(getActivity().getResources().getColor(R.color.color_525252));
+                textView.setBackgroundColor(getActivity().getResources().getColor(R.color.color_ffffff));
+                textView.setGravity(Gravity.CENTER);
+                textView.setTextSize(18);
             }
         }
     }

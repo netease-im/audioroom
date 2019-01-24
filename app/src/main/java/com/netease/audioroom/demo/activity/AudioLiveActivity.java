@@ -51,6 +51,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import static com.netease.audioroom.demo.dialog.BottomMenuDialog.BOTTOMMENUS;
 import static com.netease.audioroom.demo.dialog.RequestLinkDialog.QUEUEINFOLIST;
 
 /**
@@ -108,26 +109,64 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         ivRoomAudioSwitch.setOnClickListener(this);
         ivExistRoom.setOnClickListener(this);
         semicircleView.setOnClickListener(this);
-
-
     }
 
 
     @Override
     protected void onQueueItemClick(QueueInfo model, int position) {
         QueueInfo oldQueue = queueMap.get(position);
+        BottomMenuDialog bottomMenuDialog = new BottomMenuDialog();
         //当前麦位有人了
         if (oldQueue != null && oldQueue.getStatus() != QueueInfo.INIT_STATUS) {
-            ToastHelper.showToast("当前麦位有人");
-            removeLink(oldQueue);
-        } else {     //没人
-            String array[] = {"", "", ""};
-            BottomMenuDialog bottomMenuDialog = new BottomMenuDialog();
             Bundle bundle = new Bundle();
-//            bundle.putParcelableArrayList();
-            ToastHelper.showToast("当前麦位没人");
+            ArrayList<String> mune = new ArrayList<>();
+            mune.add("将TA踢下麦位");
+            mune.add("屏蔽麦位");
+            mune.add("取消");
+            bundle.putStringArrayList(BOTTOMMENUS, mune);
+            bottomMenuDialog.setArguments(bundle);
+            bottomMenuDialog.setItemClickListener((d, p) -> {
+                switch (d.get(p)) {
+                    case "将TA踢下麦位":
+                        removeLink(oldQueue);
+                        break;
+                    case "屏蔽麦位":
+                        ToastHelper.showToast("屏蔽麦位");
+                        break;
+                    case "取消":
+                        bottomMenuDialog.dismiss();
+                        break;
+                }
+            });
+            bottomMenuDialog.show(getFragmentManager(), BOTTOMMENUS);
+        } else {     //没人
 
+            Bundle bundle = new Bundle();
+            ArrayList<String> mune = new ArrayList<>();
+            mune.add("将成员抱上麦位");
+            mune.add("屏蔽麦位");
+            mune.add("关闭麦位");
+            mune.add("取消");
+            bundle.putStringArrayList(BOTTOMMENUS, mune);
+            bottomMenuDialog.setArguments(bundle);
+            bottomMenuDialog.setItemClickListener((d, p) -> {
+                switch (d.get(p)) {
+                    case "将成员抱上麦位":
+                        invitedLink(oldQueue);
+                        break;
+                    case "屏蔽麦位":
+                        ToastHelper.showToast("屏蔽麦位");
+                        break;
+                    case "关闭麦位":
+                        ToastHelper.showToast("关闭麦位");
+                        break;
+                    case "取消":
+                        bottomMenuDialog.dismiss();
+                        break;
 
+                }
+            });
+            bottomMenuDialog.show(getFragmentManager(), BOTTOMMENUS);
         }
     }
 
@@ -415,7 +454,25 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
     }
 
     @Override
-    public void invitedLink() {
+    public void invitedLink(QueueInfo queueInfo) {
+        queueInfo.setStatus(QueueInfo.NORMAL_STATUS);
+        chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString()).setCallback(new RequestCallback<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                ToastHelper.showToast("已将" + queueInfo.getQueueMember().getNick() + "抱上麦位" + "");
+
+            }
+
+            @Override
+            public void onFailed(int i) {
+                ToastHelper.showToast("通过连麦请求失败 ， code = " + i);
+            }
+
+            @Override
+            public void onException(Throwable throwable) {
+                ToastHelper.showToast("通过连麦请求异常 ， e = " + throwable);
+            }
+        });
 
     }
 
@@ -459,7 +516,44 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
 
 
     @Override
-    public void mutedAudio() {
+    public void mutedAudio(QueueInfo queueInfo, int position) {
+        if (hasOccupancy(position)) {
+            queueInfo.setStatus(QueueInfo.BE_MUTED_AUDIO_STATUS);
+        } else {
+            queueInfo.setStatus(QueueInfo.FORBID_STATUS);
+        }
+        updateQueueStatus(queueInfo);
 
+    }
+
+    //判断当前麦位是否有人
+    private boolean hasOccupancy(int position) {
+        QueueInfo oldQueue = queueMap.get(position);
+        if (oldQueue != null && oldQueue.getStatus() != QueueInfo.INIT_STATUS) {
+            return false;
+        } else {
+            return false;
+        }
+
+    }
+
+    //更新麦的状态
+    private void updateQueueStatus(QueueInfo queueInfo) {
+        chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString()).setCallback(new RequestCallback<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                ToastHelper.showToast("成功通过连麦请求");
+            }
+
+            @Override
+            public void onFailed(int i) {
+                ToastHelper.showToast("通过连麦请求失败 ， code = " + i);
+            }
+
+            @Override
+            public void onException(Throwable throwable) {
+                ToastHelper.showToast("通过连麦请求异常 ， e = " + throwable);
+            }
+        });
     }
 }
