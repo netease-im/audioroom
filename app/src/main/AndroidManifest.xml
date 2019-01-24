@@ -57,18 +57,17 @@
         <activity
             android:name=".activity.AudienceActivity"
             android:launchMode="singleTop"
-            android:screenOrientation="portrait" />
+
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="stateHidden|adjustResize" />
 
         <activity
             android:name=".activity.AudioLiveActivity"
             android:launchMode="singleTop"
-            android:screenOrientation="portrait" />
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="stateHidden|adjustResize" />
 
 
-        <!--0fbb6ba3ef9a98004153e3ff75ef1a2d-->
-
-        <!-- demo -->
-        <!--45c6af3c98409b18a84451215d0bdd6e-->
         <meta-data
             android:name="com.netease.nim.appKey"
             android:value="0fbb6ba3ef9a98004153e3ff75ef1a2d" />

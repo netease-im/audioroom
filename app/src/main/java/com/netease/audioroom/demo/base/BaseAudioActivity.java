@@ -1,17 +1,22 @@
 package com.netease.audioroom.demo.base;
 
+import android.graphics.Color;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.netease.audioroom.demo.R;
+import com.netease.audioroom.demo.adapter.MessageListAdapter;
 import com.netease.audioroom.demo.adapter.QueueAdapter;
 import com.netease.audioroom.demo.audio.SimpleNRtcCallback;
 import com.netease.audioroom.demo.cache.DemoCache;
@@ -19,9 +24,12 @@ import com.netease.audioroom.demo.model.AccountInfo;
 import com.netease.audioroom.demo.model.DemoRoomInfo;
 import com.netease.audioroom.demo.model.QueueInfo;
 import com.netease.audioroom.demo.model.QueueMember;
+import com.netease.audioroom.demo.model.SimpleMessage;
 import com.netease.audioroom.demo.util.CommonUtil;
+import com.netease.audioroom.demo.util.ScreenUtil;
 import com.netease.audioroom.demo.util.ToastHelper;
 import com.netease.audioroom.demo.widget.HeadImageView;
+import com.netease.audioroom.demo.widget.VerticalItemDecoration;
 import com.netease.nimlib.sdk.NIMClient;
 import com.netease.nimlib.sdk.Observer;
 import com.netease.nimlib.sdk.RequestCallback;
@@ -56,10 +64,11 @@ import java.util.List;
 /**
  * 主播与观众基础页，包含所有的基本UI元素
  */
-public abstract class BaseAudioActivity extends BaseActivity {
+public abstract class BaseAudioActivity extends BaseActivity implements ViewTreeObserver.OnGlobalLayoutListener {
 
     public static final String ROOM_INFO_KEY = "room_info_key";
     public static final String TAG = "AudioRoom";
+    private static final int KEY_BOARD_MIN_SIZE = ScreenUtil.dip2px(DemoCache.getContext(), 80);
 
     //主播基础信息
     protected HeadImageView ivLiverAvatar;
@@ -87,6 +96,8 @@ public abstract class BaseAudioActivity extends BaseActivity {
 
     //消息列表
     protected RecyclerView rcyChatMsgList;
+    private LinearLayoutManager msgLayoutManager;
+    protected MessageListAdapter msgAdapter;
 
     // 聊天室信息
     protected DemoRoomInfo roomInfo;
@@ -99,6 +110,9 @@ public abstract class BaseAudioActivity extends BaseActivity {
     //音视频接口
     protected NRtcEx nrtcEx;
     protected long audioUid;
+
+    private int rootViewVisibleHeight;
+    private View rootView;
 
     private BaseAdapter.ItemClickListener<QueueInfo> itemClickListener = new BaseAdapter.ItemClickListener<QueueInfo>() {
         @Override
@@ -150,7 +164,7 @@ public abstract class BaseAudioActivity extends BaseActivity {
                             memberIn(memberIn);
                             break;
 
-                        // 成员退出聊天室 todo , 更新rcyChatMsgList
+                        // 成员退出聊天室
                         case ChatRoomMemberExit:
                             ChatRoomQueueChangeAttachment memberExit = (ChatRoomQueueChangeAttachment) message.getAttachment();
                             logInfo.append("成员退出聊天室：nick = ").append(memberExit.getOperatorNick()).
@@ -202,6 +216,7 @@ public abstract class BaseAudioActivity extends BaseActivity {
         }
     };
 
+
     protected void memberMuteRemove(ChatRoomTempMuteRemoveAttachment muteRemove) {
     }
 
@@ -209,11 +224,29 @@ public abstract class BaseAudioActivity extends BaseActivity {
     }
 
     protected void memberExit(ChatRoomQueueChangeAttachment memberExit) {
-        //        todo , 更新rcyChatMsgList
+
+        ArrayList<String> exitNicks = memberExit.getTargetNicks();
+        if (CommonUtil.isEmpty(exitNicks)) {
+            return;
+        }
+        for (String nick : exitNicks) {
+            SimpleMessage simpleMessage = new SimpleMessage("", "“" + nick + "”离开了房间", SimpleMessage.TYPE_MEMBER_CHANGE);
+            msgAdapter.appendItem(simpleMessage);
+        }
+        scrollToBottom();
+
     }
 
     protected void memberIn(ChatRoomRoomMemberInAttachment memberIn) {
-//        todo , 更新rcyChatMsgList
+        ArrayList<String> inNicks = memberIn.getTargetNicks();
+        if (CommonUtil.isEmpty(inNicks)) {
+            return;
+        }
+        for (String nick : inNicks) {
+            SimpleMessage simpleMessage = new SimpleMessage("", "“" + nick + "”进了房间", SimpleMessage.TYPE_MEMBER_CHANGE);
+            msgAdapter.appendItem(simpleMessage);
+        }
+        scrollToBottom();
     }
 
 
@@ -228,7 +261,6 @@ public abstract class BaseAudioActivity extends BaseActivity {
         }
         chatRoomService = NIMClient.getService(ChatRoomService.class);
 
-//        "45c6af3c98409b18a84451215d0bdd6e"
         nrtcEx = (NRtcEx) NRtc.create(this, CommonUtil.readAppKey(), new SimpleNRtcCallback());
         nrtcEx.setParameter(NRtcParameters.KEY_SESSION_MULTI_MODE, true);
         audioUid = System.nanoTime();
@@ -237,11 +269,15 @@ public abstract class BaseAudioActivity extends BaseActivity {
         setupBaseViewInner();
         setupBaseView();
 
+
+        rootView = getWindow().getDecorView();
+        rootView.getViewTreeObserver().addOnGlobalLayoutListener(this);
     }
 
     @Override
     protected void onDestroy() {
         release();
+        rootView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
         super.onDestroy();
     }
 
@@ -294,6 +330,13 @@ public abstract class BaseAudioActivity extends BaseActivity {
 
         queueAdapter.setItemClickListener(itemClickListener);
         queueAdapter.setItemLongClickListener(itemLongClickListener);
+
+
+        msgLayoutManager = new LinearLayoutManager(this);
+        rcyChatMsgList.setLayoutManager(msgLayoutManager);
+        msgAdapter = new MessageListAdapter(null, this);
+        rcyChatMsgList.addItemDecoration(new VerticalItemDecoration(Color.TRANSPARENT, ScreenUtil.dip2px(this, 9)));
+        rcyChatMsgList.setAdapter(msgAdapter);
     }
 
     protected void initQueue(List<Entry<String, String>> entries) {
@@ -352,22 +395,20 @@ public abstract class BaseAudioActivity extends BaseActivity {
 
             }
         });
-        //todo update  update rcyChatMsgList
 
-
+        msgAdapter.appendItem(new SimpleMessage(DemoCache.getAccountInfo().nick, content, SimpleMessage.TYPE_NORMAL_MESSAGE));
+        edtInput.setText("");
     }
 
 
     protected void messageInComing(ChatRoomMessage message) {
         if (message.getMsgType() != MsgTypeEnum.text) {
-
             return;
         }
-        Log.i(TAG, "messageInComing ，nick =  " + message.getFromNick() + " , content = " + message.getContent());
-
-
-        //todo  update rcyChatMsgList 聊天室消息
-
+        msgAdapter.appendItem(new SimpleMessage(message.getChatRoomMessageExtension().getSenderNick(),
+                message.getContent(),
+                SimpleMessage.TYPE_NORMAL_MESSAGE));
+        scrollToBottom();
     }
 
 
@@ -471,6 +512,10 @@ public abstract class BaseAudioActivity extends BaseActivity {
         nrtcEx = null;
     }
 
+    private void scrollToBottom() {
+        msgLayoutManager.scrollToPosition(msgAdapter.getItemCount() - 1);
+    }
+
 
     protected abstract int getContentViewID();
 
@@ -497,6 +542,27 @@ public abstract class BaseAudioActivity extends BaseActivity {
         if (changeType == ChatRoomQueueChangeType.OFFER && !TextUtils.isEmpty(value)) {
             QueueInfo queueInfo = new QueueInfo(value);
             queueAdapter.updateItem(queueInfo.getIndex(), queueInfo);
+            return;
+        }
+    }
+
+
+    @Override
+    public void onGlobalLayout() {
+
+        int preHeight = rootViewVisibleHeight;
+
+        //获取当前根视图在屏幕上显示的大小
+        Rect r = new Rect();
+        rootView.getWindowVisibleDisplayFrame(r);
+        rootViewVisibleHeight = r.height();
+
+        if (preHeight == 0 || preHeight == rootViewVisibleHeight) {
+            return;
+        }
+        //根视图显示高度变大超过KEY_BOARD_MIN_SIZE，可以看作软键盘隐藏了
+        if (rootViewVisibleHeight - preHeight >= KEY_BOARD_MIN_SIZE) {
+            scrollToBottom();
             return;
         }
     }
