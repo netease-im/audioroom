@@ -22,7 +22,7 @@ public class MessageListAdapter extends BaseAdapter<SimpleMessage> {
 
     @Override
     protected RecyclerView.ViewHolder onCreateBaseViewHolder(ViewGroup parent, int viewType) {
-        return new MsgHolder(layoutInflater.inflate(R.layout.msg_list_item, parent, false));
+        return new MsgHolder(layoutInflater.inflate(R.layout.item_msg_list, parent, false));
     }
 
     @Override

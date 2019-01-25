@@ -26,7 +26,7 @@ public class QueueAdapter extends BaseAdapter<QueueInfo> {
 
     @Override
     protected RecyclerView.ViewHolder onCreateBaseViewHolder(ViewGroup parent, int viewType) {
-        return new QueueViewHolder(layoutInflater.inflate(R.layout.queue_list_item, parent, false));
+        return new QueueViewHolder(layoutInflater.inflate(R.layout.item_queue_list, parent, false));
     }
 
     @Override
@@ -40,15 +40,15 @@ public class QueueAdapter extends BaseAdapter<QueueInfo> {
 
         if (status == QueueInfo.INIT_STATUS ||
                 status == QueueInfo.FORBID_STATUS) {
-
             viewHolder.ivDefault.setVisibility(View.VISIBLE);
             viewHolder.ivAvatar.setVisibility(View.GONE);
             viewHolder.ivStatusHint.setVisibility(View.GONE);
             viewHolder.tvNick.setVisibility(View.VISIBLE);
-
             viewHolder.ivDefault.setImageResource(
                     status == QueueInfo.INIT_STATUS ? R.drawable.queue_add_member : R.drawable.queue_forbid_apply);
-
+            if (status == QueueInfo.FORBID_STATUS) {
+                viewHolder.ivStatusHint.setImageResource(R.drawable.close_audio_status);
+            }
             viewHolder.tvNick.setText("麦位" + (queueInfo.getIndex() + 1));
             return;
         }
@@ -63,7 +63,6 @@ public class QueueAdapter extends BaseAdapter<QueueInfo> {
         if (status == QueueInfo.NORMAL_STATUS ||
                 status == QueueInfo.BE_MUTED_AUDIO_STATUS ||
                 status == QueueInfo.CLOSE_SELF_AUDIO_STATUS) {
-
             viewHolder.ivDefault.setVisibility(View.GONE);
             viewHolder.ivAvatar.setVisibility(View.VISIBLE);
 

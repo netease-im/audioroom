@@ -26,9 +26,11 @@ public class RequestlinkAdapter extends BaseAdapter<RequestMember> {
     }
 
     IRequestAction requestAction;
+    ArrayList<RequestMember> queueMemberList;
 
     public RequestlinkAdapter(ArrayList<RequestMember> queueMemberList, Context context) {
         super(queueMemberList, context);
+        this.queueMemberList = queueMemberList;
     }
 
 
@@ -69,4 +71,5 @@ public class RequestlinkAdapter extends BaseAdapter<RequestMember> {
     public void setRequestAction(IRequestAction requestAction) {
         this.requestAction = requestAction;
     }
+    
 }

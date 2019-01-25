@@ -24,7 +24,7 @@ import com.netease.audioroom.demo.util.ScreenUtil;
 import com.netease.audioroom.demo.util.ToastHelper;
 import com.netease.audioroom.demo.widget.HeadImageView;
 import com.netease.audioroom.demo.widget.VerticalItemDecoration;
-import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.EmptyCallback;
+import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.EmptyChatRoomListCallback;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.ErrorCallback;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.LoadingCallback;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.NetErrCallback;
@@ -157,7 +157,7 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
         NIMClient.getService(AuthService.class).login(loginInfo).setCallback(new RequestCallback() {
             @Override
             public void onSuccess(Object o) {
-                loadService.showCallback(EmptyCallback.class);
+                loadService.showCallback(EmptyChatRoomListCallback.class);
                 afterLogin(accountInfo);
             }
 
@@ -196,7 +196,7 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
                             loadService.showSuccess();
                             chatRoomListAdapter.appendItems(roomList);
                         } else {
-                            loadService.showCallback(EmptyCallback.class);
+                            loadService.showCallback(EmptyChatRoomListCallback.class);
                         }
                     }
 

@@ -18,7 +18,6 @@ import android.widget.TextView;
 
 import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.base.BaseAdapter;
-import com.netease.audioroom.demo.util.ScreenUtil;
 import com.netease.audioroom.demo.widget.VerticalItemDecoration;
 
 import java.util.ArrayList;
@@ -77,12 +76,9 @@ public class BottomMenuDialog extends DialogFragment {
             recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
             recyclerView.addItemDecoration(new VerticalItemDecoration(Color.GRAY, 1));
             recyclerView.setAdapter(adapter);
-            adapter.setItemClickListener(new BaseAdapter.ItemClickListener<String>() {
-                @Override
-                public void onItemClick(String model, int position) {
-                    itemClickListener.onItemClick(dataList, position);
-                }
-            });
+            adapter.setItemClickListener((model, position) ->
+                    itemClickListener.onItemClick(dataList, position)
+            );
         }
     }
 
@@ -98,7 +94,7 @@ public class BottomMenuDialog extends DialogFragment {
 
         @Override
         protected RecyclerView.ViewHolder onCreateBaseViewHolder(ViewGroup parent, int viewType) {
-            return new MyViewHolder(layoutInflater.inflate(R.layout.dialog_bottom_menu_item,
+            return new MyViewHolder(layoutInflater.inflate(R.layout.item_dialog_bottom_menu,
                     parent, false));
         }
 

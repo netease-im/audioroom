@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.TextView;
 
 import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.adapter.RequestlinkAdapter;
@@ -26,6 +27,8 @@ public class RequestLinkDialog extends DialogFragment {
 
     ArrayList<RequestMember> queueMemberList;
     View view;
+
+    TextView title;
 
     public interface IRequestAction {
         void refuse(RequestMember request);
@@ -78,14 +81,12 @@ public class RequestLinkDialog extends DialogFragment {
     private void initView() {
         requesterRecyclerView = view.findViewById(R.id.requesterRecyclerView);
         requesterRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        title = view.findViewById(R.id.title);
         buidHeadView();
     }
 
     private void buidHeadView() {
-//        TextView headView = new TextView(getActivity());
-//        headView.setText("申请上麦（" + queueMemberList.size() + "）");
-//        headView.setGravity(Gravity.CENTER);
-//        requesterRecyclerView.addView(headView, 0);
+        title.setText("申请上麦(" + queueMemberList.size() + ")");
         adapter = new RequestlinkAdapter(queueMemberList, getActivity());
         requesterRecyclerView.setAdapter(adapter);
 
@@ -103,10 +104,13 @@ public class RequestLinkDialog extends DialogFragment {
                 requestAction.agree(request);
             }
         });
-
     }
 
     public void setRequestAction(IRequestAction requestAction) {
         this.requestAction = requestAction;
+    }
+
+    public void updateDate() {
+        adapter.notifyDataSetChanged();
     }
 }

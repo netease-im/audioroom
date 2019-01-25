@@ -15,6 +15,13 @@ import java.io.Serializable;
  */
 public class QueueInfo implements Serializable {
 
+    //0:麦位初始化状态
+    //1: 正在申请
+    //2: 麦位上有人
+    //3: 麦位关闭
+    //4:麦位上没人，但是被主播屏蔽 ;
+    //5:麦位上有人，但是语音被屏蔽 ;
+    //6:麦位上有人，但是他关闭了自己的语音;
 
     public static final String QUEUE_KEY_PREFIX = "queue_";
 
@@ -24,35 +31,38 @@ public class QueueInfo implements Serializable {
      */
     public static final int INIT_STATUS = 0;
 
+    /**
+     * 正在申请
+     */
+    public static final int LOAD_STATUS = 1;
 
     /**
      * 麦位上有人，且能正常发言
      */
-    public static final int NORMAL_STATUS = 1;
+    public static final int NORMAL_STATUS = 2;
+
+    /**
+     * 麦位关闭
+     */
+    public static final int CLOSE_STATUS = 3;
 
 
     /**
      * 麦位上没人，但是被主播屏蔽
      */
-    public static final int FORBID_STATUS = 2;
+    public static final int FORBID_STATUS = 4;
 
 
     /**
      * 麦位上有人，但是语音被屏蔽
      */
-    public static final int BE_MUTED_AUDIO_STATUS = 3;
+    public static final int BE_MUTED_AUDIO_STATUS = 5;
 
 
     /**
      * 麦位上有人，但是他关闭了自己的语音
      */
-    public static final int CLOSE_SELF_AUDIO_STATUS = 4;
-
-    /**
-     * 主播关闭了该麦位
-     */
-
-    public static final int CLOSE_AUDIO_STATUS = 5;
+    public static final int CLOSE_SELF_AUDIO_STATUS = 6;
 
 
     private static final String STATUS_KEY = "status";

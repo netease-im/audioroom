@@ -1,6 +1,8 @@
 package com.netease.audioroom.demo.model;
 
 
+import android.os.Parcelable;
+
 import com.netease.audioroom.demo.util.JsonUtil;
 
 
@@ -9,7 +11,7 @@ import org.json.JSONObject;
 
 import java.io.Serializable;
 
-public class AccountInfo implements Serializable {
+public class AccountInfo implements Serializable  {
 
     public final String account;
     public final String nick;

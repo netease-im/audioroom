@@ -7,7 +7,8 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 
 import com.netease.audioroom.demo.receiver.NetworkConnectChangedReceiver;
-import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.EmptyCallback;
+import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.EmptyChatRoomListCallback;
+import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.EmptyMuteRoomListCallback;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.ErrorCallback;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.LoadingCallback;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.NetErrCallback;
@@ -23,10 +24,12 @@ public class BaseApplication extends Application {
         //同一页面初始化
         LoadSir.beginBuilder()
                 .addCallback(new ErrorCallback())
-                .addCallback(new EmptyCallback())
+                .addCallback(new EmptyChatRoomListCallback())
                 .addCallback(new NetErrCallback())
                 .addCallback(new LoadingCallback())
                 .addCallback(new TimeoutCallback())
+                .addCallback(new EmptyChatRoomListCallback())
+                .addCallback(new EmptyMuteRoomListCallback())
                 .setDefaultCallback(LoadingCallback.class)
                 .commit();
 
