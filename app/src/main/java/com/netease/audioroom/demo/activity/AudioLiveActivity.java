@@ -614,13 +614,9 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
     }
 
     private boolean hasOccupancy(QueueInfo queueInfo) {
-        if (queueInfo != null && (queueInfo.getStatus() == QueueInfo.NORMAL_STATUS
+        return queueInfo != null && (queueInfo.getStatus() == QueueInfo.NORMAL_STATUS
                 || queueInfo.getStatus() == QueueInfo.BE_MUTED_AUDIO_STATUS
-                || queueInfo.getStatus() == QueueInfo.CLOSE_SELF_AUDIO_STATUS)) {
-            return true;
-        } else {
-            return false;
-        }
+                || queueInfo.getStatus() == QueueInfo.CLOSE_SELF_AUDIO_STATUS);
     }
 
     private void bottomButtonAction(BottomMenuDialog dialog, QueueInfo queueInfo, String s) {
