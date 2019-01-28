@@ -137,7 +137,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
 
     @Override
     protected void onQueueItemClick(QueueInfo model, int position) {
-        //todo
         if (model.getStatus() != QueueInfo.INIT_STATUS) {
             return;
         }
@@ -245,7 +244,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             queueLinkNormal(queueInfo);
         } else if (status == QueueInfo.BE_MUTED_AUDIO_STATUS) {
             beMutedAudio(queueInfo);
-        } else if (status == QueueInfo.INIT_STATUS) {
+        } else if (status == QueueInfo.INIT_STATUS || status == QueueInfo.CLOSE_STATUS) {
             removed(queueInfo);
         }
 
