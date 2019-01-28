@@ -39,30 +39,46 @@ public class QueueAdapter extends BaseAdapter<QueueInfo> {
         int status = queueInfo.getStatus();
 
         if (status == QueueInfo.INIT_STATUS ||
-                status == QueueInfo.FORBID_STATUS) {
+                status == QueueInfo.CLOSE_STATUS ||
+                status == QueueInfo.FORBID_STATUS
+
+                ) {
             viewHolder.ivDefault.setVisibility(View.VISIBLE);
             viewHolder.ivAvatar.setVisibility(View.GONE);
             viewHolder.ivStatusHint.setVisibility(View.GONE);
             viewHolder.tvNick.setVisibility(View.VISIBLE);
-            viewHolder.ivDefault.setImageResource(
-                    status == QueueInfo.INIT_STATUS ? R.drawable.queue_add_member : R.drawable.queue_forbid_apply);
-            if (status == QueueInfo.FORBID_STATUS) {
-                viewHolder.ivStatusHint.setImageResource(R.drawable.close_audio_status);
+
+
+            if (status == QueueInfo.INIT_STATUS) {
+                viewHolder.ivDefault.setImageResource(R.drawable.queue_add_member);
+
+            } else if (status == QueueInfo.CLOSE_STATUS) {
+                viewHolder.ivDefault.setImageResource(R.drawable.queue_add_member);
+            } else if (status == QueueInfo.FORBID_STATUS) {
+                //todo 麦位上没人，但是被主播屏蔽 UI 呢？
+                viewHolder.ivDefault.setImageResource(-1);
             }
             viewHolder.tvNick.setText("麦位" + (queueInfo.getIndex() + 1));
             return;
         }
-
 
         QueueMember queueMember = queueInfo.getQueueMember();
         if (queueMember == null) {
             return;
         }
 
+        if (status == QueueInfo.LOAD_STATUS) {
+            viewHolder.ivDefault.setVisibility(View.GONE);
+            viewHolder.ivAvatar.setVisibility(View.GONE);
+            viewHolder.tvNick.setVisibility(View.VISIBLE);
+            viewHolder.tvNick.setText(queueMember.getNick());
+            return;
+        }
 
         if (status == QueueInfo.NORMAL_STATUS ||
                 status == QueueInfo.BE_MUTED_AUDIO_STATUS ||
                 status == QueueInfo.CLOSE_SELF_AUDIO_STATUS) {
+
             viewHolder.ivDefault.setVisibility(View.GONE);
             viewHolder.ivAvatar.setVisibility(View.VISIBLE);
 
@@ -80,7 +96,6 @@ public class QueueAdapter extends BaseAdapter<QueueInfo> {
             viewHolder.tvNick.setText(queueMember.getNick());
             return;
         }
-
 
     }
 
