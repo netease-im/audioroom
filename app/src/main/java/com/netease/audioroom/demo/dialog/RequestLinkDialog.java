@@ -1,6 +1,7 @@
 package com.netease.audioroom.demo.dialog;
 
 import android.app.DialogFragment;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
@@ -16,6 +17,8 @@ import android.widget.TextView;
 import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.adapter.RequestlinkAdapter;
 import com.netease.audioroom.demo.model.RequestMember;
+import com.netease.audioroom.demo.util.ScreenUtil;
+import com.netease.audioroom.demo.widget.VerticalItemDecoration;
 
 import java.util.ArrayList;
 
@@ -59,11 +62,11 @@ public class RequestLinkDialog extends DialogFragment {
         view = inflater.inflate(R.layout.dialog_requestlink, container, false);
         // 设置宽度为屏宽、靠近屏幕底部。
         final Window window = getDialog().getWindow();
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.getDecorView().setPadding(0, 0, 0, 0);
+        window.setBackgroundDrawableResource(R.color.color_e61D1D24);
+        window.getDecorView().setPadding(15, 0, 15, 0);
         WindowManager.LayoutParams wlp = window.getAttributes();
         wlp.gravity = Gravity.TOP;
-        wlp.width = WindowManager.LayoutParams.WRAP_CONTENT;
+        wlp.width = WindowManager.LayoutParams.MATCH_PARENT;
         wlp.height = WindowManager.LayoutParams.WRAP_CONTENT;
         window.setAttributes(wlp);
         return view;
@@ -81,6 +84,9 @@ public class RequestLinkDialog extends DialogFragment {
     private void initView() {
         requesterRecyclerView = view.findViewById(R.id.requesterRecyclerView);
         requesterRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        requesterRecyclerView.addItemDecoration
+                (new VerticalItemDecoration(getResources().getColor(R.color.color_1a1a23), 1));
+
         title = view.findViewById(R.id.title);
         buidHeadView();
     }

@@ -4,8 +4,6 @@
     android:layout_width="match_parent"
     android:layout_height="200dp"
     android:layout_gravity="center_horizontal"
-    android:layout_marginLeft="@dimen/dimen_8"
-    android:layout_marginRight="@dimen/dimen_8"
     android:background="@drawable/dialog_requestlink_bg"
     android:orientation="vertical">
 
