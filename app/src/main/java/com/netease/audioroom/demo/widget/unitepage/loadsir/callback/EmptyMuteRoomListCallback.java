@@ -11,7 +11,7 @@ public class EmptyMuteRoomListCallback extends BaseCallback {
 
     @Override
     protected int onCreateView() {
-        return R.layout.page_empty;
+        return R.layout.page_empty_mute;
     }
 
     @Override
