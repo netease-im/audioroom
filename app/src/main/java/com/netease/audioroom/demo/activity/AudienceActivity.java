@@ -2,10 +2,11 @@ package com.netease.audioroom.demo.activity;
 
 
 import android.app.Activity;
-import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
+import android.os.Handler;
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.view.View;
 
@@ -15,6 +16,9 @@ import com.netease.audioroom.demo.base.IAudience;
 import com.netease.audioroom.demo.cache.DemoCache;
 import com.netease.audioroom.demo.custom.CloseRoomAttach;
 import com.netease.audioroom.demo.custom.P2PNotificationHelper;
+import com.netease.audioroom.demo.dialog.BottomMenuDialog;
+import com.netease.audioroom.demo.dialog.TipsDialog;
+import com.netease.audioroom.demo.dialog.TopTipsDialog;
 import com.netease.audioroom.demo.model.DemoRoomInfo;
 import com.netease.audioroom.demo.model.QueueInfo;
 import com.netease.audioroom.demo.model.QueueMember;
@@ -41,23 +45,34 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.netease.audioroom.demo.dialog.BottomMenuDialog.BOTTOMMENUS;
+
 
 /***
  * 观众页
  */
 public class AudienceActivity extends BaseAudioActivity implements IAudience, View.OnClickListener {
-
+    public static String AUDIENCEACTIVITY = "AudienceActivity";
     /**
      * 是否正在申请连麦中
      */
     private boolean isRequestingLink = false;
-
-
     /**
      * 是否主动下麦
      */
     private boolean isCancelLink = false;
 
+    TopTipsDialog topTipsDialog;
+
+
+    public static void start(Context context, DemoRoomInfo model) {
+        Intent intent = new Intent(context, AudienceActivity.class);
+        intent.putExtra(BaseAudioActivity.ROOM_INFO_KEY, model);
+        context.startActivity(intent);
+        if (context instanceof Activity) {
+            ((Activity) context).overridePendingTransition(R.anim.in_from_right, R.anim.out_from_left);
+        }
+    }
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -72,14 +87,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
 
     }
 
-    public static void start(Context context, DemoRoomInfo model) {
-        Intent intent = new Intent(context, AudienceActivity.class);
-        intent.putExtra(BaseAudioActivity.ROOM_INFO_KEY, model);
-        context.startActivity(intent);
-        if (context instanceof Activity) {
-            ((Activity) context).overridePendingTransition(R.anim.in_from_right, R.anim.out_from_left);
-        }
-    }
 
     @Override
     protected void enterRoomSuccess(EnterChatRoomResultData resultData) {
@@ -87,31 +94,32 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         String creatorId = resultData.getRoomInfo().getCreator();
         ArrayList<String> accountList = new ArrayList<>();
         accountList.add(creatorId);
-        chatRoomService.fetchRoomMembersByIds(resultData.getRoomId(), accountList).setCallback(new RequestCallback<List<ChatRoomMember>>() {
-            @Override
-            public void onSuccess(List<ChatRoomMember> chatRoomMembers) {
+        chatRoomService.fetchRoomMembersByIds(resultData.getRoomId(), accountList)
+                .setCallback(new RequestCallback<List<ChatRoomMember>>() {
+                    @Override
+                    public void onSuccess(List<ChatRoomMember> chatRoomMembers) {
 
-                loadService.showSuccess();
-                if (CommonUtil.isEmpty(chatRoomMembers)) {
-                    ToastHelper.showToast("获取主播信息失败 ， 结果为空");
-                    return;
-                }
+                        loadService.showSuccess();
+                        if (CommonUtil.isEmpty(chatRoomMembers)) {
+                            ToastHelper.showToast("获取主播信息失败 ， 结果为空");
+                            return;
+                        }
 
-                ChatRoomMember roomMember = chatRoomMembers.get(0);
-                ivLiverAvatar.loadAvatar(roomMember.getAvatar());
-                tvLiverNick.setText(roomMember.getNick());
-            }
+                        ChatRoomMember roomMember = chatRoomMembers.get(0);
+                        ivLiverAvatar.loadAvatar(roomMember.getAvatar());
+                        tvLiverNick.setText(roomMember.getNick());
+                    }
 
-            @Override
-            public void onFailed(int i) {
-                ToastHelper.showToast("获取主播信息失败 ， code = " + i);
-            }
+                    @Override
+                    public void onFailed(int i) {
+                        ToastHelper.showToast("获取主播信息失败 ， code = " + i);
+                    }
 
-            @Override
-            public void onException(Throwable throwable) {
-                ToastHelper.showToast("获取主播信息异常 ， e = " + throwable);
-            }
-        });
+                    @Override
+                    public void onException(Throwable throwable) {
+                        ToastHelper.showToast("获取主播信息异常 ， e = " + throwable);
+                    }
+                });
 
     }
 
@@ -137,11 +145,32 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
 
     @Override
     protected void onQueueItemClick(QueueInfo model, int position) {
+        switch (model.getStatus()) {
+            case QueueInfo.INIT_STATUS:
+                //申请上麦
+                requestLink(model);
+                break;
+            case QueueInfo.NORMAL_STATUS:
+                if (TextUtils.equals(model.getQueueMember().getAccount(), DemoCache.getAccountId())) {
+                    //下麦
+                    removed(model);
+                }
+
+                break;
+            case QueueInfo.FORBID_STATUS:
+            case QueueInfo.BE_MUTED_AUDIO_STATUS:
+                //麦位被禁止
+                TipsDialog tipsDialog = new TipsDialog();
+                tipsDialog.setTips("该麦位被主播“屏蔽语音”\n" +
+                        "现在您已无法进行语音互动");
+                tipsDialog.show(getSupportFragmentManager(), AUDIENCEACTIVITY);
+                break;
+        }
         if (model.getStatus() != QueueInfo.INIT_STATUS) {
             return;
         }
         if (isRequestingLink) {
-            ToastHelper.showToast("你已经请求连麦了，等待主播回复");
+            ToastHelper.showToast("您正在连麦中，无法申请上麦");
             return;
         }
 
@@ -150,7 +179,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             return;
             //下麦
         }
-        requestLink(model);
+
     }
 
     @Override
@@ -184,6 +213,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     @Override
     protected void exitRoom() {
         release();
+        //退出
         if (roomInfo != null) {
             chatRoomService.exitChatRoom(roomInfo.getRoomId());
             roomInfo = null;
@@ -205,7 +235,22 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             @Override
             public void onSuccess(Void aVoid) {
                 isRequestingLink = true;
-                ToastHelper.showToast("请求连麦成功");
+                topTipsDialog = new TopTipsDialog();
+                Bundle bundle = new Bundle();
+                bundle.putString(TopTipsDialog.TOPTIPSDIALOG, "已申请上麦，等待通过...  <font color=\"#0888ff\">取消</color>");
+                topTipsDialog.setArguments(bundle);
+                topTipsDialog.show(getFragmentManager(), "TopTipsDialog");
+                topTipsDialog.setClickListener(() -> {
+
+                    BottomMenuDialog bottomMenuDialog = new BottomMenuDialog();
+                    Bundle bundle1 = new Bundle();
+                    ArrayList<String> mune = new ArrayList<>();
+                    mune.add("确认取消申请上麦");
+                    mune.add("取消");
+                    bundle1.putStringArrayList(BOTTOMMENUS, mune);
+                    bottomMenuDialog.setArguments(bundle);
+                    bottomMenuDialog.show(getFragmentManager(), "BottomMenuDialog");
+                });
             }
 
             @Override
@@ -236,7 +281,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         QueueInfo queueInfo = new QueueInfo(value);
         QueueMember member = queueInfo.getQueueMember();
         //与自己无关
-        if (!TextUtils.equals(member.getAccount(), DemoCache.getAccountId())) {
+        if (member == null || !TextUtils.equals(member.getAccount(), DemoCache.getAccountId())) {
             return;
         }
         int status = queueInfo.getStatus();
@@ -252,13 +297,18 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     }
 
 
+    //取消连麦
     @Override
     public void cancelLinkRequest() {
         //todo
         P2PNotificationHelper.cancelLinkRequest(DemoCache.getAccountId(), roomInfo.getCreator(), new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
-                ToastHelper.showToast("成功取消连麦请求");
+                ToastHelper.showToast("已取消申请上麦");
+                if (topTipsDialog != null && topTipsDialog.isVisible()) {
+                    topTipsDialog.dismiss();
+                }
+
                 isRequestingLink = false;
             }
 
@@ -280,13 +330,26 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     public void linkBeRejected() {
         isRequestingLink = false;
         ToastHelper.showToast("主播拒绝了你的连麦请求");
+        TipsDialog dialog = new TipsDialog();
+        dialog.setTips("您的申请已被拒绝");
+        dialog.show(getSupportFragmentManager(), "TipsDialog");
     }
 
     @Override
     public void queueLinkNormal(QueueInfo queueInfo) {
         if (isRequestingLink) {
-            //TODO 主播同意了你连麦请求
-            ToastHelper.showToast("主播同意了你的连麦请求");
+
+            topTipsDialog = new TopTipsDialog();
+            Bundle bundle = new Bundle();
+            bundle.putString(TopTipsDialog.TOPTIPSDIALOG, "申请通过!");
+            topTipsDialog.getContent().setCompoundDrawables(getResources().getDrawable(R.drawable.right)
+                    , null, null, null);
+            topTipsDialog.getContent().setBackgroundColor(getResources().getColor(R.color.color_0888ff));
+            topTipsDialog.setArguments(bundle);
+            topTipsDialog.show(getFragmentManager(), TopTipsDialog.TOPTIPSDIALOG);
+            new Handler().postDelayed(() -> topTipsDialog.dismiss(), 2000); // 延时2秒
+
+
         } else if (selfQueue == null) {
             //TODO 你被主播抱麦
             ToastHelper.showToast("你被主播抱麦");
@@ -390,7 +453,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
 
     @Override
     public void onClick(View view) {
-
+        //事件点击
         if (view == ivSelfAudioSwitch) {
             boolean mutex = ivSelfAudioSwitch.isSelected();
             ivSelfAudioSwitch.setSelected(!mutex);
@@ -417,6 +480,25 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             finish();
             return;
 
+        }
+
+
+    }
+
+    private void bottomButtonAction(BottomMenuDialog dialog, QueueInfo queueInfo, String s) {
+        switch (s) {
+            case "确认取消申请上麦":
+                cancelLinkRequest();
+                break;
+            case "下麦":
+                cancelLink();
+                break;
+            case "取消":
+                dialog.dismiss();
+                break;
+        }
+        if (dialog.isVisible()) {
+            dialog.dismiss();
         }
     }
 }

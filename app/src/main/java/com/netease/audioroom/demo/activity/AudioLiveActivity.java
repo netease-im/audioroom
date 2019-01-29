@@ -11,7 +11,6 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.netease.audioroom.demo.R;
-import com.netease.audioroom.demo.adapter.MuteMemberListAdapter;
 import com.netease.audioroom.demo.base.BaseAudioActivity;
 import com.netease.audioroom.demo.base.IAudioLive;
 import com.netease.audioroom.demo.cache.DemoCache;
@@ -60,6 +59,8 @@ import static com.netease.audioroom.demo.dialog.RequestLinkDialog.QUEUEINFOLIST;
  */
 public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, View.OnClickListener {
 
+    public static String AUDIOLIVEACTIVITY = "AudioLiveActivity";
+
     public static void start(Context context, DemoRoomInfo demoRoomInfo) {
         Intent intent = new Intent(context, AudioLiveActivity.class);
         intent.putExtra(BaseAudioActivity.ROOM_INFO_KEY, demoRoomInfo);
@@ -76,10 +77,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
 
     ArrayList<RequestMember> requestMemberList;//申请麦位列表
 
-    BottomMenuDialog bottomMenuDialog;
-
-    ArrayList<String> mune;
-
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -92,12 +89,11 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
 
     @Override
     protected void initView() {
-        bottomMenuDialog = new BottomMenuDialog();
         semicircleView = findViewById(R.id.semicircleView);
         requestMemberList = new ArrayList<>();
         semicircleView.setVisibility(View.GONE);
         semicircleView.setClickable(true);
-        mune = new ArrayList<>();
+
     }
 
     @Override
@@ -123,86 +119,86 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         ivRoomAudioSwitch.setOnClickListener(this);
         ivExistRoom.setOnClickListener(this);
         semicircleView.setOnClickListener(this);
+
     }
 
 
     @Override
     protected void onQueueItemClick(QueueInfo queueInfo, int position) {
-
         Bundle bundle = new Bundle();
+        final BottomMenuDialog bottomMenuDialog = new BottomMenuDialog();
+        ArrayList<String> mune = new ArrayList<>();
         //当前麦位有人了
-        if (queueInfo.getStatus() == QueueInfo.NORMAL_STATUS) {
-            mune.clear();
-            mune.add("将TA踢下麦位");
-            mune.add("屏蔽麦位");
-            mune.add("取消");
-            bundle.putStringArrayList(BOTTOMMENUS, mune);
-            bottomMenuDialog.setArguments(bundle);
-            bottomMenuDialog.setItemClickListener((d, p) -> {
-                switch (d.get(p)) {
-                    case "将TA踢下麦位":
-                        bottomButtonAction(bottomMenuDialog, queueInfo, "将TA踢下麦位");
-                        break;
-                    case "屏蔽麦位":
-                        bottomButtonAction(bottomMenuDialog, queueInfo, "屏蔽麦位");
-                        break;
-                    case "取消":
-                        bottomButtonAction(bottomMenuDialog, queueInfo, "取消");
-                        break;
-                }
-            });
-            bottomMenuDialog.show(getFragmentManager(), BOTTOMMENUS);
-        } else if (queueInfo.getStatus() == QueueInfo.INIT_STATUS) {     //没人
-            mune.clear();
-            mune.add("将成员抱上麦位");
-            mune.add("屏蔽麦位");
-            mune.add("关闭麦位");
-            mune.add("取消");
-            bundle.putStringArrayList(BOTTOMMENUS, mune);
-            bottomMenuDialog.setArguments(bundle);
-            bottomMenuDialog.setItemClickListener((d, p) -> {
-                switch (d.get(p)) {
-                    case "将成员抱上麦位":
-                        bottomButtonAction(bottomMenuDialog, queueInfo, "将成员抱上麦位");
-                        break;
-                    case "屏蔽麦位":
-                        bottomButtonAction(bottomMenuDialog, queueInfo, "屏蔽麦位");
-                        break;
-                    case "关闭麦位":
-                        bottomButtonAction(bottomMenuDialog, queueInfo, "关闭麦位");
-                        break;
-                    case "取消":
-                        bottomButtonAction(bottomMenuDialog, queueInfo, "取消");
-                        break;
+        switch (queueInfo.getStatus()) {
+            case QueueInfo.NORMAL_STATUS:
+                mune.add("将TA踢下麦位");
+                mune.add("屏蔽麦位");
+                mune.add("取消");
+                bundle.putStringArrayList(BOTTOMMENUS, mune);
+                bottomMenuDialog.setArguments(bundle);
+                bottomMenuDialog.setItemClickListener((d, p) -> {
+                    switch (d.get(p)) {
+                        case "将TA踢下麦位":
+                            bottomButtonAction(bottomMenuDialog, queueInfo, "将TA踢下麦位");
+                            break;
+                        case "屏蔽麦位":
+                            bottomButtonAction(bottomMenuDialog, queueInfo, "屏蔽麦位");
+                            break;
+                        case "取消":
+                            bottomButtonAction(bottomMenuDialog, queueInfo, "取消");
+                            break;
+                    }
+                });
+                break;
+            case QueueInfo.INIT_STATUS:
+                mune.add("将成员抱上麦位");
+                mune.add("屏蔽麦位");
+                mune.add("关闭麦位");
+                mune.add("取消");
+                bundle.putStringArrayList(BOTTOMMENUS, mune);
+                bottomMenuDialog.setArguments(bundle);
+                bottomMenuDialog.setItemClickListener((d, p) -> {
+                    switch (d.get(p)) {
+                        case "将成员抱上麦位":
+                            bottomButtonAction(bottomMenuDialog, queueInfo, "将成员抱上麦位");
+                            break;
+                        case "屏蔽麦位":
+                            bottomButtonAction(bottomMenuDialog, queueInfo, "屏蔽麦位");
+                            break;
+                        case "关闭麦位":
+                            bottomButtonAction(bottomMenuDialog, queueInfo, "关闭麦位");
+                            break;
+                        case "取消":
+                            bottomButtonAction(bottomMenuDialog, queueInfo, "取消");
+                            break;
 
-                }
-            });
+                    }
+                });
+                break;
+            case QueueInfo.BE_MUTED_AUDIO_STATUS:
+                mune.add("屏蔽麦位");
+                mune.add("关闭麦位");
+                mune.add("取消");
+                bundle.putStringArrayList(BOTTOMMENUS, mune);
 
-        } else if (queueInfo.getStatus() == QueueInfo.BE_MUTED_AUDIO_STATUS) {//被屏蔽
-            mune.clear();
-            mune.add("屏蔽麦位");
-            mune.add("关闭麦位");
-            mune.add("取消");
-            bundle.putStringArrayList(BOTTOMMENUS, mune);
-            bottomMenuDialog.setArguments(bundle);
-            bottomMenuDialog.setItemClickListener((d, p) -> {
-                switch (d.get(p)) {
-                    case "屏蔽麦位":
-                        bottomButtonAction(bottomMenuDialog, queueInfo, "屏蔽麦位");
-                        break;
-                    case "关闭麦位":
-                        bottomButtonAction(bottomMenuDialog, queueInfo, "关闭麦位");
-                        break;
-                    case "取消":
-                        bottomButtonAction(bottomMenuDialog, queueInfo, "关闭麦位");
-                        break;
+                bottomMenuDialog.setArguments(bundle);
+                bottomMenuDialog.setItemClickListener((d, p) -> {
+                    switch (d.get(p)) {
+                        case "屏蔽麦位":
+                            bottomButtonAction(bottomMenuDialog, queueInfo, "屏蔽麦位");
+                            break;
+                        case "关闭麦位":
+                            bottomButtonAction(bottomMenuDialog, queueInfo, "关闭麦位");
+                            break;
+                        case "取消":
+                            bottomButtonAction(bottomMenuDialog, queueInfo, "关闭麦位");
+                            break;
 
-                }
-            });
-
-        } else if (queueInfo.getStatus() == QueueInfo.FORBID_STATUS) {
-
+                    }
+                });
+                break;
         }
+
         bottomMenuDialog.show(getFragmentManager(), BOTTOMMENUS);
     }
 
@@ -213,6 +209,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
 
     @Override
     protected void receiveNotification(CustomNotification customNotification) {
+        //TODO 更新为1
         String content = customNotification.getContent();
         if (TextUtils.isEmpty(content)) {
             return;
@@ -233,7 +230,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
             linkRequest(queueMember, index);
             return;
         }
-
 
         //有人请求下麦
         if (command == P2PNotificationHelper.CANCEL_LINK) {
@@ -314,7 +310,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
 
     @Override
     public void linkRequest(QueueMember queueMember, int index) {
-        //todo UI呈现
         requestMemberList.add(new RequestMember(queueMember, index));
         if (requestMemberList.size() > 0) {
             semicircleView.setVisibility(View.VISIBLE);
@@ -363,6 +358,8 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
             @Override
             public void onSuccess(Void aVoid) {
                 ToastHelper.showToast("成功通过连麦请求");
+
+
             }
 
             @Override
@@ -572,7 +569,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString()).setCallback(new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
-                ToastHelper.showToast("");
             }
 
             @Override

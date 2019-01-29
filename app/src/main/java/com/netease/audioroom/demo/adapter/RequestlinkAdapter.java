@@ -71,5 +71,5 @@ public class RequestlinkAdapter extends BaseAdapter<RequestMember> {
     public void setRequestAction(IRequestAction requestAction) {
         this.requestAction = requestAction;
     }
-    
+
 }

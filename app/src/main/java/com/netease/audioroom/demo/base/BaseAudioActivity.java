@@ -225,7 +225,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
     }
 
     protected void memberExit(ChatRoomQueueChangeAttachment memberExit) {
-
         ArrayList<String> exitNicks = memberExit.getTargetNicks();
         if (CommonUtil.isEmpty(exitNicks)) {
             return;
@@ -235,7 +234,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
             msgAdapter.appendItem(simpleMessage);
         }
         scrollToBottom();
-
     }
 
     protected void memberIn(ChatRoomRoomMemberInAttachment memberIn) {
@@ -320,7 +318,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
 
 
     private void setupBaseViewInner() {
-
         String name = roomInfo.getName();
         name = "房间：" + (TextUtils.isEmpty(name) ? roomInfo.getRoomId() : name) + "（" + roomInfo.getOnlineUserCount() + "人）";
 
@@ -349,7 +346,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
             queue.setIndex(i);
             queueInfoList.add(queue);
         }
-
         if (entries == null) {
             queueAdapter.setItems(queueInfoList);
             return;

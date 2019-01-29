@@ -37,64 +37,42 @@ public class QueueAdapter extends BaseAdapter<QueueInfo> {
         }
         QueueViewHolder viewHolder = (QueueViewHolder) holder;
         int status = queueInfo.getStatus();
-
-        if (status == QueueInfo.INIT_STATUS ||
-                status == QueueInfo.CLOSE_STATUS ||
-                status == QueueInfo.FORBID_STATUS
-
-                ) {
-            viewHolder.ivDefault.setVisibility(View.VISIBLE);
-            viewHolder.ivAvatar.setVisibility(View.GONE);
-            viewHolder.ivStatusHint.setVisibility(View.GONE);
-            viewHolder.tvNick.setVisibility(View.VISIBLE);
-
-
-            if (status == QueueInfo.INIT_STATUS) {
-                viewHolder.ivDefault.setImageResource(R.drawable.queue_add_member);
-
-            } else if (status == QueueInfo.CLOSE_STATUS) {
-                viewHolder.ivDefault.setImageResource(R.drawable.queue_add_member);
-            } else if (status == QueueInfo.FORBID_STATUS) {
-                //todo 麦位上没人，但是被主播屏蔽 UI 呢？
-                viewHolder.ivDefault.setImageResource(-1);
-            }
-            viewHolder.tvNick.setText("麦位" + (queueInfo.getIndex() + 1));
-            return;
-        }
-
         QueueMember queueMember = queueInfo.getQueueMember();
-        if (queueMember == null) {
-            return;
-        }
 
-        if (status == QueueInfo.LOAD_STATUS) {
-            viewHolder.ivDefault.setVisibility(View.GONE);
-            viewHolder.ivAvatar.setVisibility(View.GONE);
-            viewHolder.tvNick.setVisibility(View.VISIBLE);
-            viewHolder.tvNick.setText(queueMember.getNick());
-            return;
-        }
-
-        if (status == QueueInfo.NORMAL_STATUS ||
-                status == QueueInfo.BE_MUTED_AUDIO_STATUS ||
-                status == QueueInfo.CLOSE_SELF_AUDIO_STATUS) {
-
-            viewHolder.ivDefault.setVisibility(View.GONE);
-            viewHolder.ivAvatar.setVisibility(View.VISIBLE);
-
-            if (status == QueueInfo.BE_MUTED_AUDIO_STATUS) {
+        switch (status) {
+            case QueueInfo.INIT_STATUS:
+                viewHolder.iv_user_status.setVisibility(View.VISIBLE);
+                viewHolder.iv_user_status.setImageResource(R.drawable.queue_add_member);
+                viewHolder.tvNick.setText("麦位" + (queueInfo.getIndex() + 1));
+                break;
+            case QueueInfo.LOAD_STATUS:
+                //TODO 正在申请麦位
+                break;
+            case QueueInfo.NORMAL_STATUS:
+                viewHolder.iv_user_status.setVisibility(View.GONE);
+                viewHolder.ivStatusHint.setVisibility(View.GONE);
+                break;
+            case QueueInfo.CLOSE_STATUS:
+                viewHolder.iv_user_status.setVisibility(View.VISIBLE);
+                viewHolder.ivStatusHint.setVisibility(View.GONE);
+                viewHolder.iv_user_status.setImageResource(R.drawable.queue_close);
+                break;
+            case QueueInfo.FORBID_STATUS:
+            case QueueInfo.BE_MUTED_AUDIO_STATUS:
+                viewHolder.iv_user_status.setVisibility(View.GONE);
                 viewHolder.ivStatusHint.setVisibility(View.VISIBLE);
                 viewHolder.ivStatusHint.setImageResource(R.drawable.audio_be_muted_status);
-            } else if (status == QueueInfo.CLOSE_SELF_AUDIO_STATUS) {
+                break;
+            case QueueInfo.CLOSE_SELF_AUDIO_STATUS:
+                viewHolder.iv_user_status.setVisibility(View.GONE);
                 viewHolder.ivStatusHint.setVisibility(View.VISIBLE);
                 viewHolder.ivStatusHint.setImageResource(R.drawable.close_audio_status);
-            }
-
-            viewHolder.tvNick.setVisibility(View.VISIBLE);
-
+                break;
+        }
+        viewHolder.tvNick.setText(queueMember == null ? "麦位" + (queueInfo.getIndex() + 1) : queueMember.getNick());
+        if (queueMember != null) {
             viewHolder.ivAvatar.loadAvatar(queueMember.getAvatar());
-            viewHolder.tvNick.setText(queueMember.getNick());
-            return;
+            viewHolder.tvNick.setVisibility(View.VISIBLE);
         }
 
     }
@@ -105,7 +83,9 @@ public class QueueAdapter extends BaseAdapter<QueueInfo> {
         ImageView ivDefault;
         HeadImageView ivAvatar;
         ImageView ivStatusHint;
+        ImageView iv_user_status;
         TextView tvNick;
+
 
         public QueueViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -113,6 +93,7 @@ public class QueueAdapter extends BaseAdapter<QueueInfo> {
             ivAvatar = itemView.findViewById(R.id.iv_user_avatar);
             ivStatusHint = itemView.findViewById(R.id.iv_user_status_hint);
             tvNick = itemView.findViewById(R.id.tv_user_nick);
+            iv_user_status = itemView.findViewById(R.id.iv_user_status);
         }
     }
 

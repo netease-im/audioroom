@@ -3,8 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingBottom="10dp"
-    android:paddingTop="10dp">
+    android:paddingTop="10dp"
+    android:paddingBottom="10dp">
 
 
     <ImageView
@@ -22,15 +22,23 @@
         android:layout_width="60dp"
         android:layout_height="60dp"
         android:layout_centerHorizontal="true"
-        tools:src="@color/color_828282" />
+        android:src="@color/color_292929" />
+
+    <ImageView
+        android:id="@+id/iv_user_status"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_centerHorizontal="true"
+        android:contentDescription="是否为关闭状态"
+        android:padding="@dimen/dimen_10" />
 
     <ImageView
         android:id="@+id/iv_user_status_hint"
         android:layout_width="17dp"
         android:layout_height="17dp"
-        android:layout_alignBottom="@id/iv_user_avatar"
-        android:layout_alignRight="@id/iv_user_avatar"
-        android:visibility="visible"
+        android:layout_alignRight="@id/iv_user_status"
+        android:layout_alignBottom="@id/iv_user_status"
+        android:contentDescription="是否为屏蔽状态"
         tools:visibility="visible" />
 
 
