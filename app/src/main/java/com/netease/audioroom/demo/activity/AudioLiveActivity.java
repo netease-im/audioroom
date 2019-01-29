@@ -56,6 +56,7 @@ import com.netease.nrtc.sdk.NRtcConstants;
 
 import org.json.JSONObject;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -258,7 +259,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
             int index = jsonObject.optInt(P2PNotificationHelper.INDEX);
             String nick = jsonObject.optString(P2PNotificationHelper.NICK);
             String avatar = jsonObject.optString(P2PNotificationHelper.AVATAR);
-            QueueMember queueMember = new QueueMember(customNotification.getFromAccount(), nick, avatar, false);
+            QueueMember queueMember = new QueueMember(customNotification.getFromAccount(), nick, avatar);
             ToastHelper.showToast("有人请求连麦");
             linkRequest(queueMember, index);
             return;
