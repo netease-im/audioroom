@@ -98,13 +98,11 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 .setCallback(new RequestCallback<List<ChatRoomMember>>() {
                     @Override
                     public void onSuccess(List<ChatRoomMember> chatRoomMembers) {
-
                         loadService.showSuccess();
                         if (CommonUtil.isEmpty(chatRoomMembers)) {
                             ToastHelper.showToast("获取主播信息失败 ， 结果为空");
                             return;
                         }
-
                         ChatRoomMember roomMember = chatRoomMembers.get(0);
                         ivLiverAvatar.loadAvatar(roomMember.getAvatar());
                         tvLiverNick.setText(roomMember.getNick());
@@ -234,22 +232,40 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         P2PNotificationHelper.requestLink(model, DemoCache.getAccountInfo(), roomInfo.getCreator(), new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
+
                 isRequestingLink = true;
                 topTipsDialog = new TopTipsDialog();
                 Bundle bundle = new Bundle();
-                bundle.putString(TopTipsDialog.TOPTIPSDIALOG, "已申请上麦，等待通过...  <font color=\"#0888ff\">取消</color>");
+                TopTipsDialog.Style style = topTipsDialog.new Style(
+                        "已申请上麦，等待通过...  <font color=\"#0888ff\">取消</color>",
+                        0,
+                        0,
+                        0);
+                bundle.putParcelable(TopTipsDialog.TOPTIPSDIALOG, style);
                 topTipsDialog.setArguments(bundle);
                 topTipsDialog.show(getFragmentManager(), "TopTipsDialog");
                 topTipsDialog.setClickListener(() -> {
-
+                    topTipsDialog.dismiss();
                     BottomMenuDialog bottomMenuDialog = new BottomMenuDialog();
                     Bundle bundle1 = new Bundle();
                     ArrayList<String> mune = new ArrayList<>();
-                    mune.add("确认取消申请上麦");
+                    mune.add("<font color=\"#ff4f4f\">确认取消申请上麦</color>");
                     mune.add("取消");
                     bundle1.putStringArrayList(BOTTOMMENUS, mune);
-                    bottomMenuDialog.setArguments(bundle);
+                    bottomMenuDialog.setArguments(bundle1);
                     bottomMenuDialog.show(getFragmentManager(), "BottomMenuDialog");
+                    bottomMenuDialog.setItemClickListener((d, p) -> {
+                        switch (d.get(p)) {
+                            case "<font color=\"#ff4f4f\">确认取消申请上麦</color>":
+                                bottomButtonAction(bottomMenuDialog, model, "确认取消申请上麦");
+                                break;
+                            case "取消":
+                                bottomButtonAction(bottomMenuDialog, model, "取消");
+                                break;
+                        }
+
+
+                    });
                 });
             }
 
@@ -305,10 +321,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             @Override
             public void onSuccess(Void aVoid) {
                 ToastHelper.showToast("已取消申请上麦");
-                if (topTipsDialog != null && topTipsDialog.isVisible()) {
-                    topTipsDialog.dismiss();
-                }
-
                 isRequestingLink = false;
             }
 
@@ -338,13 +350,16 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     @Override
     public void queueLinkNormal(QueueInfo queueInfo) {
         if (isRequestingLink) {
-
+            if (topTipsDialog != null && topTipsDialog.isVisible()) {
+                topTipsDialog.dismiss();
+            }
             topTipsDialog = new TopTipsDialog();
             Bundle bundle = new Bundle();
-            bundle.putString(TopTipsDialog.TOPTIPSDIALOG, "申请通过!");
-            topTipsDialog.getContent().setCompoundDrawables(getResources().getDrawable(R.drawable.right)
-                    , null, null, null);
-            topTipsDialog.getContent().setBackgroundColor(getResources().getColor(R.color.color_0888ff));
+            TopTipsDialog.Style style = topTipsDialog.new Style("申请通过!",
+                    R.color.color_0888ff,
+                    R.drawable.right,
+                    R.color.color_ffffff);
+            bundle.putParcelable(TopTipsDialog.TOPTIPSDIALOG, style);
             topTipsDialog.setArguments(bundle);
             topTipsDialog.show(getFragmentManager(), TopTipsDialog.TOPTIPSDIALOG);
             new Handler().postDelayed(() -> topTipsDialog.dismiss(), 2000); // 延时2秒

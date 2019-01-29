@@ -41,7 +41,8 @@ public class RoomMemberCache {
     }
 
     /**
-     * 根据聊天室id获取所有成员信息 ， 如果为空，可以用{@link RoomMemberCache#fetchMembers(String, long, int, RequestCallback<List<ChatRoomMember>>)}自己拉取一波
+     * 根据聊天室id获取所有成员信息 ， 如果为空，可以用{@link RoomMemberCache#fetchMembers
+     * (String, long, int, RequestCallback<List<ChatRoomMember>>)}自己拉取一波
      */
     @Nullable
     public ArrayList<ChatRoomMember> getRoomMembers(String roomId) {

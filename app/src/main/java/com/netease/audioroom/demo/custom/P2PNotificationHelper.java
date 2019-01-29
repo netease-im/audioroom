@@ -115,7 +115,6 @@ public class P2PNotificationHelper {
      * 观众取消连麦请求
      */
     public static void cancelLinkRequest(String selfAccount, String creator, RequestCallback<Void> callback) {
-
         CustomNotification requestLink = new CustomNotification();
         requestLink.setSessionId(creator);
         requestLink.setSessionType(SessionTypeEnum.P2P);

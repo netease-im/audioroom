@@ -1,15 +1,22 @@
 package com.netease.audioroom.demo.dialog;
 
 import android.app.DialogFragment;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.Parcel;
+import android.os.Parcelable;
+import android.support.annotation.ColorInt;
+import android.support.annotation.DrawableRes;
 import android.support.annotation.Nullable;
 import android.text.Html;
+import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.netease.audioroom.demo.R;
@@ -21,8 +28,10 @@ public class TopTipsDialog extends DialogFragment {
     View view;
 
     TextView content;
+    LinearLayout linearLayout;
 
-    String tips;
+    Style style;
+
 
     public interface IClickListener {
         void onClickLister();
@@ -42,7 +51,7 @@ public class TopTipsDialog extends DialogFragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
         Bundle bundle = getArguments();
         if (bundle != null) {
-            tips = getArguments().getString(TOPTIPSDIALOG);
+            style = getArguments().getParcelable(TOPTIPSDIALOG);
         } else {
             dismiss();
         }
@@ -66,8 +75,29 @@ public class TopTipsDialog extends DialogFragment {
 
 
     private void initView() {
+
         content = view.findViewById(R.id.content);
-        content.setText(Html.fromHtml(tips));
+        linearLayout = view.findViewById(R.id.root);
+
+        if (!TextUtils.isEmpty(style.getTips())) {
+            content.setText(Html.fromHtml(style.getTips()));
+        }
+        if (style.getTipIcon() != 0) {
+            Drawable drawable = getResources().getDrawable(
+                    style.getTipIcon());
+            drawable.setBounds(0, 0, drawable.getMinimumWidth(),
+                    drawable.getMinimumHeight());
+            content.setCompoundDrawables(drawable, null, null, null);
+        }
+
+        if (style.getBackground() != 0) {
+            linearLayout.setBackgroundColor(getResources().getColor(style.getBackground()));
+        }
+
+        if (style.getTextColor() != 0) {
+            content.setTextColor(getResources().getColor(style.getTextColor()));
+        }
+
         content.setOnClickListener(v -> clickListener.onClickLister());
     }
 
@@ -78,5 +108,75 @@ public class TopTipsDialog extends DialogFragment {
 
     public TextView getContent() {
         return content;
+    }
+
+
+    public class Style implements Parcelable {
+        String tips;
+
+        @ColorInt
+        int background;
+
+        @DrawableRes
+        int tipIcon;
+
+        @ColorInt
+        int textColor;
+
+        public Style(String tips, int background, int tipIcon, int textColor) {
+            this.tips = tips;
+            this.background = background;
+            this.tipIcon = tipIcon;
+            this.textColor = textColor;
+        }
+
+
+        @Override
+        public int describeContents() {
+            return 0;
+        }
+
+        @Override
+        public void writeToParcel(Parcel dest, int flags) {
+            dest.writeString(this.tips);
+            dest.writeInt(this.background);
+            dest.writeInt(this.tipIcon);
+            dest.writeInt(this.textColor);
+        }
+
+        protected Style(Parcel in) {
+            this.tips = in.readString();
+            this.background = in.readInt();
+            this.tipIcon = in.readInt();
+            this.textColor = in.readInt();
+        }
+
+        public final Creator<Style> CREATOR = new Creator<Style>() {
+            @Override
+            public Style createFromParcel(Parcel source) {
+                return new Style(source);
+            }
+
+            @Override
+            public Style[] newArray(int size) {
+                return new Style[size];
+            }
+        };
+
+        public String getTips() {
+            return tips;
+        }
+
+        public int getBackground() {
+            return background;
+        }
+
+        public int getTipIcon() {
+            return tipIcon;
+        }
+
+        public int getTextColor() {
+            return textColor;
+        }
     }
 }

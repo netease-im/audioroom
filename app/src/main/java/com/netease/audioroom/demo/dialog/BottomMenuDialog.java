@@ -8,6 +8,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.Html;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -101,7 +102,7 @@ public class BottomMenuDialog extends DialogFragment {
         @Override
         protected void onBindBaseViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
             MyViewHolder myViewHolder = (MyViewHolder) holder;
-            myViewHolder.textView.setText(getItem(position));
+            myViewHolder.textView.setText(Html.fromHtml(getItem(position)));
         }
 
         private class MyViewHolder extends RecyclerView.ViewHolder {

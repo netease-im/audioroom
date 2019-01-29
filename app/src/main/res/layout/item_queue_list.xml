@@ -36,8 +36,8 @@
         android:id="@+id/iv_user_status_hint"
         android:layout_width="17dp"
         android:layout_height="17dp"
-        android:layout_alignRight="@id/iv_user_status"
-        android:layout_alignBottom="@id/iv_user_status"
+        android:layout_alignRight="@id/iv_user_avatar"
+        android:layout_alignBottom="@id/iv_user_avatar"
         android:contentDescription="是否为屏蔽状态"
         tools:visibility="visible" />
 

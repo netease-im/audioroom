@@ -89,4 +89,10 @@ public interface IAudioLive {
      * • 如果“空麦位”处于“屏蔽状态”，则同样可以关闭麦位，关闭后只要显示“关闭状态”即可，不需要显示“屏蔽状态”。关闭后的麦位，其屏蔽状态会被清空，再次打开麦位后，该麦位应该处于“未屏蔽状态”
      */
     void closeAudio(QueueInfo queueInfo);
+
+    /**
+     * 去除屏蔽||关闭状态
+     */
+
+    void openAudio(QueueInfo queueInfo);
 }

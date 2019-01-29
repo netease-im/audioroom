@@ -46,7 +46,8 @@ public class QueueAdapter extends BaseAdapter<QueueInfo> {
                 viewHolder.tvNick.setText("麦位" + (queueInfo.getIndex() + 1));
                 break;
             case QueueInfo.LOAD_STATUS:
-                //TODO 正在申请麦位
+                viewHolder.iv_user_status.setVisibility(View.GONE);
+                viewHolder.ivStatusHint.setVisibility(View.GONE);
                 break;
             case QueueInfo.NORMAL_STATUS:
                 viewHolder.iv_user_status.setVisibility(View.GONE);

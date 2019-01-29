@@ -53,6 +53,7 @@ import com.netease.nimlib.sdk.msg.model.CustomNotification;
 
 import org.json.JSONObject;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -64,11 +65,9 @@ import static com.netease.audioroom.demo.dialog.RequestLinkDialog.QUEUEINFOLIST;
  * 主播页
  */
 public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, View.OnClickListener {
-
     private String[] musicPathArray;
     private int currentPlayIndex;
 
-    public static String AUDIOLIVEACTIVITY = "AudioLiveActivity";
 
     public static void start(Context context, DemoRoomInfo demoRoomInfo) {
         Intent intent = new Intent(context, AudioLiveActivity.class);
@@ -86,15 +85,15 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
 
     ArrayList<RequestMember> requestMemberList;//申请麦位列表
 
-    BottomMenuDialog bottomMenuDialog;
-
-    ArrayList<String> mune;
-
 
     private TextView tvMusicPlayHint;
     private ImageView ivPauseOrPlay;
     private ImageView ivNext;
 
+    @Override
+    protected int getContentViewID() {
+        return R.layout.activity_live;
+    }
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -126,10 +125,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
 
     }
 
-    @Override
-    protected int getContentViewID() {
-        return R.layout.activity_live;
-    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -160,26 +155,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         ArrayList<String> mune = new ArrayList<>();
         //当前麦位有人了
         switch (queueInfo.getStatus()) {
-            case QueueInfo.NORMAL_STATUS:
-                mune.add("将TA踢下麦位");
-                mune.add("屏蔽麦位");
-                mune.add("取消");
-                bundle.putStringArrayList(BOTTOMMENUS, mune);
-                bottomMenuDialog.setArguments(bundle);
-                bottomMenuDialog.setItemClickListener((d, p) -> {
-                    switch (d.get(p)) {
-                        case "将TA踢下麦位":
-                            bottomButtonAction(bottomMenuDialog, queueInfo, "将TA踢下麦位");
-                            break;
-                        case "屏蔽麦位":
-                            bottomButtonAction(bottomMenuDialog, queueInfo, "屏蔽麦位");
-                            break;
-                        case "取消":
-                            bottomButtonAction(bottomMenuDialog, queueInfo, "取消");
-                            break;
-                    }
-                });
-                break;
             case QueueInfo.INIT_STATUS:
                 mune.add("将成员抱上麦位");
                 mune.add("屏蔽麦位");
@@ -205,30 +180,102 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
                     }
                 });
                 break;
-            case QueueInfo.BE_MUTED_AUDIO_STATUS:
+            case QueueInfo.LOAD_STATUS:
+
+                break;
+            case QueueInfo.NORMAL_STATUS:
+                mune.add("将TA踢下麦位");
                 mune.add("屏蔽麦位");
-                mune.add("关闭麦位");
+                mune.add("取消");
+                bundle.putStringArrayList(BOTTOMMENUS, mune);
+                bottomMenuDialog.setArguments(bundle);
+                bottomMenuDialog.setItemClickListener((d, p) -> {
+                    switch (d.get(p)) {
+                        case "将TA踢下麦位":
+                            bottomButtonAction(bottomMenuDialog, queueInfo, "将TA踢下麦位");
+                            break;
+                        case "屏蔽麦位":
+                            bottomButtonAction(bottomMenuDialog, queueInfo, "屏蔽麦位");
+                            break;
+                        case "取消":
+                            bottomButtonAction(bottomMenuDialog, queueInfo, "取消");
+                            break;
+                    }
+                });
+                break;
+            case QueueInfo.CLOSE_STATUS:
+                mune.add("打开麦位");
+                mune.add("取消");
+                bundle.putStringArrayList(BOTTOMMENUS, mune);
+                bottomMenuDialog.setArguments(bundle);
+                bottomMenuDialog.setItemClickListener((d, p) -> {
+                    switch (d.get(p)) {
+                        case "打开麦位":
+                            bottomButtonAction(bottomMenuDialog, queueInfo, "打开麦位");
+                            break;
+                        case "取消":
+                            bottomButtonAction(bottomMenuDialog, queueInfo, "取消");
+                            break;
+                    }
+                });
+                break;
+            case QueueInfo.FORBID_STATUS:
+                mune.add("解除语音屏蔽");
+                mune.add("取消");
+                bundle.putStringArrayList(BOTTOMMENUS, mune);
+                bottomMenuDialog.setArguments(bundle);
+                bottomMenuDialog.setItemClickListener((d, p) -> {
+                    switch (d.get(p)) {
+                        case "解除语音屏蔽":
+                            bottomButtonAction(bottomMenuDialog, queueInfo, "解除语音屏蔽");
+                            break;
+                        case "取消":
+                            bottomButtonAction(bottomMenuDialog, queueInfo, "取消");
+                            break;
+                    }
+                });
+                break;
+            case QueueInfo.BE_MUTED_AUDIO_STATUS:
+                mune.add("将TA踢下麦位");
+                mune.add("解除语音屏蔽");
                 mune.add("取消");
                 bundle.putStringArrayList(BOTTOMMENUS, mune);
 
                 bottomMenuDialog.setArguments(bundle);
                 bottomMenuDialog.setItemClickListener((d, p) -> {
                     switch (d.get(p)) {
-                        case "屏蔽麦位":
-                            bottomButtonAction(bottomMenuDialog, queueInfo, "屏蔽麦位");
+                        case "将TA踢下麦位":
+                            bottomButtonAction(bottomMenuDialog, queueInfo, "将TA踢下麦位");
                             break;
-                        case "关闭麦位":
-                            bottomButtonAction(bottomMenuDialog, queueInfo, "关闭麦位");
+                        case "解除语音屏蔽":
+                            bottomButtonAction(bottomMenuDialog, queueInfo, "解除语音屏蔽");
                             break;
                         case "取消":
-                            bottomButtonAction(bottomMenuDialog, queueInfo, "关闭麦位");
+                            bottomButtonAction(bottomMenuDialog, queueInfo, "取消");
                             break;
 
                     }
                 });
                 break;
-        }
+            case QueueInfo.CLOSE_SELF_AUDIO_STATUS:
+                mune.add("将TA踢下麦位");
+                mune.add("取消");
+                bundle.putStringArrayList(BOTTOMMENUS, mune);
+                bottomMenuDialog.setArguments(bundle);
+                bottomMenuDialog.setItemClickListener((d, p) -> {
+                    switch (d.get(p)) {
+                        case "将TA踢下麦位":
+                            bottomButtonAction(bottomMenuDialog, queueInfo, "将TA踢下麦位");
+                            break;
+                        case "取消":
+                            bottomButtonAction(bottomMenuDialog, queueInfo, "取消");
+                            break;
 
+                    }
+                });
+                break;
+
+        }
         bottomMenuDialog.show(getFragmentManager(), BOTTOMMENUS);
     }
 
@@ -239,7 +286,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
 
     @Override
     protected void receiveNotification(CustomNotification customNotification) {
-        //TODO 更新为1
+
         String content = customNotification.getContent();
         if (TextUtils.isEmpty(content)) {
             return;
@@ -249,15 +296,22 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
             return;
         }
         int command = jsonObject.optInt(P2PNotificationHelper.COMMAND, 0);
-
         //有人请求连麦
         if (command == P2PNotificationHelper.REQUEST_LINK) {
+
             int index = jsonObject.optInt(P2PNotificationHelper.INDEX);
             String nick = jsonObject.optString(P2PNotificationHelper.NICK);
             String avatar = jsonObject.optString(P2PNotificationHelper.AVATAR);
-            QueueMember queueMember = new QueueMember(customNotification.getFromAccount(), nick, avatar, false);
-            ToastHelper.showToast("有人请求连麦");
+            QueueMember queueMember = new QueueMember(customNotification.getFromAccount(), nick, avatar);
+            QueueInfo queueInfo = queueMap.get(QueueInfo.getKeyByIndex(index));
+            if (queueInfo != null) {
+                //更新为请求状态
+                queueInfo.setStatus(QueueInfo.LOAD_STATUS);
+                chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString());
+            }
             linkRequest(queueMember, index);
+
+
             return;
         }
 
@@ -340,7 +394,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
 
     @Override
     public void linkRequest(QueueMember queueMember, int index) {
-        //todo UI呈现
         requestMemberList.add(new RequestMember(queueMember, index));
         if (requestMemberList.size() > 0) {
             semicircleView.setVisibility(View.VISIBLE);
@@ -630,6 +683,32 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
     @Override
     public void muteTextAll() {
 
+    }
+
+    @Override
+    public void openAudio(QueueInfo queueInfo) {
+        //麦上没人
+        if (queueInfo.getStatus() == QueueInfo.CLOSE_STATUS || queueInfo.getStatus() == QueueInfo.FORBID_STATUS) {
+            queueInfo.setStatus(QueueInfo.INIT_STATUS);
+        } else if (queueInfo.getStatus() == QueueInfo.BE_MUTED_AUDIO_STATUS) {
+            queueInfo.setStatus(QueueInfo.NORMAL_STATUS);
+        }
+        chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString()).setCallback(new RequestCallback<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                ToastHelper.showToast("该麦位已“解除语音屏蔽”");
+            }
+
+            @Override
+            public void onFailed(int i) {
+                ToastHelper.showToast("该麦位“解除语音屏蔽”失败");
+            }
+
+            @Override
+            public void onException(Throwable throwable) {
+                ToastHelper.showToast("该麦位“解除语音屏蔽”异常");
+            }
+        });
 
     }
 
@@ -705,10 +784,10 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
                 mutedAudio(queueInfo);
                 break;
             case "解除语音屏蔽":
-                mutedAudio(queueInfo);
+                openAudio(queueInfo);
                 break;
             case "打开麦位":
-                closeAudio(queueInfo);
+                openAudio(queueInfo);
                 break;
             case "取消":
                 dialog.dismiss();

@@ -27,9 +27,9 @@
         android:layout_gravity="right|bottom"
         android:layout_marginBottom="66dp"
         android:background="@drawable/play_music_contronal"
-        android:paddingBottom="10dp"
         android:paddingLeft="10dp"
-        android:paddingTop="10dp">
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp">
 
 
         <TextView
