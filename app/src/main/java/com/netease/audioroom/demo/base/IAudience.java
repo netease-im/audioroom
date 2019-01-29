@@ -19,13 +19,13 @@ public interface IAudience {
     /**
      * 请求连麦
      */
-    void requestLink(QueueInfo model);
+    void requestLink(QueueInfo queueInfo);
 
 
     /**
      * 取消连麦请求
      */
-    void cancelLinkRequest();
+    void cancelLinkRequest(QueueInfo queueInfo);
 
     /**
      * 主播拒绝连麦

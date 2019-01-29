@@ -55,4 +55,29 @@ public class RequestMember implements Parcelable {
             return new RequestMember[size];
         }
     };
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null) {
+            return false;
+        }
+        if (o == this) {
+            return true;
+        }
+        if (getClass() != o.getClass()) {
+            return false;
+        }
+        RequestMember e = (RequestMember) o;
+        return (this.getIndex() == e.getIndex());
+    }
+
+    @Override
+    public int hashCode() {
+        final int PRIME = 31;
+        int result = 1;
+        result = PRIME * result + getIndex();
+        return result;
+    }
+
+
 }

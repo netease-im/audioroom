@@ -114,7 +114,7 @@ public class P2PNotificationHelper {
     /**
      * 观众取消连麦请求
      */
-    public static void cancelLinkRequest(String selfAccount, String creator, RequestCallback<Void> callback) {
+    public static void cancelLinkRequest(QueueInfo queueInfo, String selfAccount, String creator, RequestCallback<Void> callback) {
         CustomNotification requestLink = new CustomNotification();
         requestLink.setSessionId(creator);
         requestLink.setSessionType(SessionTypeEnum.P2P);
@@ -122,6 +122,7 @@ public class P2PNotificationHelper {
         try {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put(COMMAND, CANCEL_REQUEST_LINK);
+            jsonObject.put(INDEX, queueInfo.getIndex());
             requestLink.setContent(jsonObject.toString());
             NIMClient.getService(MsgService.class).sendCustomNotification(requestLink).setCallback(callback);
         } catch (JSONException e) {

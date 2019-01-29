@@ -41,6 +41,8 @@ public class QueueAdapter extends BaseAdapter<QueueInfo> {
 
         switch (status) {
             case QueueInfo.INIT_STATUS:
+                viewHolder.ivAvatar.setImageResource(R.color.color_525252);
+                viewHolder.ivStatusHint.setVisibility(View.GONE);
                 viewHolder.iv_user_status.setVisibility(View.VISIBLE);
                 viewHolder.iv_user_status.setImageResource(R.drawable.queue_add_member);
                 viewHolder.tvNick.setText("麦位" + (queueInfo.getIndex() + 1));
@@ -70,10 +72,19 @@ public class QueueAdapter extends BaseAdapter<QueueInfo> {
                 viewHolder.ivStatusHint.setImageResource(R.drawable.close_audio_status);
                 break;
         }
-        viewHolder.tvNick.setText(queueMember == null ? "麦位" + (queueInfo.getIndex() + 1) : queueMember.getNick());
-        if (queueMember != null) {
+        if (queueMember != null && status == QueueInfo.LOAD_STATUS) {//请求麦位
+            viewHolder.tvNick.setText(queueMember.getNick());
+        } else if (queueMember != null
+                && status != QueueInfo.INIT_STATUS
+                && status != QueueInfo.FORBID_STATUS
+                && status != QueueInfo.CLOSE_STATUS) {//麦上有人
+            //麦上有人
             viewHolder.ivAvatar.loadAvatar(queueMember.getAvatar());
             viewHolder.tvNick.setVisibility(View.VISIBLE);
+            viewHolder.tvNick.setText(queueMember.getNick());
+        } else {
+            //麦上没人
+            viewHolder.tvNick.setText("麦位" + (queueInfo.getIndex() + 1));
         }
 
     }

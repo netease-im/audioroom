@@ -145,10 +145,8 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
             if (chatRoomMessages == null || chatRoomMessages.isEmpty()) {
                 return;
             }
-
             StringBuffer logInfo = new StringBuffer();
             for (ChatRoomMessage message : chatRoomMessages) {
-
                 if (message.getSessionType() != SessionTypeEnum.ChatRoom
                         || !TextUtils.equals(message.getSessionId(), roomInfo.getRoomId())) {
                     continue;
@@ -165,7 +163,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
 
                             memberIn(memberIn);
                             break;
-
                         // 成员退出聊天室
                         case ChatRoomMemberExit:
                             ChatRoomQueueChangeAttachment memberExit = (ChatRoomQueueChangeAttachment) message.getAttachment();

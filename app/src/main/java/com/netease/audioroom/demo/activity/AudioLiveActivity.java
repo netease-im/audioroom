@@ -51,9 +51,12 @@ import com.netease.nimlib.sdk.chatroom.model.ChatRoomTempMuteRemoveAttachment;
 import com.netease.nimlib.sdk.chatroom.model.EnterChatRoomResultData;
 import com.netease.nimlib.sdk.msg.constant.ChatRoomQueueChangeType;
 import com.netease.nimlib.sdk.msg.model.CustomNotification;
+import com.netease.nrtc.sdk.NRtcCallback;
+import com.netease.nrtc.sdk.NRtcConstants;
 
 import org.json.JSONObject;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -66,11 +69,6 @@ import static com.netease.audioroom.demo.dialog.RequestLinkDialog.QUEUEINFOLIST;
  */
 public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, View.OnClickListener {
 
-    private String[] musicPathArray;
-    private int currentPlayIndex;
-
-    public static String AUDIOLIVEACTIVITY = "AudioLiveActivity";
-
     public static void start(Context context, DemoRoomInfo demoRoomInfo) {
         Intent intent = new Intent(context, AudioLiveActivity.class);
         intent.putExtra(BaseAudioActivity.ROOM_INFO_KEY, demoRoomInfo);
@@ -79,6 +77,10 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
             ((Activity) context).overridePendingTransition(R.anim.in_from_right, R.anim.out_from_left);
         }
     }
+
+    private String[] musicPathArray;
+    private int currentPlayIndex;
+
 
     //聊天室队列元素
     private HashMap<String, QueueInfo> queueMap = new HashMap<>();
@@ -104,13 +106,14 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         enterChatRoom(roomInfo.getRoomId());
         enableAudienceRole(false);
         joinChannel(audioUid);
-
         checkFile();
     }
 
 
     @Override
     protected void initView() {
+
+
         semicircleView = findViewById(R.id.semicircleView);
 
         tvMusicPlayHint = findViewById(R.id.tv_music_play_hint);
@@ -124,7 +127,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         requestMemberList = new ArrayList<>();
         semicircleView.setVisibility(View.GONE);
         semicircleView.setClickable(true);
-
 
         updateMusicPlayHint();
 
@@ -149,7 +151,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         ivRoomAudioSwitch.setOnClickListener(this);
         ivExistRoom.setOnClickListener(this);
         semicircleView.setOnClickListener(this);
-
     }
 
 
@@ -292,7 +293,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
 
     @Override
     protected void receiveNotification(CustomNotification customNotification) {
-
         String content = customNotification.getContent();
         if (TextUtils.isEmpty(content)) {
             return;
@@ -302,48 +302,43 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
             return;
         }
         int command = jsonObject.optInt(P2PNotificationHelper.COMMAND, 0);
-        //有人请求连麦
-        if (command == P2PNotificationHelper.REQUEST_LINK) {
-
-            int index = jsonObject.optInt(P2PNotificationHelper.INDEX);
-            String nick = jsonObject.optString(P2PNotificationHelper.NICK);
-            String avatar = jsonObject.optString(P2PNotificationHelper.AVATAR);
-            QueueMember queueMember = new QueueMember(customNotification.getFromAccount(), nick, avatar);
-            QueueInfo queueInfo = queueMap.get(QueueInfo.getKeyByIndex(index));
-            if (queueInfo != null) {
-                //更新为请求状态
-                queueInfo.setStatus(QueueInfo.LOAD_STATUS);
+        int index;
+        QueueInfo queueInfo;
+        switch (command) {
+            case P2PNotificationHelper.REQUEST_LINK://请求连麦
+                index = jsonObject.optInt(P2PNotificationHelper.INDEX);
+                String nick = jsonObject.optString(P2PNotificationHelper.NICK);
+                String avatar = jsonObject.optString(P2PNotificationHelper.AVATAR);
+                QueueMember queueMember = new QueueMember(customNotification.getFromAccount(), nick, avatar);
+                queueInfo = queueMap.get(QueueInfo.getKeyByIndex(index));
+                if (queueInfo != null) {
+                    //更新为请求状态
+                    queueInfo.setStatus(QueueInfo.LOAD_STATUS);
+                } else {
+                    queueInfo = new QueueInfo(queueMember, QueueInfo.LOAD_STATUS, index);
+                }
                 chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString());
-            }
-            QueueMember queueMember = new QueueMember(customNotification.getFromAccount(), nick, avatar);
-            ToastHelper.showToast("有人请求连麦");
-            linkRequest(queueMember, index);
+                linkRequest(queueMember, index);
+                break;
+            case P2PNotificationHelper.CANCEL_REQUEST_LINK://取消请求
+                index = jsonObject.optInt(P2PNotificationHelper.INDEX);
+                queueInfo = queueMap.get(QueueInfo.getKeyByIndex(index));
+                if (queueInfo == null) {
+                    queueInfo = new QueueInfo();
+                }
+                linkRequestCancel(queueInfo);
 
-
-            return;
+                break;
+            case P2PNotificationHelper.CANCEL_LINK://主动下麦
+                index = jsonObject.optInt(P2PNotificationHelper.INDEX, -1);
+                queueInfo = queueMap.get(QueueInfo.getKeyByIndex(index));
+                if (queueInfo != null) {
+                    queueInfo.setStatus(QueueInfo.INIT_STATUS);
+                    chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString());
+                    ToastHelper.showToast("有人请求下麦");
+                }
+                break;
         }
-
-        //有人请求下麦
-        if (command == P2PNotificationHelper.CANCEL_LINK) {
-            int index = jsonObject.optInt(P2PNotificationHelper.INDEX, -1);
-            QueueInfo queueInfo = queueMap.get(QueueInfo.getKeyByIndex(index));
-            if (queueInfo != null) {
-                queueInfo.setStatus(QueueInfo.INIT_STATUS);
-                chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString());
-                ToastHelper.showToast("有人请求下麦");
-            }
-            return;
-        }
-
-
-        //有人取消连麦请求
-        if (command == P2PNotificationHelper.CANCEL_REQUEST_LINK) {
-
-            //谁取消了连麦请求
-            String fromAccount = customNotification.getFromAccount();
-            //todo
-        }
-
 
     }
 
@@ -382,7 +377,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
             if (queueInfo.getIndex() != -1) {
                 queueMap.put(queueInfo.getKey(), queueInfo);
             }
-            return;
         }
     }
 
@@ -402,7 +396,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
 
     @Override
     public void linkRequest(QueueMember queueMember, int index) {
-        //todo UI呈现
         requestMemberList.add(new RequestMember(queueMember, index));
         if (requestMemberList.size() > 0) {
             semicircleView.setVisibility(View.VISIBLE);
@@ -414,7 +407,32 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
     }
 
     @Override
-    public void linkRequestCancel() {
+    public void linkRequestCancel(QueueInfo queueInfo) {
+        queueInfo.setStatus(QueueInfo.INIT_STATUS);
+        chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(),
+                queueInfo.toString()).setCallback(new RequestCallback<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                requestMemberList.remove(requestMemberList.get(queueInfo.getIndex()));
+                if (requestMemberList.size() == 0) {
+                    semicircleView.setVisibility(View.GONE);
+                } else {
+                    semicircleView.setText(requestMemberList.size());
+                }
+
+            }
+
+            @Override
+            public void onFailed(int i) {
+                ToastHelper.showToast("通过连麦请求失败 ， code = " + i);
+            }
+
+            @Override
+            public void onException(Throwable throwable) {
+                ToastHelper.showToast("通过连麦请求异常 ， e = " + throwable);
+            }
+        });
+
 
     }
 
@@ -451,8 +469,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
             @Override
             public void onSuccess(Void aVoid) {
                 ToastHelper.showToast("成功通过连麦请求");
-
-
             }
 
             @Override
@@ -669,21 +685,20 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
     @Override
     public void removeLink(QueueInfo queueInfo) {
         queueInfo.setStatus(QueueInfo.INIT_STATUS);
-        chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString()).setCallback(new RequestCallback<Void>() {
+        chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(),
+                queueInfo.toString()).setCallback(new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
-
-                ToastHelper.showToast(" 踢了一个人下麦（不知道这样写对不对）");
+                ToastHelper.showToast("已将“" + queueInfo.getQueueMember().getNick() + "”踢下麦位");
             }
 
             @Override
             public void onFailed(int i) {
-                ToastHelper.showToast("通过连麦请求失败 ， code = " + i);
             }
 
             @Override
             public void onException(Throwable throwable) {
-                ToastHelper.showToast("通过连麦请求异常 ， e = " + throwable);
+
             }
         });
 
@@ -715,20 +730,21 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         } else if (queueInfo.getStatus() == QueueInfo.BE_MUTED_AUDIO_STATUS) {
             queueInfo.setStatus(QueueInfo.NORMAL_STATUS);
         }
-        chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString()).setCallback(new RequestCallback<Void>() {
+        chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(),
+                queueInfo.toString()).setCallback(new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
-                ToastHelper.showToast("该麦位已“解除语音屏蔽”");
+                ToastHelper.showToast("“麦位" + queueInfo.getIndex() + 1 + "”已打开”");
             }
 
             @Override
             public void onFailed(int i) {
-                ToastHelper.showToast("该麦位“解除语音屏蔽”失败");
+
             }
 
             @Override
             public void onException(Throwable throwable) {
-                ToastHelper.showToast("该麦位“解除语音屏蔽”异常");
+
             }
         });
 
@@ -738,7 +754,8 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
     @Override
     public void closeAudio(QueueInfo queueInfo) {
         queueInfo.setStatus(QueueInfo.CLOSE_STATUS);
-        chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString()).setCallback(new RequestCallback<Void>() {
+        chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(),
+                queueInfo.toString()).setCallback(new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
                 ToastHelper.showToast("");
@@ -791,7 +808,21 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
     private void bottomButtonAction(BottomMenuDialog dialog, QueueInfo queueInfo, String s) {
         switch (s) {
             case "确定踢下麦位":
+                BottomMenuDialog bottomMenuDialog = new BottomMenuDialog();
+                ArrayList arrayList = new ArrayList();
+                arrayList.add("<font color = \"#ff4f4f\">确定踢下麦位</color>");
+                arrayList.add("取消");
                 removeLink(queueInfo);
+                bottomMenuDialog.setItemClickListener((d, p) -> {
+                    switch (d.get(p)) {
+                        case "<font color = \"#ff4f4f\">确定踢下麦位</color>":
+                            removeLink(queueInfo);
+                            break;
+                        case "取消":
+                            bottomMenuDialog.dismiss();
+                            break;
+                    }
+                });
                 break;
             case "关闭麦位":
                 closeAudio(queueInfo);

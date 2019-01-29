@@ -148,6 +148,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 //申请上麦
                 requestLink(model);
                 break;
+
             case QueueInfo.NORMAL_STATUS:
                 if (TextUtils.equals(model.getQueueMember().getAccount(), DemoCache.getAccountId())) {
                     //下麦
@@ -315,12 +316,11 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
 
     //取消连麦
     @Override
-    public void cancelLinkRequest() {
+    public void cancelLinkRequest(QueueInfo queueInfo) {
         //todo
-        P2PNotificationHelper.cancelLinkRequest(DemoCache.getAccountId(), roomInfo.getCreator(), new RequestCallback<Void>() {
+        P2PNotificationHelper.cancelLinkRequest(queueInfo, DemoCache.getAccountId(), roomInfo.getCreator(), new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
-                ToastHelper.showToast("已取消申请上麦");
                 isRequestingLink = false;
             }
 
@@ -503,7 +503,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     private void bottomButtonAction(BottomMenuDialog dialog, QueueInfo queueInfo, String s) {
         switch (s) {
             case "确认取消申请上麦":
-                cancelLinkRequest();
+                cancelLinkRequest(queueInfo);
                 break;
             case "下麦":
                 cancelLink();

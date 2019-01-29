@@ -29,7 +29,7 @@ public interface IAudioLive {
     /**
      * 有人取消了连麦请求
      */
-    void linkRequestCancel();
+    void linkRequestCancel(QueueInfo queueInfo);
 
 
     /**

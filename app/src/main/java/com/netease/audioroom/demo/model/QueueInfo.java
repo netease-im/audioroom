@@ -73,11 +73,8 @@ public class QueueInfo implements Serializable {
     private int status = INIT_STATUS;
     private int index = -1;
 
-
-    public QueueInfo(@Nullable QueueMember queueMember, int status) {
-        this.queueMember = queueMember;
-        this.status = status;
-        this.index = 0;
+    public QueueInfo() {
+        this(null, INIT_STATUS);
     }
 
 
@@ -85,13 +82,20 @@ public class QueueInfo implements Serializable {
         this(queueMember, INIT_STATUS);
     }
 
-    public QueueInfo() {
-        this(null, INIT_STATUS);
+
+    public QueueInfo(@Nullable QueueMember queueMember, int status) {
+        this.queueMember = queueMember;
+        this.status = status;
+        this.index = 0;
     }
 
+    public QueueInfo(QueueMember queueMember, int status, int index) {
+        this.queueMember = queueMember;
+        this.status = status;
+        this.index = index;
+    }
 
     public QueueInfo(String json) {
-
         JSONObject jsonObject = JsonUtil.parse(json);
         if (jsonObject == null) {
             return;
@@ -102,7 +106,6 @@ public class QueueInfo implements Serializable {
         if (memberJson != null) {
             queueMember = new QueueMember(memberJson);
         }
-
     }
 
     public int getIndex() {
