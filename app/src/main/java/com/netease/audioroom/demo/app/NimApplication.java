@@ -14,7 +14,6 @@ public class NimApplication extends BaseApplication {
         super.onCreate();
         DemoCache.init(this);
         NIMClient.init(this, null, null);
-
         if (NIMUtil.isMainProcess(this)) {
             // 注册自定义消息附件解析器
             NIMClient.getService(MsgService.class).registerCustomAttachmentParser(new CustomAttachParser());

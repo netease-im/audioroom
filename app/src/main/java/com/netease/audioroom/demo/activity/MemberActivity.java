@@ -26,7 +26,7 @@ import com.netease.nimlib.sdk.chatroom.model.ChatRoomMember;
 import java.util.ArrayList;
 import java.util.List;
 
-//成员列表
+//选择成员
 public class MemberActivity extends BaseActivity {
     public static Integer REQUESTCODE = 0x1001;
 

@@ -5,10 +5,9 @@ import com.netease.audioroom.demo.R;
 
 
 public class EmptyChatRoomListCallback extends BaseCallback {
-
     @Override
     protected int onCreateView() {
-        return R.layout.page_empty;
+        return R.layout.page_empty_member;
     }
 
 }
