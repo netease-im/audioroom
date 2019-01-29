@@ -4,14 +4,18 @@ package com.netease.audioroom.demo.activity;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.annotation.Nullable;
+import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
+import android.text.style.ForegroundColorSpan;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.netease.audioroom.demo.R;
-import com.netease.audioroom.demo.adapter.MuteMemberListAdapter;
 import com.netease.audioroom.demo.base.BaseAudioActivity;
 import com.netease.audioroom.demo.base.IAudioLive;
 import com.netease.audioroom.demo.cache.DemoCache;
@@ -31,6 +35,7 @@ import com.netease.audioroom.demo.permission.MPermissionUtil;
 import com.netease.audioroom.demo.permission.annotation.OnMPermissionDenied;
 import com.netease.audioroom.demo.permission.annotation.OnMPermissionGranted;
 import com.netease.audioroom.demo.permission.annotation.OnMPermissionNeverAskAgain;
+import com.netease.audioroom.demo.util.CommonUtil;
 import com.netease.audioroom.demo.util.JsonUtil;
 import com.netease.audioroom.demo.util.ToastHelper;
 import com.netease.nimlib.sdk.RequestCallback;
@@ -48,6 +53,7 @@ import com.netease.nimlib.sdk.msg.model.CustomNotification;
 
 import org.json.JSONObject;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -59,6 +65,9 @@ import static com.netease.audioroom.demo.dialog.RequestLinkDialog.QUEUEINFOLIST;
  * 主播页
  */
 public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, View.OnClickListener {
+
+    private String[] musicPathArray;
+    private int currentPlayIndex;
 
     public static void start(Context context, DemoRoomInfo demoRoomInfo) {
         Intent intent = new Intent(context, AudioLiveActivity.class);
@@ -81,6 +90,11 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
     ArrayList<String> mune;
 
 
+    private TextView tvMusicPlayHint;
+    private ImageView ivPauseOrPlay;
+    private ImageView ivNext;
+
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -88,12 +102,24 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         enterChatRoom(roomInfo.getRoomId());
         enableAudienceRole(false);
         joinChannel(audioUid);
+
+        checkFile();
     }
+
 
     @Override
     protected void initView() {
         bottomMenuDialog = new BottomMenuDialog();
         semicircleView = findViewById(R.id.semicircleView);
+
+        tvMusicPlayHint = findViewById(R.id.tv_music_play_hint);
+        ivPauseOrPlay = findViewById(R.id.iv_pause_or_play);
+        ivNext = findViewById(R.id.iv_next);
+
+        ivPauseOrPlay.setOnClickListener(this);
+        ivNext.setOnClickListener(this);
+
+
         requestMemberList = new ArrayList<>();
         semicircleView.setVisibility(View.GONE);
         semicircleView.setClickable(true);
@@ -470,8 +496,48 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
                 }
             });
 
+        } else if (view == ivPauseOrPlay) {
+            playOrPauseMusic();
+        } else if (view == ivNext) {
+            currentPlayIndex = (currentPlayIndex + 1) % musicPathArray.length;
+            nrtcEx.startAudioMixing(musicPathArray[currentPlayIndex], true, false, 100, 1.0f);
+            ivPauseOrPlay.setTag(musicPathArray[currentPlayIndex]);
+            ivPauseOrPlay.setSelected(true);
+            updateMusicPlayHint();
         }
+    }
 
+    private void playOrPauseMusic() {
+        boolean isPlaying = ivPauseOrPlay.isSelected();
+        String oldPath = (String) ivPauseOrPlay.getTag();
+        // 如果正在播放，暂停
+        if (isPlaying) {
+            nrtcEx.pauseAudioMixing();
+        }
+        //如果已经暂停了，重新播放
+        else if (!TextUtils.isEmpty(oldPath)) {
+            nrtcEx.resumeAudioMixing();
+        }
+        //之前没有设置任何音乐在播放或暂停
+        else {
+            nrtcEx.startAudioMixing(musicPathArray[currentPlayIndex], true, false, 100, 1.0f);
+            ivPauseOrPlay.setTag(musicPathArray[currentPlayIndex]);
+        }
+        ivPauseOrPlay.setSelected(!isPlaying);
+
+        updateMusicPlayHint();
+    }
+
+    private void updateMusicPlayHint() {
+        boolean isPlaying = ivPauseOrPlay.isSelected();
+        SpannableStringBuilder stringBuilder = new SpannableStringBuilder("音乐" + (currentPlayIndex + 1));
+        stringBuilder.setSpan(new ForegroundColorSpan(Color.parseColor("#ffa410")),
+                0, stringBuilder.length(),
+                SpannableStringBuilder.SPAN_INCLUSIVE_EXCLUSIVE);
+
+        stringBuilder.append(isPlaying ? "播放中" : "已暂停");
+        tvMusicPlayHint.setText(stringBuilder);
+        
     }
 
     protected void memberMuteRemove(ChatRoomTempMuteRemoveAttachment muteRemove) {
@@ -651,5 +717,18 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         }
     }
 
+    private void checkFile() {
+        String musicRootPath = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + getPackageName() + File.separator + "music" + File.separator;
+
+        musicPathArray = new String[2];
+        musicPathArray[0] = musicRootPath + "first_song.mp3";
+        musicPathArray[1] = musicRootPath + "second_song.mp3";
+        currentPlayIndex = 0;
+
+        new Thread(() -> {
+            CommonUtil.copyAssetToFile(this, "music/first_song.mp3", musicRootPath, "first_song.mp3");
+            CommonUtil.copyAssetToFile(this, "music/second_song.mp3", musicRootPath, "second_song.mp3");
+        }).start();
+    }
 
 }

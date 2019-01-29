@@ -265,6 +265,7 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
 
         nrtcEx = (NRtcEx) NRtc.create(this, CommonUtil.readAppKey(), new SimpleNRtcCallback());
         nrtcEx.setParameter(NRtcParameters.KEY_SESSION_MULTI_MODE, true);
+        nrtcEx.setParameter(NRtcParameters.KEY_AUDIO_HIGH_QUALITY, true);
         audioUid = System.nanoTime();
         enterChatRoom(roomInfo.getRoomId());
         findBaseView();
