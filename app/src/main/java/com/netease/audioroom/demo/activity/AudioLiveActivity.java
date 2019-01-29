@@ -128,6 +128,9 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         semicircleView.setVisibility(View.GONE);
         semicircleView.setClickable(true);
 
+
+        updateMusicPlayHint();
+
     }
 
     @Override
@@ -514,6 +517,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         ToastHelper.showToast("伴音发现错误");
         ivPauseOrPlay.setTag(null);
         ivPauseOrPlay.setSelected(false);
+        nrtcEx.stopAudioMixing();
         updateMusicPlayHint();
     }
 
