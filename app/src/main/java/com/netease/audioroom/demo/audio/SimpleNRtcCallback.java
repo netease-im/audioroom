@@ -68,7 +68,7 @@ public class SimpleNRtcCallback implements NRtcCallback {
      */
     @Override
     public void onVideoCapturerStarted(boolean success) {
-        Log.d(TAG, "onVideoCapturerStarted , success =  " + success);
+//        Log.d(TAG, "onVideoCapturerStarted , success =  " + success);
     }
 
 
@@ -77,7 +77,7 @@ public class SimpleNRtcCallback implements NRtcCallback {
      */
     @Override
     public void onVideoCapturerStopped() {
-        Log.d(TAG, "onVideoCapturerStopped ");
+//        Log.d(TAG, "onVideoCapturerStopped ");
     }
 
 
@@ -122,7 +122,7 @@ public class SimpleNRtcCallback implements NRtcCallback {
      */
     @Override
     public void onNetworkQuality(long uid, int quality, NetStats stats) {
-        Log.d(TAG, "onNetworkQuality , uid =  " + uid + " , quality = " + quality);
+//        Log.d(TAG, "onNetworkQuality , uid =  " + uid + " , quality = " + quality);
     }
 
     /**
@@ -189,7 +189,7 @@ public class SimpleNRtcCallback implements NRtcCallback {
      */
     @Override
     public void onVideoFpsReported(long uid, int fps) {
-        Log.d(TAG, "onVideoFpsReported , uid =  " + uid + " , fps = " + fps);
+//        Log.d(TAG, "onVideoFpsReported , uid =  " + uid + " , fps = " + fps);
     }
 
     /**
@@ -199,7 +199,7 @@ public class SimpleNRtcCallback implements NRtcCallback {
      */
     @Override
     public void onFirstVideoFrameRendered(long uid) {
-        Log.d(TAG, "onFirstVideoFrameRendered , uid =  " + uid);
+//        Log.d(TAG, "onFirstVideoFrameRendered , uid =  " + uid);
     }
 
 
@@ -213,7 +213,7 @@ public class SimpleNRtcCallback implements NRtcCallback {
      */
     @Override
     public void onVideoFrameResolutionChanged(long uid, int videoWidth, int videoHeight, int rotation) {
-        Log.d(TAG, "onVideoFrameResolutionChanged , uid =  " + uid + " , videoWidth = " + videoWidth + " , videoHeight = " + videoHeight);
+//        Log.d(TAG, "onVideoFrameResolutionChanged , uid =  " + uid + " , videoWidth = " + videoWidth + " , videoHeight = " + videoHeight);
     }
 
 
@@ -229,7 +229,7 @@ public class SimpleNRtcCallback implements NRtcCallback {
      */
     @Override
     public boolean onVideoFrameFilter(final VideoFrame frame, final boolean maybeDualInput) {
-        Log.d(TAG, "onVideoFrameFilter  ");
+//        Log.d(TAG, "onVideoFrameFilter  ");
         return true;
     }
 
@@ -242,7 +242,7 @@ public class SimpleNRtcCallback implements NRtcCallback {
      */
     @Override
     public boolean onAudioFrameFilter(final AudioFrame frame) {
-        Log.d(TAG, "onAudioFrameFilter  ");
+//        Log.d(TAG, "onAudioFrameFilter  ");
         return true;
     }
 
@@ -267,7 +267,7 @@ public class SimpleNRtcCallback implements NRtcCallback {
      */
     @Override
     public void onReportSpeaker(int activated, long[] speakers, int[] energies, int mixedEnergy) {
-        Log.d(TAG, "onReportSpeaker ,  speakers =  " + speakers);
+//        Log.d(TAG, "onReportSpeaker ,  speakers =  " + speakers);
     }
 
 
@@ -300,6 +300,6 @@ public class SimpleNRtcCallback implements NRtcCallback {
      */
     @Override
     public void onAudioMixingProgressUpdated(long progressMs, long durationMs) {
-        Log.d(TAG, "onAudioMixingProgressUpdated ,  progressMs =  " + progressMs + " , durationMs =" + durationMs);
+//        Log.d(TAG, "onAudioMixingProgressUpdated ,  progressMs =  " + progressMs + " , durationMs =" + durationMs);
     }
 }

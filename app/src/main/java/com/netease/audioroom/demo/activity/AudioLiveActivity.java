@@ -16,6 +16,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.netease.audioroom.demo.R;
+import com.netease.audioroom.demo.audio.SimpleNRtcCallback;
 import com.netease.audioroom.demo.base.BaseAudioActivity;
 import com.netease.audioroom.demo.base.IAudioLive;
 import com.netease.audioroom.demo.cache.DemoCache;
@@ -53,7 +54,6 @@ import com.netease.nimlib.sdk.msg.model.CustomNotification;
 
 import org.json.JSONObject;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -65,9 +65,11 @@ import static com.netease.audioroom.demo.dialog.RequestLinkDialog.QUEUEINFOLIST;
  * 主播页
  */
 public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, View.OnClickListener {
+
     private String[] musicPathArray;
     private int currentPlayIndex;
 
+    public static String AUDIOLIVEACTIVITY = "AudioLiveActivity";
 
     public static void start(Context context, DemoRoomInfo demoRoomInfo) {
         Intent intent = new Intent(context, AudioLiveActivity.class);
@@ -122,6 +124,9 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         requestMemberList = new ArrayList<>();
         semicircleView.setVisibility(View.GONE);
         semicircleView.setClickable(true);
+
+
+        updateMusicPlayHint();
 
     }
 
@@ -232,6 +237,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
                         case "取消":
                             bottomButtonAction(bottomMenuDialog, queueInfo, "取消");
                             break;
+
                     }
                 });
                 break;
@@ -309,6 +315,8 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
                 queueInfo.setStatus(QueueInfo.LOAD_STATUS);
                 chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString());
             }
+            QueueMember queueMember = new QueueMember(customNotification.getFromAccount(), nick, avatar);
+            ToastHelper.showToast("有人请求连麦");
             linkRequest(queueMember, index);
 
 
@@ -394,6 +402,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
 
     @Override
     public void linkRequest(QueueMember queueMember, int index) {
+        //todo UI呈现
         requestMemberList.add(new RequestMember(queueMember, index));
         if (requestMemberList.size() > 0) {
             semicircleView.setVisibility(View.VISIBLE);
@@ -554,12 +563,25 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         } else if (view == ivPauseOrPlay) {
             playOrPauseMusic();
         } else if (view == ivNext) {
-            currentPlayIndex = (currentPlayIndex + 1) % musicPathArray.length;
-            nrtcEx.startAudioMixing(musicPathArray[currentPlayIndex], true, false, 100, 1.0f);
-            ivPauseOrPlay.setTag(musicPathArray[currentPlayIndex]);
-            ivPauseOrPlay.setSelected(true);
-            updateMusicPlayHint();
+            playNextMusic();
         }
+    }
+
+
+    private void playMusicErr() {
+        ToastHelper.showToast("伴音发现错误");
+        ivPauseOrPlay.setTag(null);
+        ivPauseOrPlay.setSelected(false);
+        nrtcEx.stopAudioMixing();
+        updateMusicPlayHint();
+    }
+
+    private void playNextMusic() {
+        currentPlayIndex = (currentPlayIndex + 1) % musicPathArray.length;
+        nrtcEx.startAudioMixing(musicPathArray[currentPlayIndex], true, false, 0, 1.0f);
+        ivPauseOrPlay.setTag(musicPathArray[currentPlayIndex]);
+        ivPauseOrPlay.setSelected(true);
+        updateMusicPlayHint();
     }
 
     private void playOrPauseMusic() {
@@ -811,5 +833,27 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
             CommonUtil.copyAssetToFile(this, "music/second_song.mp3", musicRootPath, "second_song.mp3");
         }).start();
     }
+
+    @Override
+    protected NRtcCallback createNrtcCallBack() {
+
+        return new InnerNRtcCallBack();
+    }
+
+    private class InnerNRtcCallBack extends SimpleNRtcCallback {
+        @Override
+        public void onDeviceEvent(int event, String desc) {
+            super.onDeviceEvent(event, desc);
+            if (event == NRtcConstants.DeviceEvent.AUDIO_MIXING_ERROR) {
+
+                playMusicErr();
+            } else if (event == NRtcConstants.DeviceEvent.AUDIO_MIXING_FINISHED) {
+                playNextMusic();
+            }
+
+
+        }
+    }
+
 
 }

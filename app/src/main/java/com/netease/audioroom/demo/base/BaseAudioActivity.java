@@ -54,6 +54,7 @@ import com.netease.nimlib.sdk.msg.model.CustomNotification;
 import com.netease.nimlib.sdk.util.Entry;
 import com.netease.nrtc.engine.rawapi.RtcRole;
 import com.netease.nrtc.sdk.NRtc;
+import com.netease.nrtc.sdk.NRtcCallback;
 import com.netease.nrtc.sdk.NRtcEx;
 import com.netease.nrtc.sdk.NRtcParameters;
 
@@ -261,7 +262,7 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
         }
         chatRoomService = NIMClient.getService(ChatRoomService.class);
 
-        nrtcEx = (NRtcEx) NRtc.create(this, CommonUtil.readAppKey(), new SimpleNRtcCallback());
+        nrtcEx = (NRtcEx) NRtc.create(this, CommonUtil.readAppKey(), createNrtcCallBack());
         nrtcEx.setParameter(NRtcParameters.KEY_SESSION_MULTI_MODE, true);
         nrtcEx.setParameter(NRtcParameters.KEY_AUDIO_HIGH_QUALITY, true);
         audioUid = System.nanoTime();
@@ -273,6 +274,10 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
 
         rootView = getWindow().getDecorView();
         rootView.getViewTreeObserver().addOnGlobalLayoutListener(this);
+    }
+
+    protected NRtcCallback createNrtcCallBack() {
+        return new SimpleNRtcCallback();
     }
 
     @Override
@@ -565,8 +570,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
             return;
         }
     }
-
-
 
 
 }
