@@ -16,6 +16,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.netease.audioroom.demo.R;
+import com.netease.audioroom.demo.audio.SimpleNRtcCallback;
 import com.netease.audioroom.demo.base.BaseAudioActivity;
 import com.netease.audioroom.demo.base.IAudioLive;
 import com.netease.audioroom.demo.cache.DemoCache;
@@ -50,6 +51,8 @@ import com.netease.nimlib.sdk.chatroom.model.ChatRoomTempMuteRemoveAttachment;
 import com.netease.nimlib.sdk.chatroom.model.EnterChatRoomResultData;
 import com.netease.nimlib.sdk.msg.constant.ChatRoomQueueChangeType;
 import com.netease.nimlib.sdk.msg.model.CustomNotification;
+import com.netease.nrtc.sdk.NRtcCallback;
+import com.netease.nrtc.sdk.NRtcConstants;
 
 import org.json.JSONObject;
 
@@ -499,12 +502,24 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         } else if (view == ivPauseOrPlay) {
             playOrPauseMusic();
         } else if (view == ivNext) {
-            currentPlayIndex = (currentPlayIndex + 1) % musicPathArray.length;
-            nrtcEx.startAudioMixing(musicPathArray[currentPlayIndex], true, false, 100, 1.0f);
-            ivPauseOrPlay.setTag(musicPathArray[currentPlayIndex]);
-            ivPauseOrPlay.setSelected(true);
-            updateMusicPlayHint();
+            playNextMusic();
         }
+    }
+
+
+    private void playMusicErr() {
+        ToastHelper.showToast("伴音发现错误");
+        ivPauseOrPlay.setTag(null);
+        ivPauseOrPlay.setSelected(false);
+        updateMusicPlayHint();
+    }
+
+    private void playNextMusic() {
+        currentPlayIndex = (currentPlayIndex + 1) % musicPathArray.length;
+        nrtcEx.startAudioMixing(musicPathArray[currentPlayIndex], true, false, 0, 1.0f);
+        ivPauseOrPlay.setTag(musicPathArray[currentPlayIndex]);
+        ivPauseOrPlay.setSelected(true);
+        updateMusicPlayHint();
     }
 
     private void playOrPauseMusic() {
@@ -520,7 +535,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         }
         //之前没有设置任何音乐在播放或暂停
         else {
-            nrtcEx.startAudioMixing(musicPathArray[currentPlayIndex], true, false, 100, 1.0f);
+            nrtcEx.startAudioMixing(musicPathArray[currentPlayIndex], false, false, 0, 1.0f);
             ivPauseOrPlay.setTag(musicPathArray[currentPlayIndex]);
         }
         ivPauseOrPlay.setSelected(!isPlaying);
@@ -537,7 +552,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
 
         stringBuilder.append(isPlaying ? "播放中" : "已暂停");
         tvMusicPlayHint.setText(stringBuilder);
-        
+
     }
 
     protected void memberMuteRemove(ChatRoomTempMuteRemoveAttachment muteRemove) {
@@ -730,5 +745,27 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
             CommonUtil.copyAssetToFile(this, "music/second_song.mp3", musicRootPath, "second_song.mp3");
         }).start();
     }
+
+    @Override
+    protected NRtcCallback createNrtcCallBack() {
+
+        return new InnerNRtcCallBack();
+    }
+
+    private class InnerNRtcCallBack extends SimpleNRtcCallback {
+        @Override
+        public void onDeviceEvent(int event, String desc) {
+            super.onDeviceEvent(event, desc);
+            if (event == NRtcConstants.DeviceEvent.AUDIO_MIXING_ERROR) {
+
+                playMusicErr();
+            } else if (event == NRtcConstants.DeviceEvent.AUDIO_MIXING_FINISHED) {
+                playNextMusic();
+            }
+
+
+        }
+    }
+
 
 }
