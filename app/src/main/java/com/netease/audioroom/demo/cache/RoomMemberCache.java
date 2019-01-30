@@ -71,11 +71,9 @@ public class RoomMemberCache {
      * 成员禁言信息变更
      */
     public void muteChange(String roomId, ArrayList<String> accountList, boolean isMutex) {
-
         if (CommonUtil.isEmpty(accountList)) {
             return;
         }
-
 
         HashMap<String, ChatRoomMember> roomCache = memberCache.get(roomId);
         // 缓存中没有，拉取一波
@@ -83,7 +81,6 @@ public class RoomMemberCache {
             fetchMembers(roomId, accountList, null);
             return;
         }
-
         ArrayList<String> emptyAccount = new ArrayList<>();
         for (String account : accountList) {
             ChatRoomMember chatRoomMember = roomCache.get(account);
@@ -93,7 +90,6 @@ public class RoomMemberCache {
             }
             chatRoomMember.setMuted(isMutex);
         }
-
         // 缓存中没有，拉取一波
         if (!CommonUtil.isEmpty(emptyAccount)) {
             fetchMembers(roomId, emptyAccount, null);

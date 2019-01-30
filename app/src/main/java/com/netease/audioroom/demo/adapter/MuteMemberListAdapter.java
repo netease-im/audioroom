@@ -12,7 +12,6 @@ import android.widget.TextView;
 import com.daimajia.swipe.SwipeLayout;
 import com.daimajia.swipe.adapters.RecyclerSwipeAdapter;
 import com.netease.audioroom.demo.R;
-import com.netease.audioroom.demo.util.CommonUtil;
 import com.netease.audioroom.demo.widget.HeadImageView;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMember;
 
@@ -33,6 +32,7 @@ public class MuteMemberListAdapter extends RecyclerSwipeAdapter<MuteMemberListAd
         return list.size();
     }
 
+
     @Override
     public int getSwipeLayoutResourceId(int position) {
         return position;
@@ -45,6 +45,7 @@ public class MuteMemberListAdapter extends RecyclerSwipeAdapter<MuteMemberListAd
 
     @Override
     public void onBindViewHolder(MuteMemberViewHolder viewHolder, int position) {
+
         viewHolder.swipeLayout.setShowMode(SwipeLayout.ShowMode.LayDown);
         viewHolder.linearLayout.setOnClickListener(v -> {
                     list.remove(position);
@@ -53,7 +54,7 @@ public class MuteMemberListAdapter extends RecyclerSwipeAdapter<MuteMemberListAd
 
         );
         viewHolder.name.setText(list.get(position).getNick());
-        CommonUtil.loadImage(context, list.get(position).getAvatar(), viewHolder.headImageView);
+        viewHolder.headImageView.loadAvatar(list.get(position).getAvatar());
 
     }
 
@@ -69,7 +70,7 @@ public class MuteMemberListAdapter extends RecyclerSwipeAdapter<MuteMemberListAd
             super(itemView);
             swipeLayout = itemView.findViewById(R.id.swipeLayout);
             linearLayout = itemView.findViewById(R.id.bottom_wrapper);
-            headImageView = itemView.findViewById(R.id.memberinfo).findViewById(R.id.icon);
+            headImageView = itemView.findViewById(R.id.memberinfo).findViewById(R.id.headview);
             name = itemView.findViewById(R.id.memberinfo).findViewById(R.id.chatroom_name);
         }
     }

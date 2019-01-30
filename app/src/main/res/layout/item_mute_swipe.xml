@@ -8,7 +8,7 @@
     <!-- Bottom View Start-->
     <LinearLayout
         android:id="@+id/bottom_wrapper"
-        android:layout_width="160dp"
+        android:layout_width="100dp"
         android:layout_height="match_parent"
         android:background="@color/color_ff4f4f"
         android:orientation="vertical">
@@ -16,10 +16,11 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_gravity="center"
             android:gravity="center"
             android:text="解除禁言"
             android:textColor="@color/color_ffffff"
-            android:textSize="14sp" />
+            android:textSize="16sp" />
     </LinearLayout>
     <!-- Bottom View End-->
 

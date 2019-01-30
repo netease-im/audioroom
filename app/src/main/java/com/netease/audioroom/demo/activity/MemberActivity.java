@@ -19,6 +19,7 @@ import com.netease.audioroom.demo.cache.RoomMemberCache;
 import com.netease.audioroom.demo.util.ScreenUtil;
 import com.netease.audioroom.demo.util.ToastHelper;
 import com.netease.audioroom.demo.widget.VerticalItemDecoration;
+import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.EmptyChatRoomListCallback;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.ErrorCallback;
 import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMember;
@@ -26,11 +27,15 @@ import com.netease.nimlib.sdk.chatroom.model.ChatRoomMember;
 import java.util.ArrayList;
 import java.util.List;
 
-//选择成员
+/**
+ * 选择成员
+ */
+
 public class MemberActivity extends BaseActivity {
     public static Integer REQUESTCODE = 0x1001;
 
     public static String MEMBERACTIVITY = "memberactivity";
+
     RecyclerView recyclerView;
 
     String roomId;
@@ -81,18 +86,23 @@ public class MemberActivity extends BaseActivity {
         RoomMemberCache.getInstance().fetchMembers(roomId, 0, 10, new RequestCallback<List<ChatRoomMember>>() {
             @Override
             public void onSuccess(List<ChatRoomMember> chatRoomMembers) {
-                loadService.showSuccess();
-                adapter = new MemberListAdapter((ArrayList<ChatRoomMember>) chatRoomMembers, mContext);
-                recyclerView.setLayoutManager(new LinearLayoutManager(mContext));
-                recyclerView.setAdapter(adapter);
-                adapter.setItemClickListener((m, p) -> {
-                    //数据是使用Intent返回
-                    ChatRoomMember roomMember = chatRoomMembers.get(p);
-                    Intent intent = new Intent();
-                    intent.putExtra(MEMBERACTIVITY, (Parcelable) roomMember);
-                    setResult(RESULT_OK, intent);
-                    finish();
-                });
+                if (chatRoomMembers.size() == 0) {
+                    loadService.showCallback(EmptyChatRoomListCallback.class);
+                } else {
+                    loadService.showSuccess();
+                    adapter = new MemberListAdapter((ArrayList<ChatRoomMember>) chatRoomMembers, mContext);
+                    recyclerView.setLayoutManager(new LinearLayoutManager(mContext));
+                    recyclerView.setAdapter(adapter);
+                    adapter.setItemClickListener((m, p) -> {
+                        //数据是使用Intent返回
+                        ChatRoomMember roomMember = chatRoomMembers.get(p);
+                        Intent intent = new Intent();
+                        intent.putExtra(MEMBERACTIVITY, (Parcelable) roomMember);
+                        setResult(RESULT_OK, intent);
+                        finish();
+                    });
+                }
+
             }
 
             @Override

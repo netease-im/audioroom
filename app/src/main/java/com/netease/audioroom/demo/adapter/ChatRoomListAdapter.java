@@ -22,6 +22,8 @@ public class ChatRoomListAdapter extends BaseAdapter<DemoRoomInfo> {
         super(dataList, context);
     }
 
+
+
     @Override
     protected RecyclerView.ViewHolder onCreateBaseViewHolder(ViewGroup parent, int viewType) {
         return new ChatRoomHolder(layoutInflater.inflate(R.layout.item_chat_room_list, parent, false));

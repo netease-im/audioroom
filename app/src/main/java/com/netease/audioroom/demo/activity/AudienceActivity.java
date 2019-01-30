@@ -144,20 +144,20 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     @Override
     protected void onQueueItemClick(QueueInfo model, int position) {
         switch (model.getStatus()) {
-            case QueueInfo.INIT_STATUS:
+            case QueueInfo.STATUS_INIT:
                 //申请上麦
                 requestLink(model);
                 break;
 
-            case QueueInfo.NORMAL_STATUS:
+            case QueueInfo.STATUS_NORMAL:
                 if (TextUtils.equals(model.getQueueMember().getAccount(), DemoCache.getAccountId())) {
                     //下麦
                     removed(model);
                 }
 
                 break;
-            case QueueInfo.FORBID_STATUS:
-            case QueueInfo.BE_MUTED_AUDIO_STATUS:
+            case QueueInfo.STATUS_FORBID:
+            case QueueInfo.STATUS_BE_MUTED_AUDIO:
                 //麦位被禁止
                 TipsDialog tipsDialog = new TipsDialog();
                 tipsDialog.setTips("该麦位被主播“屏蔽语音”\n" +
@@ -165,7 +165,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 tipsDialog.show(getSupportFragmentManager(), AUDIENCEACTIVITY);
                 break;
         }
-        if (model.getStatus() != QueueInfo.INIT_STATUS) {
+        if (model.getStatus() != QueueInfo.STATUS_INIT) {
             return;
         }
         if (isRequestingLink) {
@@ -188,7 +188,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
 
     @Override
     protected void receiveNotification(CustomNotification customNotification) {
-
         if (!TextUtils.equals(customNotification.getFromAccount(), roomInfo.getCreator())) {
             return;
         }
@@ -201,11 +200,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         if (jsonObject == null) {
             return;
         }
-        int command = jsonObject.optInt(P2PNotificationHelper.COMMAND, 0);
-        if (command == P2PNotificationHelper.REJECT_LINK) {
-            linkBeRejected();
-            return;
-        }
+
 
     }
 
@@ -302,11 +297,11 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             return;
         }
         int status = queueInfo.getStatus();
-        if (status == QueueInfo.NORMAL_STATUS) {
+        if (status == QueueInfo.STATUS_NORMAL) {
             queueLinkNormal(queueInfo);
-        } else if (status == QueueInfo.BE_MUTED_AUDIO_STATUS) {
+        } else if (status == QueueInfo.STATUS_BE_MUTED_AUDIO) {
             beMutedAudio(queueInfo);
-        } else if (status == QueueInfo.INIT_STATUS || status == QueueInfo.CLOSE_STATUS) {
+        } else if (status == QueueInfo.STATUS_INIT || status == QueueInfo.STATUS_CLOSE) {
             removed(queueInfo);
         }
 
@@ -368,7 +363,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         } else if (selfQueue == null) {
             //TODO 你被主播抱麦
             ToastHelper.showToast("你被主播抱麦");
-        } else if (selfQueue.getStatus() == QueueInfo.BE_MUTED_AUDIO_STATUS) {
+        } else if (selfQueue.getStatus() == QueueInfo.STATUS_BE_MUTED_AUDIO) {
             //todo 主播解除对你的语音屏蔽
             ToastHelper.showToast("主播解除对你的语音屏蔽");
         }

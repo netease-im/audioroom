@@ -10,25 +10,25 @@ import android.widget.TextView;
 
 import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.base.BaseAdapter;
+import com.netease.audioroom.demo.model.QueueInfo;
 import com.netease.audioroom.demo.model.QueueMember;
-import com.netease.audioroom.demo.model.RequestMember;
 import com.netease.audioroom.demo.util.CommonUtil;
 import com.netease.audioroom.demo.widget.HeadImageView;
 
 import java.util.ArrayList;
 
-public class RequestlinkAdapter extends BaseAdapter<RequestMember> {
+public class RequestlinkAdapter extends BaseAdapter<QueueInfo> {
     public interface IRequestAction {
-        void refuse(RequestMember request);
+        void refuse(QueueInfo queueInfo);
 
-        void agree(RequestMember request);
+        void agree(QueueInfo queueInfo);
 
     }
 
     IRequestAction requestAction;
-    ArrayList<RequestMember> queueMemberList;
+    ArrayList<QueueInfo> queueMemberList;
 
-    public RequestlinkAdapter(ArrayList<RequestMember> queueMemberList, Context context) {
+    public RequestlinkAdapter(ArrayList<QueueInfo> queueMemberList, Context context) {
         super(queueMemberList, context);
         this.queueMemberList = queueMemberList;
     }
@@ -41,16 +41,17 @@ public class RequestlinkAdapter extends BaseAdapter<RequestMember> {
 
     @Override
     protected void onBindBaseViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        RequestMember queueMember = getItem(position);
-        if (queueMember == null) {
+        QueueInfo queueInfo = getItem(position);
+        if (queueInfo == null) {
             return;
         }
         QueueViewHolder viewHolder = (QueueViewHolder) holder;
-        QueueMember member = queueMember.getQueueMember();
+        QueueMember member = queueInfo.getQueueMember();
         CommonUtil.loadImage(context, member.getAvatar(), viewHolder.ivAvatar, R.drawable.chat_room_default_bg, 0);
-        viewHolder.tvContent.setText(member.getNick() + "\t申请麦位(" + queueMember.getIndex() + 1 + ")");
-        viewHolder.ivRefuse.setOnClickListener((v) -> requestAction.refuse(queueMember));
-        viewHolder.ivAfree.setOnClickListener((v) -> requestAction.agree(queueMember));
+        int index = queueInfo.getIndex() + 1;
+        viewHolder.tvContent.setText(member.getNick() + "\t申请麦位(" + index + ")");
+        viewHolder.ivRefuse.setOnClickListener((v) -> requestAction.refuse(queueInfo));
+        viewHolder.ivAfree.setOnClickListener((v) -> requestAction.agree(queueInfo));
     }
 
     private class QueueViewHolder extends RecyclerView.ViewHolder {

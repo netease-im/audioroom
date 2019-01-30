@@ -36,15 +36,9 @@ public class P2PNotificationHelper {
 
 
     /**
-     * 主播拒绝连麦
-     */
-    public static final int REJECT_LINK = 3;
-
-
-    /**
      * 观众取消连麦请求
      */
-    public static final int CANCEL_REQUEST_LINK = 4;
+    public static final int CANCEL_REQUEST_LINK = 3;
 
     /**
      * 请求连麦
@@ -89,27 +83,6 @@ public class P2PNotificationHelper {
             callback.onException(e);
         }
     }
-
-
-    /**
-     * 主播拒绝连麦
-     */
-    public static void rejectLink(String selfAccount, String toAccount, RequestCallback<Void> callback) {
-        CustomNotification requestLink = new CustomNotification();
-        requestLink.setSessionId(toAccount);
-        requestLink.setSessionType(SessionTypeEnum.P2P);
-        requestLink.setFromAccount(selfAccount);
-        try {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put(COMMAND, REJECT_LINK);
-            requestLink.setContent(jsonObject.toString());
-            NIMClient.getService(MsgService.class).sendCustomNotification(requestLink).setCallback(callback);
-        } catch (JSONException e) {
-            e.printStackTrace();
-            callback.onException(e);
-        }
-    }
-
 
     /**
      * 观众取消连麦请求

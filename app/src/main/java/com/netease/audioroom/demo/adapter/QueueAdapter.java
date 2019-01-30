@@ -40,50 +40,52 @@ public class QueueAdapter extends BaseAdapter<QueueInfo> {
         QueueMember queueMember = queueInfo.getQueueMember();
 
         switch (status) {
-            case QueueInfo.INIT_STATUS:
+            case QueueInfo.STATUS_INIT:
                 viewHolder.ivAvatar.setImageResource(R.color.color_525252);
                 viewHolder.ivStatusHint.setVisibility(View.GONE);
                 viewHolder.iv_user_status.setVisibility(View.VISIBLE);
                 viewHolder.iv_user_status.setImageResource(R.drawable.queue_add_member);
                 viewHolder.tvNick.setText("麦位" + (queueInfo.getIndex() + 1));
                 break;
-            case QueueInfo.LOAD_STATUS:
+            case QueueInfo.STATUS_LOAD:
                 viewHolder.iv_user_status.setVisibility(View.GONE);
                 viewHolder.ivStatusHint.setVisibility(View.GONE);
                 break;
-            case QueueInfo.NORMAL_STATUS:
+            case QueueInfo.STATUS_NORMAL:
                 viewHolder.iv_user_status.setVisibility(View.GONE);
                 viewHolder.ivStatusHint.setVisibility(View.GONE);
                 break;
-            case QueueInfo.CLOSE_STATUS:
+            case QueueInfo.STATUS_CLOSE:
                 viewHolder.iv_user_status.setVisibility(View.VISIBLE);
                 viewHolder.ivStatusHint.setVisibility(View.GONE);
                 viewHolder.iv_user_status.setImageResource(R.drawable.queue_close);
                 break;
-            case QueueInfo.FORBID_STATUS:
-            case QueueInfo.BE_MUTED_AUDIO_STATUS:
+            case QueueInfo.STATUS_FORBID:
+            case QueueInfo.STATUS_BE_MUTED_AUDIO:
+                viewHolder.iv_user_status.setVisibility(View.GONE);
                 viewHolder.iv_user_status.setVisibility(View.GONE);
                 viewHolder.ivStatusHint.setVisibility(View.VISIBLE);
                 viewHolder.ivStatusHint.setImageResource(R.drawable.audio_be_muted_status);
                 break;
-            case QueueInfo.CLOSE_SELF_AUDIO_STATUS:
+            case QueueInfo.STATUS_CLOSE_SELF_AUDIO:
                 viewHolder.iv_user_status.setVisibility(View.GONE);
                 viewHolder.ivStatusHint.setVisibility(View.VISIBLE);
                 viewHolder.ivStatusHint.setImageResource(R.drawable.close_audio_status);
                 break;
         }
-        if (queueMember != null && status == QueueInfo.LOAD_STATUS) {//请求麦位
+        if (queueMember != null && status == QueueInfo.STATUS_LOAD) {//请求麦位
             viewHolder.tvNick.setText(queueMember.getNick());
-        } else if (queueMember != null
-                && status != QueueInfo.INIT_STATUS
-                && status != QueueInfo.FORBID_STATUS
-                && status != QueueInfo.CLOSE_STATUS) {//麦上有人
-            //麦上有人
+        } else if (QueueInfo.hasOccupancy(queueInfo)) {//麦上有人
             viewHolder.ivAvatar.loadAvatar(queueMember.getAvatar());
             viewHolder.tvNick.setVisibility(View.VISIBLE);
             viewHolder.tvNick.setText(queueMember.getNick());
         } else {
             //麦上没人
+            if (status != QueueInfo.STATUS_CLOSE) {
+                viewHolder.iv_user_status.setVisibility(View.VISIBLE);
+                viewHolder.iv_user_status.setImageResource(R.drawable.queue_add_member);
+            }
+            viewHolder.ivAvatar.setImageResource(R.color.color_292929);
             viewHolder.tvNick.setText("麦位" + (queueInfo.getIndex() + 1));
         }
 
@@ -91,13 +93,11 @@ public class QueueAdapter extends BaseAdapter<QueueInfo> {
 
 
     private class QueueViewHolder extends RecyclerView.ViewHolder {
-
         ImageView ivDefault;
         HeadImageView ivAvatar;
         ImageView ivStatusHint;
         ImageView iv_user_status;
         TextView tvNick;
-
 
         public QueueViewHolder(@NonNull View itemView) {
             super(itemView);

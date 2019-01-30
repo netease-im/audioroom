@@ -15,7 +15,7 @@ import android.widget.TextView;
 
 import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.adapter.RequestlinkAdapter;
-import com.netease.audioroom.demo.model.RequestMember;
+import com.netease.audioroom.demo.model.QueueInfo;
 import com.netease.audioroom.demo.widget.VerticalItemDecoration;
 
 import java.util.ArrayList;
@@ -26,15 +26,16 @@ public class RequestLinkDialog extends DialogFragment {
     RecyclerView requesterRecyclerView;
     RequestlinkAdapter adapter;
 
-    ArrayList<RequestMember> queueMemberList;
+    ArrayList<QueueInfo> queueMemberList;
     View view;
 
     TextView title;
+    TextView dissmiss;
 
     public interface IRequestAction {
-        void refuse(RequestMember request);
+        void refuse(QueueInfo queueInfo);
 
-        void agree(RequestMember request);
+        void agree(QueueInfo queueInfo);
 
     }
 
@@ -60,7 +61,7 @@ public class RequestLinkDialog extends DialogFragment {
         view = inflater.inflate(R.layout.dialog_requestlink, container, false);
         // 设置宽度为屏宽、靠近屏幕底部。
         final Window window = getDialog().getWindow();
-        window.setBackgroundDrawableResource(R.color.color_e61D1D24);
+        window.setBackgroundDrawableResource(R.color.color_00000000);
         window.getDecorView().setPadding(20, 0, 20, 0);
         WindowManager.LayoutParams wlp = window.getAttributes();
         wlp.gravity = Gravity.TOP;
@@ -83,14 +84,14 @@ public class RequestLinkDialog extends DialogFragment {
         requesterRecyclerView = view.findViewById(R.id.requesterRecyclerView);
         requesterRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         requesterRecyclerView.addItemDecoration
-                (new VerticalItemDecoration(getResources().getColor(R.color.color_1a1a23), 1));
-
+                (new VerticalItemDecoration(getResources().getColor(R.color.color_000000), 1));
         title = view.findViewById(R.id.title);
+        dissmiss = view.findViewById(R.id.dissmiss);
         buidHeadView();
     }
 
     private void buidHeadView() {
-        title.setText("申请上麦(" + queueMemberList.size() + ")");
+        title.setText("申请上麦 (" + queueMemberList.size() + ") ");
         adapter = new RequestlinkAdapter(queueMemberList, getActivity());
         requesterRecyclerView.setAdapter(adapter);
 
@@ -99,13 +100,20 @@ public class RequestLinkDialog extends DialogFragment {
     public void initListener() {
         adapter.setRequestAction(new RequestlinkAdapter.IRequestAction() {
             @Override
-            public void refuse(RequestMember request) {
-                requestAction.refuse(request);
+            public void refuse(QueueInfo queueInfo) {
+                requestAction.refuse(queueInfo);
             }
 
             @Override
-            public void agree(RequestMember request) {
-                requestAction.agree(request);
+            public void agree(QueueInfo queueInfo) {
+                requestAction.agree(queueInfo);
+            }
+        });
+
+        dissmiss.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dismiss();
             }
         });
     }

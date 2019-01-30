@@ -6,11 +6,11 @@
 
     <TextView
         android:id="@+id/semicircleView"
-        android:layout_width="@dimen/dimen_50"
-        android:layout_height="@dimen/dimen_25"
+        android:layout_width="@dimen/dimen_65"
+        android:layout_height="@dimen/dimen_35"
         android:layout_gravity="center_horizontal"
         android:background="@drawable/semicircle"
-        android:gravity="center"
+        android:gravity="center_horizontal"
         android:textColor="@color/color_ffffff"
         android:textSize="16sp"
         tools:text="1" />
