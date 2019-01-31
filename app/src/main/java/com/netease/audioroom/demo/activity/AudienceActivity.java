@@ -148,7 +148,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 //申请上麦
                 requestLink(model);
                 break;
-
             case QueueInfo.STATUS_NORMAL:
                 if (TextUtils.equals(model.getQueueMember().getAccount(), DemoCache.getAccountId())) {
                     //下麦

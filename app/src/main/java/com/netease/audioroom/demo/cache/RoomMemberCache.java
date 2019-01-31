@@ -7,6 +7,7 @@ import com.netease.nimlib.sdk.NIMClient;
 import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.chatroom.ChatRoomService;
 import com.netease.nimlib.sdk.chatroom.constant.MemberQueryType;
+import com.netease.nimlib.sdk.chatroom.constant.MemberType;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMember;
 
 import java.util.ArrayList;
@@ -117,32 +118,33 @@ public class RoomMemberCache {
      */
     public void fetchMembers(String roomId, long time, int limit, RequestCallback<List<ChatRoomMember>> callback) {
 
-        NIMClient.getService(ChatRoomService.class).fetchRoomMembers(roomId, MemberQueryType.GUEST, time, limit).setCallback(new RequestCallback<List<ChatRoomMember>>() {
-            @Override
-            public void onSuccess(List<ChatRoomMember> chatRoomMembers) {
-                for (ChatRoomMember member : chatRoomMembers) {
-                    addOrUpdateMember(roomId, member);
-                }
-                if (callback != null) {
-                    callback.onSuccess(chatRoomMembers);
-                }
+        NIMClient.getService(ChatRoomService.class).fetchRoomMembers(roomId, MemberQueryType.GUEST, time, limit)
+                .setCallback(new RequestCallback<List<ChatRoomMember>>() {
+                    @Override
+                    public void onSuccess(List<ChatRoomMember> chatRoomMembers) {
+                        for (ChatRoomMember member : chatRoomMembers) {
+                            addOrUpdateMember(roomId, member);
+                        }
+                        if (callback != null) {
+                            callback.onSuccess(chatRoomMembers);
+                        }
 
-            }
+                    }
 
-            @Override
-            public void onFailed(int code) {
-                if (callback != null) {
-                    callback.onFailed(code);
-                }
-            }
+                    @Override
+                    public void onFailed(int code) {
+                        if (callback != null) {
+                            callback.onFailed(code);
+                        }
+                    }
 
-            @Override
-            public void onException(Throwable throwable) {
-                if (callback != null) {
-                    callback.onException(throwable);
-                }
-            }
-        });
+                    @Override
+                    public void onException(Throwable throwable) {
+                        if (callback != null) {
+                            callback.onException(throwable);
+                        }
+                    }
+                });
 
     }
 

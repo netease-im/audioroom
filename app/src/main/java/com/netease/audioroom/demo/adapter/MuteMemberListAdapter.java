@@ -22,6 +22,12 @@ public class MuteMemberListAdapter extends RecyclerSwipeAdapter<MuteMemberListAd
     private Context context;
     private List<ChatRoomMember> list;
 
+    public interface IRemoveMute {
+        void remove(int position);
+    }
+
+    IRemoveMute removeMute;
+
     public MuteMemberListAdapter(Context context, List<ChatRoomMember> list) {
         this.context = context;
         this.list = list;
@@ -45,21 +51,18 @@ public class MuteMemberListAdapter extends RecyclerSwipeAdapter<MuteMemberListAd
 
     @Override
     public void onBindViewHolder(MuteMemberViewHolder viewHolder, int position) {
-
         viewHolder.swipeLayout.setShowMode(SwipeLayout.ShowMode.LayDown);
         viewHolder.linearLayout.setOnClickListener(v -> {
-                    list.remove(position);
-                    notifyDataSetChanged();
+                    removeMute.remove(position);
+//                    list.remove(position);
+//                    notifyDataSetChanged();
                 }
-
         );
         viewHolder.name.setText(list.get(position).getNick());
         viewHolder.headImageView.loadAvatar(list.get(position).getAvatar());
-
     }
 
     public class MuteMemberViewHolder extends RecyclerView.ViewHolder {
-
         SwipeLayout swipeLayout;
         LinearLayout linearLayout;
 
@@ -73,6 +76,10 @@ public class MuteMemberListAdapter extends RecyclerSwipeAdapter<MuteMemberListAd
             headImageView = itemView.findViewById(R.id.memberinfo).findViewById(R.id.headview);
             name = itemView.findViewById(R.id.memberinfo).findViewById(R.id.chatroom_name);
         }
+    }
+
+    public void setRemoveMute(IRemoveMute removeMute) {
+        this.removeMute = removeMute;
     }
 }
 

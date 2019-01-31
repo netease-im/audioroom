@@ -13,10 +13,8 @@ import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.adapter.MuteMemberListAdapter;
 import com.netease.audioroom.demo.base.BaseActivity;
 import com.netease.audioroom.demo.cache.RoomMemberCache;
-import com.netease.audioroom.demo.util.ScreenUtil;
 import com.netease.audioroom.demo.util.ToastHelper;
 import com.netease.audioroom.demo.widget.VerticalItemDecoration;
-import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.EmptyMuteRoomListCallback;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.ErrorCallback;
 import com.netease.nimlib.sdk.NIMClient;
 import com.netease.nimlib.sdk.RequestCallback;
@@ -42,6 +40,7 @@ public class MuteMemberListActivity extends BaseActivity {
     List<ChatRoomMember> muteList;
     LinearLayout empty_view;
 
+    int muteTime = 30 * 24 * 60 * 60;
 
     public static void start(Context context, String roomId) {
         Intent intent = new Intent(context, MuteMemberListActivity.class);
@@ -72,6 +71,8 @@ public class MuteMemberListActivity extends BaseActivity {
         }
         addMuteMember.setOnClickListener(v -> addMuteMember());
         muteAllMember.setOnClickListener(v -> muteAllMember());
+        recyclerView.addOnScrollListener(onScrollListener);
+
 
     }
 
@@ -88,31 +89,35 @@ public class MuteMemberListActivity extends BaseActivity {
                 empty_view.setVisibility(View.GONE);
                 recyclerView.setVisibility(View.VISIBLE);
                 MemberOption option = new MemberOption(roomId, muteList.get(0).getAccount());
-                NIMClient.getService(ChatRoomService.class).markChatRoomMutedList(true, option)
-                        .setCallback(new RequestCallback<ChatRoomMember>() {
+                //临时禁言30天
+                NIMClient.getService(ChatRoomService.class).markChatRoomTempMute(true, muteTime, option)
+                        .setCallback(new RequestCallback<Void>() {
                             @Override
-                            public void onSuccess(ChatRoomMember param) {
+                            public void onSuccess(Void param) {
+                                ToastHelper.showToast("禁言成功" + "\t 解禁成员" + option.getAccount());
                                 ToastHelper.showToast("禁言成功");
                                 // 成功
                                 ArrayList<String> accountList = new ArrayList<>();
                                 for (String account : accountList) {
                                     accountList.add(account);
                                 }
+                                adapter = new MuteMemberListAdapter(mContext, muteList);
+                                recyclerView.setAdapter(adapter);
+                                adapter.setRemoveMute((p) -> removeMuteMember(p, muteList.get(p)));
                             }
 
                             @Override
                             public void onFailed(int code) {
                                 // 失败
+                                ToastHelper.showToast("禁言失败" + code);
                             }
 
                             @Override
                             public void onException(Throwable exception) {
                                 // 错误
+                                ToastHelper.showToast("禁言异常" + exception.getMessage());
                             }
                         });
-
-                adapter = new MuteMemberListAdapter(mContext, muteList);
-                recyclerView.setAdapter(adapter);
 
 
             }
@@ -121,23 +126,23 @@ public class MuteMemberListActivity extends BaseActivity {
     }
 
 
+    //获取临时禁言成员列表
     private void getMuteList() {
         RoomMemberCache.getInstance().fetchMembers(roomId, 0, 100, new RequestCallback<List<ChatRoomMember>>() {
             @Override
             public void onSuccess(List<ChatRoomMember> chatRoomMembers) {
                 loadService.showSuccess();
                 for (ChatRoomMember c : chatRoomMembers) {
-                    if (c.isMuted()) muteList.add(c);
+                    if (c.isTempMuted()) muteList.add(c);
                 }
                 if (muteList.size() != 0) {
                     empty_view.setVisibility(View.GONE);
                     adapter = new MuteMemberListAdapter(mContext, muteList);
                     recyclerView.setAdapter(adapter);
-
+                    adapter.setRemoveMute((p) -> removeMuteMember(p, muteList.get(p)));
                 } else {
                     recyclerView.setVisibility(View.GONE);
                     empty_view.setVisibility(View.VISIBLE);
-
                 }
 
             }
@@ -154,6 +159,20 @@ public class MuteMemberListActivity extends BaseActivity {
         });
     }
 
+    RecyclerView.OnScrollListener onScrollListener = new RecyclerView.OnScrollListener() {
+        @Override
+        public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+            super.onScrollStateChanged(recyclerView, newState);
+
+        }
+
+        @Override
+        public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+            super.onScrolled(recyclerView, dx, dy);
+
+        }
+    };
+
     //添加禁言成员
     private void addMuteMember() {
         MemberActivity.start(this, roomId);
@@ -161,7 +180,43 @@ public class MuteMemberListActivity extends BaseActivity {
 
     //禁言所有成员
     private void muteAllMember() {
+    }
 
+    //解除禁言
+    private void removeMuteMember(int p, ChatRoomMember member) {
+        MemberOption option = new MemberOption(roomId, member.getAccount());
+        NIMClient.getService(ChatRoomService.class).markChatRoomTempMute(false, muteTime, option)
+                .setCallback(new RequestCallback<Void>() {
+                    @Override
+                    public void onSuccess(Void param) {
+                        ToastHelper.showToast("解禁成功" + "\t 解禁成员" + member.getAccount());
+                        muteList.remove(p);
+                        if (muteList.size() == 0) {
+                            adapter.notifyDataSetChanged();
+                            empty_view.setVisibility(View.VISIBLE);
+                        } else {
+                            adapter.notifyDataSetChanged();
+                        }
 
+                    }
+
+                    @Override
+                    public void onFailed(int code) {
+                        ToastHelper.showToast("解禁失败" + code);
+                        // 失败
+                    }
+
+                    @Override
+                    public void onException(Throwable exception) {
+                        // 错误
+                        ToastHelper.showToast("解禁异常" + exception.getMessage());
+                    }
+                });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        recyclerView.removeOnScrollListener(onScrollListener);
     }
 }
