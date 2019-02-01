@@ -6,8 +6,6 @@ import com.netease.audioroom.demo.model.QueueInfo;
  * 观众行为
  */
 public interface IAudience {
-
-
     /**
      * 进入IM 聊天室
      *

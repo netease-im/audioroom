@@ -41,6 +41,15 @@ public class P2PNotificationHelper {
     public static final int CANCEL_REQUEST_LINK = 3;
 
     /**
+     * 禁言成员
+     */
+    public static final int MUTE = 4;
+    /**
+     * 禁言所有成员
+     */
+    public static final int MUTE_ALL = 5;
+
+    /**
      * 请求连麦
      */
     public static void requestLink(QueueInfo model, AccountInfo selfInfo, String creator, RequestCallback<Void> callback) {
@@ -103,4 +112,5 @@ public class P2PNotificationHelper {
             callback.onException(e);
         }
     }
+    
 }

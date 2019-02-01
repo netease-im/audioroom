@@ -71,11 +71,10 @@ public class RoomMemberCache {
     /**
      * 成员禁言信息变更
      */
-    public void muteChange(String roomId, ArrayList<String> accountList, boolean isMutex) {
+    public void muteChange(String roomId, ArrayList<String> accountList, boolean isTeamMutex) {
         if (CommonUtil.isEmpty(accountList)) {
             return;
         }
-
         HashMap<String, ChatRoomMember> roomCache = memberCache.get(roomId);
         // 缓存中没有，拉取一波
         if (roomCache == null) {
@@ -89,7 +88,7 @@ public class RoomMemberCache {
                 emptyAccount.add(account);
                 continue;
             }
-            chatRoomMember.setMuted(isMutex);
+            chatRoomMember.setMuted(isTeamMutex);
         }
         // 缓存中没有，拉取一波
         if (!CommonUtil.isEmpty(emptyAccount)) {

@@ -52,6 +52,7 @@ import com.netease.nimlib.sdk.msg.constant.ChatRoomQueueChangeType;
 import com.netease.nimlib.sdk.msg.model.CustomNotification;
 import com.netease.nrtc.sdk.NRtcCallback;
 import com.netease.nrtc.sdk.NRtcConstants;
+import com.netease.nrtc.sdk.NRtcParameters;
 
 import org.json.JSONObject;
 
@@ -541,6 +542,9 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
             MuteMemberListActivity.start(mContext, roomInfo.getRoomId());
 
         } else if (view == ivAudioQuality) {
+            //TODO 音频清晰度切换
+
+            nrtcEx.setParameter(NRtcParameters.KEY_AUDIO_HIGH_QUALITY, true);
 
         } else if (view == ivSelfAudioSwitch) {
             boolean mutex = ivSelfAudioSwitch.isSelected();
@@ -552,6 +556,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
             ivRoomAudioSwitch.setSelected(!close);
             muteRoomAudio(!close);
         } else if (view == ivExistRoom) {
+            //主播退出房间
             release();
             ChatRoomMessage closeRoomMessage = ChatRoomMessageBuilder.createChatRoomCustomMessage(roomInfo.getRoomId(), new CloseRoomAttach());
             chatRoomService.sendMessage(closeRoomMessage, false).setCallback(new RequestCallbackWrapper<Void>() {
@@ -672,7 +677,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
     //邀请上麦
     @Override
     public void invitedLink(QueueInfo queueInfo) {
-
         queueInfo.setStatus(QueueInfo.STATUS_NORMAL);
         queueInfo.setReason(QueueInfo.Reason.inviteByHost);
         chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString()).setCallback(new RequestCallback<Void>() {

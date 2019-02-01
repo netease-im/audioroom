@@ -36,6 +36,7 @@ public class ChatRoomHttpClient {
     private static final String API_GET_USER = "user/get";
     private static final String API_CREATE_ROOM = "room/create";
     private static final String API_CLOSE_ROOM = "room/dissolve";
+    private static final String API_ALL_MUTE = "room/mute";
 
 
     private static final String HEADER_KEY_CONTENT_TYPE = "Content-Type";
@@ -64,6 +65,7 @@ public class ChatRoomHttpClient {
     private static final String REQUEST_OFFSET = "offset";
     private static final String REQUEST_SID = "sid";
     private static final String REQUEST_ROOM_NAME = "roomName"; // 直播间名字
+    private static final String REQUEST_IS_MUTE = "mute"; // 直播间名字
 
 
     private boolean isTest = true;
@@ -253,15 +255,73 @@ public class ChatRoomHttpClient {
         });
     }
 
-
+    /**
+     * 解散房间
+     *
+     * @param account
+     * @param roomID
+     * @param callback
+     */
     public void closeRoom(String account, String roomID, final ChatRoomHttpCallback callback) {
-      
+
         String url = getServer() + API_CLOSE_ROOM;
         Map<String, String> headers = new HashMap<>(2);
         headers.put(HEADER_KEY_CONTENT_TYPE, "application/x-www-form-urlencoded;charset=utf-8");
 
         String bodyString = REQUEST_SID + "=" + account + "&" +
                 RESULT_KEY_ROOM_ID + "=" + roomID;
+        NimHttpClient.getInstance().execute(url, headers, bodyString, new NimHttpClient.NimHttpCallback() {
+            @Override
+            public void onResponse(String response, int code, String errorMsg) {
+
+                if (callback == null) {
+                    return;
+                }
+                if (code != 0) {
+                    Log.e(TAG, "closeRoom failed : code = " + code + ", errorMsg = " + errorMsg);
+                    callback.onFailed(code, errorMsg);
+                    return;
+                }
+                Log.i(TAG, "closeRoom  : response = " + response);
+                try {
+                    JSONObject res = new JSONObject(response);
+                    int resCode = res.optInt(RESULT_KEY_RES);
+                    errorMsg = res.optString(RESULT_KEY_MSG, null);
+
+                    if (resCode == RESULT_CODE_SUCCESS) {
+                        callback.onSuccess(null);
+                        return;
+                    }
+
+                    Log.e(TAG, "closeRoom failed : code = " + code);
+                    callback.onFailed(resCode, errorMsg);
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    callback.onFailed(-1, e.getMessage());
+                }
+
+            }
+        });
+    }
+
+
+    /**
+     * 禁言所有成员节目
+     *
+     * @param account
+     * @param roomID
+     * @param callback
+     */
+    public void muteAll(String account, String roomID, boolean mute, final ChatRoomHttpCallback callback) {
+
+        String url = getServer() + API_ALL_MUTE;
+        Map<String, String> headers = new HashMap<>(3);
+        headers.put(HEADER_KEY_CONTENT_TYPE, "application/x-www-form-urlencoded;charset=utf-8");
+
+        String bodyString = REQUEST_SID + "=" + account + "&" +
+                RESULT_KEY_ROOM_ID + "=" + roomID + "&" +
+                REQUEST_IS_MUTE + "=" + mute;
         NimHttpClient.getInstance().execute(url, headers, bodyString, new NimHttpClient.NimHttpCallback() {
             @Override
             public void onResponse(String response, int code, String errorMsg) {

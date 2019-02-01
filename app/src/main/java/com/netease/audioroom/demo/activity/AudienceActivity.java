@@ -159,8 +159,9 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             case QueueInfo.STATUS_BE_MUTED_AUDIO:
                 //麦位被禁止
                 TipsDialog tipsDialog = new TipsDialog();
-                tipsDialog.setTips("该麦位被主播“屏蔽语音”\n" +
-                        "现在您已无法进行语音互动");
+                Bundle bundle = new Bundle();
+                bundle.putString(TipsDialog.TIPSDIALOG, "该麦位被主播“屏蔽语音”\n现在您已无法进行语音互动");
+                tipsDialog.setArguments(bundle);
                 tipsDialog.show(getSupportFragmentManager(), AUDIENCEACTIVITY);
                 break;
         }
@@ -227,7 +228,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         P2PNotificationHelper.requestLink(model, DemoCache.getAccountInfo(), roomInfo.getCreator(), new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
-
                 isRequestingLink = true;
                 topTipsDialog = new TopTipsDialog();
                 Bundle bundle = new Bundle();
@@ -336,9 +336,11 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     public void linkBeRejected() {
         isRequestingLink = false;
         ToastHelper.showToast("主播拒绝了你的连麦请求");
-        TipsDialog dialog = new TipsDialog();
-        dialog.setTips("您的申请已被拒绝");
-        dialog.show(getSupportFragmentManager(), "TipsDialog");
+        TipsDialog tipsDialog = new TipsDialog();
+        Bundle bundle = new Bundle();
+        bundle.putString(TipsDialog.TIPSDIALOG, "您的申请已被拒绝");
+        tipsDialog.setArguments(bundle);
+        tipsDialog.show(getSupportFragmentManager(), "TipsDialog");
     }
 
     @Override
@@ -485,13 +487,37 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         MsgAttachment msgAttachment = message.getAttachment();
         if (msgAttachment != null && msgAttachment instanceof CloseRoomAttach) {
             release();
-            ToastHelper.showToast("主播关闭了房间");
-            finish();
-            return;
-
+            TipsDialog tipsDialog = new TipsDialog();
+            Bundle bundle = new Bundle();
+            bundle.putString(TipsDialog.TIPSDIALOG, "该房间已被主播解散");
+            tipsDialog.setArguments(bundle);
+            tipsDialog.show(getSupportFragmentManager(), "TipsDialog");
+            tipsDialog.setClickListener(() -> {
+                finish();
+                tipsDialog.dismiss();
+            });
         }
+    }
 
+    @Override
+    protected void mute() {
+        super.mute();
+        edtInput.setHint("您已被禁言");
+        edtInput.setFocusable(false);
+        edtInput.setFocusableInTouchMode(false);
+        sendButton.setClickable(false);
+        ToastHelper.showToast("您已被禁言");
+    }
 
+    @Override
+    protected void cancelMute() {
+        super.cancelMute();
+        edtInput.setHint("唠两句~");
+        edtInput.setFocusableInTouchMode(true);
+        edtInput.setFocusable(true);
+        edtInput.requestFocus();
+        sendButton.setClickable(true);
+        ToastHelper.showToast("您的禁言被解除");
     }
 
     private void bottomButtonAction(BottomMenuDialog dialog, QueueInfo queueInfo, String s) {

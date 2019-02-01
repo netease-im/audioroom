@@ -12,10 +12,18 @@ import android.widget.TextView;
 import com.netease.audioroom.demo.R;
 
 public class TipsDialog extends DialogFragment {
+    public final static String TIPSDIALOG = "TipsDialog";
     View mConentView;
 
-    TextView content;
-    TextView tips;
+    TextView tvContent;
+    TextView tvTips;
+    String content;
+
+    public interface IClickListener {
+        void onClick();
+    }
+
+    IClickListener clickListener;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -28,6 +36,7 @@ public class TipsDialog extends DialogFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
         getDialog().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        content = getArguments().getString(TIPSDIALOG);
         mConentView = inflater.inflate(R.layout.dialog_tips, container, false);
         return mConentView;
     }
@@ -40,16 +49,16 @@ public class TipsDialog extends DialogFragment {
     }
 
     private void initView() {
-        content = mConentView.findViewById(R.id.content);
-        tips = mConentView.findViewById(R.id.tips);
+        tvContent = mConentView.findViewById(R.id.content);
+        tvTips = mConentView.findViewById(R.id.tips);
+        tvContent.setText(content);
     }
 
     private void initListener() {
-        tips.setOnClickListener(v -> dismiss());
+        tvTips.setOnClickListener(v -> clickListener.onClick());
     }
 
-    public void setTips(String s) {
-        tips.setText(s);
+    public void setClickListener(IClickListener clickListener) {
+        this.clickListener = clickListener;
     }
-
 }

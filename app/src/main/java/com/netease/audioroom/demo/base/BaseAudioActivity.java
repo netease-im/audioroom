@@ -85,7 +85,8 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
     protected ImageView ivCancelLink;
     protected ImageView ivExistRoom;
 
-    private EditText edtInput;
+    protected EditText edtInput;
+    protected TextView sendButton;
 
     //自己的麦位，只有观众有
     protected QueueInfo selfQueue;
@@ -177,6 +178,7 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
                             logInfo.append("成员被禁言：nick list =  ").append(addMuteMember.getTargetNicks()).
                                     append(" , account list = ").append(addMuteMember.getTargets());
                             memberMuteAdd(addMuteMember);
+                            mute();
                             break;
 
                         //成员被解除禁言
@@ -184,6 +186,7 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
                             ChatRoomTempMuteRemoveAttachment muteRemove = (ChatRoomTempMuteRemoveAttachment) message.getAttachment();
                             logInfo.append("成员被解除禁言：nick list =  ").append(muteRemove.getTargetNicks()).
                                     append(" , account list = ").append(muteRemove.getTargets());
+                            cancelMute();
                             memberMuteRemove(muteRemove);
                             break;
                         //队列变更
@@ -220,6 +223,14 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
     }
 
     protected void memberMuteAdd(ChatRoomTempMuteAddAttachment addMuteMember) {
+    }
+
+    protected void mute() {
+
+    }
+
+    protected void cancelMute() {
+
     }
 
     protected void memberExit(ChatRoomQueueChangeAttachment memberExit) {
@@ -260,15 +271,13 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
         chatRoomService = NIMClient.getService(ChatRoomService.class);
 
         nrtcEx = (NRtcEx) NRtc.create(this, CommonUtil.readAppKey(), createNrtcCallBack());
-        nrtcEx.setParameter(NRtcParameters.KEY_SESSION_MULTI_MODE, true);
-        nrtcEx.setParameter(NRtcParameters.KEY_AUDIO_HIGH_QUALITY, true);
+        nrtcEx.setParameter(NRtcParameters.KEY_SESSION_MULTI_MODE, true);//多人会话
+        nrtcEx.setParameter(NRtcParameters.KEY_AUDIO_HIGH_QUALITY, true);//高清晰度
         audioUid = System.nanoTime();
         enterChatRoom(roomInfo.getRoomId());
         findBaseView();
         setupBaseViewInner();
         setupBaseView();
-
-
         rootView = getWindow().getDecorView();
         rootView.getViewTreeObserver().addOnGlobalLayoutListener(this);
     }
@@ -309,7 +318,8 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
         rcyChatMsgList = baseAudioView.findViewById(R.id.rcy_chat_message_list);
 
         edtInput = baseAudioView.findViewById(R.id.edt_input_text);
-        baseAudioView.findViewById(R.id.tv_send_text).setOnClickListener(new View.OnClickListener() {
+        sendButton = baseAudioView.findViewById(R.id.tv_send_text);
+        sendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 sendTextMessage();
@@ -551,9 +561,7 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
 
     @Override
     public void onGlobalLayout() {
-
         int preHeight = rootViewVisibleHeight;
-
         //获取当前根视图在屏幕上显示的大小
         Rect r = new Rect();
         rootView.getWindowVisibleDisplayFrame(r);

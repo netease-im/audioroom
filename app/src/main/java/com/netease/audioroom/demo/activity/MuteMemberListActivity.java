@@ -12,7 +12,9 @@ import android.widget.TextView;
 import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.adapter.MuteMemberListAdapter;
 import com.netease.audioroom.demo.base.BaseActivity;
+import com.netease.audioroom.demo.cache.DemoCache;
 import com.netease.audioroom.demo.cache.RoomMemberCache;
+import com.netease.audioroom.demo.http.ChatRoomHttpClient;
 import com.netease.audioroom.demo.util.ToastHelper;
 import com.netease.audioroom.demo.widget.VerticalItemDecoration;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.ErrorCallback;
@@ -95,7 +97,6 @@ public class MuteMemberListActivity extends BaseActivity {
                             @Override
                             public void onSuccess(Void param) {
                                 ToastHelper.showToast("禁言成功" + "\t 解禁成员" + option.getAccount());
-                                ToastHelper.showToast("禁言成功");
                                 // 成功
                                 ArrayList<String> accountList = new ArrayList<>();
                                 for (String account : accountList) {
@@ -118,8 +119,6 @@ public class MuteMemberListActivity extends BaseActivity {
                                 ToastHelper.showToast("禁言异常" + exception.getMessage());
                             }
                         });
-
-
             }
 
         }
@@ -180,12 +179,25 @@ public class MuteMemberListActivity extends BaseActivity {
 
     //禁言所有成员
     private void muteAllMember() {
+        ChatRoomHttpClient.getInstance().muteAll(DemoCache.getAccountId(), roomId, true, new ChatRoomHttpClient.ChatRoomHttpCallback() {
+            @Override
+            public void onSuccess(Object o) {
+                //TODO 全体禁言
+                ToastHelper.showToast("全体禁言Success");
+            }
+
+            @Override
+            public void onFailed(int code, String errorMsg) {
+                ToastHelper.showToast("全体失败+" + errorMsg);
+
+            }
+        });
     }
 
     //解除禁言
     private void removeMuteMember(int p, ChatRoomMember member) {
         MemberOption option = new MemberOption(roomId, member.getAccount());
-        NIMClient.getService(ChatRoomService.class).markChatRoomTempMute(false, muteTime, option)
+        NIMClient.getService(ChatRoomService.class).markChatRoomTempMute(true, 0, option)
                 .setCallback(new RequestCallback<Void>() {
                     @Override
                     public void onSuccess(Void param) {
@@ -197,7 +209,6 @@ public class MuteMemberListActivity extends BaseActivity {
                         } else {
                             adapter.notifyDataSetChanged();
                         }
-
                     }
 
                     @Override
