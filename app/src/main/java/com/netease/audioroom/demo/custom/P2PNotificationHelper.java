@@ -76,7 +76,6 @@ public class P2PNotificationHelper {
      * 主动下麦
      */
     public static void cancelLink(int queueIndex, String selfAccount, String creator, RequestCallback<Void> callback) {
-
         CustomNotification requestLink = new CustomNotification();
         requestLink.setSessionId(creator);
         requestLink.setSessionType(SessionTypeEnum.P2P);

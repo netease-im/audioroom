@@ -3,6 +3,7 @@ package com.netease.audioroom.demo.dialog;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -36,7 +37,10 @@ public class TipsDialog extends DialogFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
         getDialog().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
-        content = getArguments().getString(TIPSDIALOG);
+        if (getArguments() != null) {
+            content = getArguments().getString(TIPSDIALOG);
+        }
+
         mConentView = inflater.inflate(R.layout.dialog_tips, container, false);
         return mConentView;
     }
@@ -51,7 +55,8 @@ public class TipsDialog extends DialogFragment {
     private void initView() {
         tvContent = mConentView.findViewById(R.id.content);
         tvTips = mConentView.findViewById(R.id.tips);
-        tvContent.setText(content);
+        if (TextUtils.isEmpty(content))
+            tvContent.setText(content);
     }
 
     private void initListener() {
