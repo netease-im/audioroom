@@ -84,9 +84,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
 
     @Override
     protected void initView() {
-
     }
-
 
     @Override
     protected void enterRoomSuccess(EnterChatRoomResultData resultData) {

@@ -263,7 +263,6 @@ public class ChatRoomHttpClient {
      * @param callback
      */
     public void closeRoom(String account, String roomID, final ChatRoomHttpCallback callback) {
-
         String url = getServer() + API_CLOSE_ROOM;
         Map<String, String> headers = new HashMap<>(2);
         headers.put(HEADER_KEY_CONTENT_TYPE, "application/x-www-form-urlencoded;charset=utf-8");
@@ -313,15 +312,17 @@ public class ChatRoomHttpClient {
      * @param roomID
      * @param callback
      */
-    public void muteAll(String account, String roomID, boolean mute, final ChatRoomHttpCallback callback) {
+    public void muteAll(String account, String roomID, boolean mute, boolean needNotify, boolean notifyExt, final ChatRoomHttpCallback callback) {
 
         String url = getServer() + API_ALL_MUTE;
-        Map<String, String> headers = new HashMap<>(3);
+        Map<String, String> headers = new HashMap<>(5);
         headers.put(HEADER_KEY_CONTENT_TYPE, "application/x-www-form-urlencoded;charset=utf-8");
 
         String bodyString = REQUEST_SID + "=" + account + "&" +
                 RESULT_KEY_ROOM_ID + "=" + roomID + "&" +
-                REQUEST_IS_MUTE + "=" + mute;
+                REQUEST_IS_MUTE + "=" + mute + "&" +
+                "needNotify" + "=" + needNotify +"&"+
+                "notifyExt" + "=" + notifyExt;
         NimHttpClient.getInstance().execute(url, headers, bodyString, new NimHttpClient.NimHttpCallback() {
             @Override
             public void onResponse(String response, int code, String errorMsg) {

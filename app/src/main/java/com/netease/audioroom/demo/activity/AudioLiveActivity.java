@@ -539,31 +539,47 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
             //禁言
             MuteMemberListActivity.start(mContext, roomInfo.getRoomId());
 
-        }
-//        else if (view == ivAudioQuality) {
-//            //TODO 音频清晰度切换
-//
-//        }
-        else if (view == ivSelfAudioSwitch) {
+        } else if (view == ivSelfAudioSwitch) {
             boolean mutex = ivSelfAudioSwitch.isSelected();
             ivSelfAudioSwitch.setSelected(!mutex);
             muteSelfAudio(!mutex);
+            if (mutex) {
+                ToastHelper.showToast("话筒已开启");
+            } else {
+                ToastHelper.showToast("话筒已关闭");
+            }
 
         } else if (view == ivRoomAudioSwitch) {
             boolean close = ivRoomAudioSwitch.isSelected();
             ivRoomAudioSwitch.setSelected(!close);
             muteRoomAudio(!close);
+            if (close) {
+                ToastHelper.showToast("已关闭“聊天室声音”");
+            } else {
+                ToastHelper.showToast("已打开“聊天室声音”");
+            }
         } else if (view == ivExistRoom) {
-            //主播退出房间
-            release();
-            ChatRoomMessage closeRoomMessage = ChatRoomMessageBuilder.createChatRoomCustomMessage(roomInfo.getRoomId(), new CloseRoomAttach());
-            chatRoomService.sendMessage(closeRoomMessage, false).setCallback(new RequestCallbackWrapper<Void>() {
-                @Override
-                public void onResult(int i, Void aVoid, Throwable throwable) {
-                    ChatRoomHttpClient.getInstance().closeRoom(DemoCache.getAccountId(), roomInfo.getRoomId(), null);
+            BottomMenuDialog bottomMenuDialog = new BottomMenuDialog();
+            Bundle bundle1 = new Bundle();
+            ArrayList<String> mune = new ArrayList<>();
+            mune.add("<font color=\"#ff4f4f\">确认取消申请上麦</color>");
+            mune.add("取消");
+            bundle1.putStringArrayList(BOTTOMMENUS, mune);
+            bottomMenuDialog.setArguments(bundle1);
+            bottomMenuDialog.show(getFragmentManager(), "BottomMenuDialog");
+            bottomMenuDialog.setItemClickListener((d, p) -> {
+                switch (d.get(p)) {
+                    case "<font color=\"#ff4f4f\">退出并解散房间</color>":
+                        bottomButtonAction(bottomMenuDialog, null, "退出并解散房间");
+                        break;
+                    case "取消":
+                        bottomButtonAction(bottomMenuDialog, null, "取消");
+                        break;
                 }
+
+
             });
-            finish();
+
         } else if (view == semicircleView) {
             requestLinkDialog = new RequestLinkDialog();
             Bundle bundle = new Bundle();
@@ -859,6 +875,19 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
                 break;
             case "打开麦位":
                 openAudio(queueInfo);
+                break;
+            case "退出并解散房间":
+                //主播退出房间
+                release();
+                ChatRoomMessage closeRoomMessage = ChatRoomMessageBuilder.createChatRoomCustomMessage(roomInfo.getRoomId(), new CloseRoomAttach());
+                chatRoomService.sendMessage(closeRoomMessage, false).setCallback(new RequestCallbackWrapper<Void>() {
+                    @Override
+                    public void onResult(int i, Void aVoid, Throwable throwable) {
+                        ChatRoomHttpClient.getInstance().closeRoom(DemoCache.getAccountId(), roomInfo.getRoomId(), null);
+                        ToastHelper.showToast("房间已解散");
+                    }
+                });
+                finish();
                 break;
             case "取消":
                 dialog.dismiss();

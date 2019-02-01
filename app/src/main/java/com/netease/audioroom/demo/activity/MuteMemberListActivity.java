@@ -35,7 +35,7 @@ public class MuteMemberListActivity extends BaseActivity {
 
     String roomId;
 
-    TextView addMuteMember, muteAllMember;
+    TextView addMuteMember, muteAllMember, icon, title;
     RecyclerView recyclerView;
     MuteMemberListAdapter adapter;
 
@@ -74,7 +74,8 @@ public class MuteMemberListActivity extends BaseActivity {
         addMuteMember.setOnClickListener(v -> addMuteMember());
         muteAllMember.setOnClickListener(v -> muteAllMember());
         recyclerView.addOnScrollListener(onScrollListener);
-
+        icon = findViewById(R.id.toolsbar).findViewById(R.id.icon);
+        title = findViewById(R.id.toolsbar).findViewById(R.id.title);
 
     }
 
@@ -104,6 +105,7 @@ public class MuteMemberListActivity extends BaseActivity {
                                 }
                                 adapter = new MuteMemberListAdapter(mContext, muteList);
                                 recyclerView.setAdapter(adapter);
+                                title.setText("禁言成员 (" + muteList.size() + ")");
                                 adapter.setRemoveMute((p) -> removeMuteMember(p, muteList.get(p)));
                             }
 
@@ -132,16 +134,18 @@ public class MuteMemberListActivity extends BaseActivity {
             public void onSuccess(List<ChatRoomMember> chatRoomMembers) {
                 loadService.showSuccess();
                 for (ChatRoomMember c : chatRoomMembers) {
-                    if (c.isTempMuted()) muteList.add(c);
+                    if (c.isTempMuted() || c.isMuted()) muteList.add(c);
                 }
                 if (muteList.size() != 0) {
                     empty_view.setVisibility(View.GONE);
                     adapter = new MuteMemberListAdapter(mContext, muteList);
                     recyclerView.setAdapter(adapter);
+                    title.setText("禁言成员 (" + muteList.size() + ")");
                     adapter.setRemoveMute((p) -> removeMuteMember(p, muteList.get(p)));
                 } else {
                     recyclerView.setVisibility(View.GONE);
                     empty_view.setVisibility(View.VISIBLE);
+                    title.setText("禁言成员");
                 }
 
             }
@@ -179,19 +183,21 @@ public class MuteMemberListActivity extends BaseActivity {
 
     //禁言所有成员
     private void muteAllMember() {
-        ChatRoomHttpClient.getInstance().muteAll(DemoCache.getAccountId(), roomId, true, new ChatRoomHttpClient.ChatRoomHttpCallback() {
-            @Override
-            public void onSuccess(Object o) {
-                //TODO 全体禁言
-                ToastHelper.showToast("全体禁言Success");
-            }
+        ChatRoomHttpClient.getInstance().muteAll(DemoCache.getAccountId(), roomId, true, true, false,
+                new ChatRoomHttpClient.ChatRoomHttpCallback() {
+                    @Override
+                    public void onSuccess(Object o) {
+                        getMuteList();
+                        ToastHelper.showToast("全体禁言Success");
 
-            @Override
-            public void onFailed(int code, String errorMsg) {
-                ToastHelper.showToast("全体失败+" + errorMsg);
+                    }
 
-            }
-        });
+                    @Override
+                    public void onFailed(int code, String errorMsg) {
+                        ToastHelper.showToast("全体失败+" + errorMsg);
+
+                    }
+                });
     }
 
     //解除禁言
