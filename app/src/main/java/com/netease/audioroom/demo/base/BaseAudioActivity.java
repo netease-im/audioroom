@@ -79,7 +79,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
 
     // 各种控制开关
     protected ImageView ivMuteOtherText;
-    protected ImageView ivAudioQuality;
     protected ImageView ivSelfAudioSwitch;
     protected ImageView ivRoomAudioSwitch;
     protected ImageView ivCancelLink;
@@ -307,7 +306,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
         tvRoomName = baseAudioView.findViewById(R.id.tv_chat_room_name);
 
         ivMuteOtherText = baseAudioView.findViewById(R.id.iv_mute_other_text);
-        ivAudioQuality = baseAudioView.findViewById(R.id.iv_audio_quality_switch);
         ivSelfAudioSwitch = baseAudioView.findViewById(R.id.iv_close_self_audio_switch);
         ivRoomAudioSwitch = baseAudioView.findViewById(R.id.iv_close_room_audio_switch);
         ivCancelLink = baseAudioView.findViewById(R.id.iv_cancel_link);

@@ -131,7 +131,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     @Override
     protected void setupBaseView() {
         ivMuteOtherText.setVisibility(View.GONE);
-        ivAudioQuality.setVisibility(View.GONE);
         ivSelfAudioSwitch.setVisibility(View.GONE);
         ivCancelLink.setVisibility(View.GONE);
 
@@ -362,11 +361,21 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
 
 
         } else if (selfQueue == null) {
-            //TODO 你被主播抱麦
-            ToastHelper.showToast("你被主播抱麦");
+            int position = queueInfo.getIndex() + 1;
+            TipsDialog tipsDialog = new TipsDialog();
+            Bundle bundle = new Bundle();
+            bundle.putString(TipsDialog.TIPSDIALOG,
+                    "您已被主播抱上“麦位”" + position + "\n" +
+                            "现在可以进行语音互动啦\n" +
+                            "如需下麦，可点击自己的头像或下麦按钮");
+            tipsDialog.show(getSupportFragmentManager(), TipsDialog.TIPSDIALOG);
+
         } else if (selfQueue.getStatus() == QueueInfo.STATUS_BE_MUTED_AUDIO) {
-            //todo 主播解除对你的语音屏蔽
-            ToastHelper.showToast("主播解除对你的语音屏蔽");
+            TipsDialog tipsDialog = new TipsDialog();
+            Bundle bundle = new Bundle();
+            bundle.putString(TipsDialog.TIPSDIALOG,
+                    "该麦位被主播“解除语音屏蔽”\n现在您可以再次进行语音互动了");
+            tipsDialog.show(getSupportFragmentManager(), TipsDialog.TIPSDIALOG);
         }
 
         ivCancelLink.setVisibility(View.VISIBLE);
@@ -383,7 +392,11 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             ToastHelper.showToast("主动下麦成功");
             isCancelLink = false;
         } else {
-            ToastHelper.showToast("你被主播下麦");
+            TipsDialog tipsDialog = new TipsDialog();
+            Bundle bundle = new Bundle();
+            bundle.putString(TipsDialog.TIPSDIALOG,
+                    "您已被主播请下麦位");
+            tipsDialog.show(getSupportFragmentManager(), TipsDialog.TIPSDIALOG);
         }
         ivCancelLink.setVisibility(View.GONE);
         enableAudienceRole(true);
@@ -402,7 +415,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 new RequestCallback<Void>() {
                     @Override
                     public void onSuccess(Void aVoid) {
-                        ToastHelper.showToast("申请下麦成功");
+                        ToastHelper.showToast("您已下麦");
                     }
 
                     @Override
@@ -425,8 +438,12 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
 
     @Override
     public void beMutedAudio(QueueInfo queueInfo) {
-        //TODO 主播屏蔽了你的语音
-        ToastHelper.showToast("主播屏蔽了你的语音");
+//        ToastHelper.showToast("主播屏蔽了你的语音");
+        TipsDialog tipsDialog = new TipsDialog();
+        Bundle bundle = new Bundle();
+        bundle.putString(TipsDialog.TIPSDIALOG,
+                "该麦位被主播“屏蔽语音”\n 现在您已无法进行语音互动");
+        tipsDialog.show(getSupportFragmentManager(), TipsDialog.TIPSDIALOG);
         selfQueue = queueInfo;
         enableAudienceRole(true);
 

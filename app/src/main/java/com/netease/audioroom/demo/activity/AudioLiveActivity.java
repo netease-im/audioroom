@@ -52,7 +52,6 @@ import com.netease.nimlib.sdk.msg.constant.ChatRoomQueueChangeType;
 import com.netease.nimlib.sdk.msg.model.CustomNotification;
 import com.netease.nrtc.sdk.NRtcCallback;
 import com.netease.nrtc.sdk.NRtcConstants;
-import com.netease.nrtc.sdk.NRtcParameters;
 
 import org.json.JSONObject;
 
@@ -144,7 +143,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
     protected void setupBaseView() {
         ivCancelLink.setVisibility(View.GONE);
         ivMuteOtherText.setOnClickListener(this);
-        ivAudioQuality.setOnClickListener(this);
         ivSelfAudioSwitch.setOnClickListener(this);
         ivRoomAudioSwitch.setOnClickListener(this);
         ivExistRoom.setOnClickListener(this);
@@ -541,12 +539,12 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
             //禁言
             MuteMemberListActivity.start(mContext, roomInfo.getRoomId());
 
-        } else if (view == ivAudioQuality) {
-            //TODO 音频清晰度切换
-
-            nrtcEx.setParameter(NRtcParameters.KEY_AUDIO_HIGH_QUALITY, true);
-
-        } else if (view == ivSelfAudioSwitch) {
+        }
+//        else if (view == ivAudioQuality) {
+//            //TODO 音频清晰度切换
+//
+//        }
+        else if (view == ivSelfAudioSwitch) {
             boolean mutex = ivSelfAudioSwitch.isSelected();
             ivSelfAudioSwitch.setSelected(!mutex);
             muteSelfAudio(!mutex);
@@ -824,8 +822,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
      * return true:有人
      * false:没人
      */
-
-
     private void bottomButtonAction(BottomMenuDialog dialog, QueueInfo queueInfo, String s) {
         switch (s) {
             case "确定踢下麦位":
