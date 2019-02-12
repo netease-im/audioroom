@@ -1,9 +1,11 @@
 package com.netease.audioroom.demo.dialog;
 
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
 import android.text.TextUtils;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -36,34 +38,42 @@ public class TipsDialog extends DialogFragment {
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
+        if (getDialog() == null) {
+            dismiss();
+        }
         getDialog().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         if (getArguments() != null) {
             content = getArguments().getString(TIPSDIALOG);
         }
-
         mConentView = inflater.inflate(R.layout.dialog_tips, container, false);
         return mConentView;
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
+    public void onResume() {
+        super.onResume();
         initView();
-        initListener();
     }
 
     private void initView() {
         tvContent = mConentView.findViewById(R.id.content);
         tvTips = mConentView.findViewById(R.id.tips);
-        if (TextUtils.isEmpty(content))
+        if (!TextUtils.isEmpty(content)) {
             tvContent.setText(content);
-    }
-
-    private void initListener() {
+        }
+        getDialog().setOnKeyListener((dialog, keyCode, event) -> {
+            if (keyCode == KeyEvent.KEYCODE_BACK) {
+                return true;
+            }
+            return false;
+        });
         tvTips.setOnClickListener(v -> clickListener.onClick());
     }
+
 
     public void setClickListener(IClickListener clickListener) {
         this.clickListener = clickListener;
     }
+
+
 }

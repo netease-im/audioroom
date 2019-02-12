@@ -31,7 +31,7 @@ public class QueueInfo implements Serializable, Parcelable {
         int kickedBySelf = 4;//主动下麦
         int cancelApplyBySelf = 5;//主动取消申请
         int cancelApplyByHost = 6;//被拒绝
-        int applyInMute = 7;// 7：麦位在屏蔽状态中被申请
+        int applyInMute = 7;//麦位在屏蔽状态中被申请
     }
 
 
@@ -212,6 +212,7 @@ public class QueueInfo implements Serializable, Parcelable {
         }
     };
 
+    // 判断当前麦位是否有人
     public static boolean hasOccupancy(QueueInfo queueInfo) {
         return queueInfo != null && (queueInfo.getStatus() == QueueInfo.STATUS_NORMAL
                 || queueInfo.getStatus() == QueueInfo.STATUS_BE_MUTED_AUDIO

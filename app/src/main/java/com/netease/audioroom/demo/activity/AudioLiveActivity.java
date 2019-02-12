@@ -282,7 +282,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
                     }
                 });
                 break;
-
         }
         bottomMenuDialog.show(getFragmentManager(), BOTTOMMENUS);
     }
@@ -316,7 +315,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
                 queueMember = new QueueMember(customNotification.getFromAccount(), nick, avatar);
                 queueInfo = queueMap.get(QueueInfo.getKeyByIndex(index));
                 if (queueInfo != null) {
-                    //更新为请求状态
                     if (queueInfo.getStatus() == QueueInfo.STATUS_FORBID) {
                         queueInfo.setReason(QueueInfo.Reason.applyInMute);
                     } else {
@@ -332,7 +330,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
             case P2PNotificationHelper.CANCEL_REQUEST_LINK://取消请求
                 index = jsonObject.optInt(P2PNotificationHelper.INDEX);
                 queueInfo = queueMap.get(QueueInfo.getKeyByIndex(index));
-                queueInfo.setReason(QueueInfo.Reason.cancelApplyBySelf);
                 if (queueInfo == null) {
                     queueInfo = new QueueInfo(index, null, QueueInfo.STATUS_INIT, QueueInfo.Reason.init);
                 }
@@ -345,7 +342,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
                     queueInfo.setStatus(QueueInfo.STATUS_INIT);
                     queueInfo.setReason(QueueInfo.Reason.kickedBySelf);
                     chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString());
-                    ToastHelper.showToast("有人请求下麦");
+//                    ToastHelper.showToast("有人请求下麦");
                 }
                 break;
         }
@@ -417,7 +414,11 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
 
     @Override
     public void linkRequestCancel(QueueInfo queueInfo) {
-        queueInfo.setStatus(QueueInfo.STATUS_INIT);
+        if (queueInfo.getReason() == QueueInfo.Reason.applyInMute) {
+            queueInfo.setStatus(QueueInfo.STATUS_FORBID);
+        } else {
+            queueInfo.setStatus(QueueInfo.STATUS_INIT);
+        }
         queueInfo.setReason(QueueInfo.Reason.cancelApplyBySelf);
         chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(),
                 queueInfo.toString()).setCallback(new RequestCallback<Void>() {
@@ -446,11 +447,12 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
 
     }
 
+    //拒绝连麦
     @Override
     public void rejectLink(QueueInfo queueInfo) {
         queueInfo.setReason(QueueInfo.Reason.cancelApplyByHost);
-        chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(),
-                queueInfo.toString()).setCallback(new RequestCallback<Void>() {
+        queueInfo.setStatus(QueueInfo.STATUS_INIT);
+        chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString()).setCallback(new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
                 requestMemberList.remove(queueInfo);
@@ -552,7 +554,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         if (view == ivMuteOtherText) {
             //禁言
             MuteMemberListActivity.start(mContext, roomInfo.getRoomId());
-
         } else if (view == ivSelfAudioSwitch) {
             boolean mutex = ivSelfAudioSwitch.isSelected();
             ivSelfAudioSwitch.setSelected(!mutex);
@@ -576,7 +577,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
             BottomMenuDialog bottomMenuDialog = new BottomMenuDialog();
             Bundle bundle1 = new Bundle();
             ArrayList<String> mune = new ArrayList<>();
-            mune.add("<font color=\"#ff4f4f\">确认取消申请上麦</color>");
+            mune.add("<font color=\"#ff4f4f\">退出并解散房间</color>");
             mune.add("取消");
             bundle1.putStringArrayList(BOTTOMMENUS, mune);
             bottomMenuDialog.setArguments(bundle1);
@@ -593,7 +594,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
 
 
             });
-
         } else if (view == semicircleView) {
             requestLinkDialog = new RequestLinkDialog();
             Bundle bundle = new Bundle();

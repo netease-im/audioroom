@@ -21,39 +21,23 @@ public class P2PNotificationHelper {
     public static final String INDEX = "index";//麦位
     public static final String NICK = "nick"; // 昵称
     public static final String AVATAR = "avatar";//头像
-
-
     /**
      * 请求连麦
      */
     public static final int REQUEST_LINK = 1;
-
-
     /**
      * 主动下麦
      */
     public static final int CANCEL_LINK = 2;
-
-
     /**
      * 观众取消连麦请求
      */
     public static final int CANCEL_REQUEST_LINK = 3;
 
     /**
-     * 禁言成员
-     */
-    public static final int MUTE = 4;
-    /**
-     * 禁言所有成员
-     */
-    public static final int MUTE_ALL = 5;
-
-    /**
      * 请求连麦
      */
     public static void requestLink(QueueInfo model, AccountInfo selfInfo, String creator, RequestCallback<Void> callback) {
-
         CustomNotification requestLink = new CustomNotification();
         requestLink.setSessionId(creator);
         requestLink.setSessionType(SessionTypeEnum.P2P);
@@ -111,5 +95,5 @@ public class P2PNotificationHelper {
             callback.onException(e);
         }
     }
-    
+
 }

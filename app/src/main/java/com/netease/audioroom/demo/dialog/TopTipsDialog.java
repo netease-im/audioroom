@@ -11,6 +11,7 @@ import android.support.annotation.Nullable;
 import android.text.Html;
 import android.text.TextUtils;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -97,6 +98,13 @@ public class TopTipsDialog extends DialogFragment {
         if (style.getTextColor() != 0) {
             content.setTextColor(getResources().getColor(style.getTextColor()));
         }
+
+        getDialog().setOnKeyListener((dialog, keyCode, event) -> {
+            if (keyCode == KeyEvent.KEYCODE_BACK) {
+                return true;
+            }
+            return false;
+        });
 
         content.setOnClickListener(v -> clickListener.onClickLister());
     }

@@ -41,15 +41,21 @@ public class QueueAdapter extends BaseAdapter<QueueInfo> {
 
         switch (status) {
             case QueueInfo.STATUS_INIT:
-                viewHolder.ivAvatar.setImageResource(R.color.color_525252);
+                viewHolder.ivAvatar.setImageResource(R.color.color_292929);
                 viewHolder.ivStatusHint.setVisibility(View.GONE);
                 viewHolder.iv_user_status.setVisibility(View.VISIBLE);
                 viewHolder.iv_user_status.setImageResource(R.drawable.queue_add_member);
                 viewHolder.tvNick.setText("麦位" + (queueInfo.getIndex() + 1));
                 break;
             case QueueInfo.STATUS_LOAD:
+                viewHolder.ivAvatar.setImageResource(R.color.color_292929);
                 viewHolder.iv_user_status.setVisibility(View.GONE);
-                viewHolder.ivStatusHint.setVisibility(View.GONE);
+                if (queueInfo.getReason() != QueueInfo.Reason.applyInMute) {
+                    viewHolder.ivStatusHint.setVisibility(View.GONE);
+                } else {
+                    viewHolder.ivStatusHint.setVisibility(View.VISIBLE);
+                    viewHolder.ivStatusHint.setImageResource(R.drawable.audio_be_muted_status);
+                }
                 break;
             case QueueInfo.STATUS_NORMAL:
                 viewHolder.iv_user_status.setVisibility(View.GONE);

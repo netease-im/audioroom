@@ -47,7 +47,9 @@ public class RequestlinkAdapter extends BaseAdapter<QueueInfo> {
         }
         QueueViewHolder viewHolder = (QueueViewHolder) holder;
         QueueMember member = queueInfo.getQueueMember();
-        CommonUtil.loadImage(context, member.getAvatar(), viewHolder.ivAvatar, R.drawable.chat_room_default_bg, 0);
+        if (member != null) {
+            CommonUtil.loadImage(context, member.getAvatar(), viewHolder.ivAvatar, R.drawable.nim_avatar_default, 0);
+        }
         int index = queueInfo.getIndex() + 1;
         viewHolder.tvContent.setText(member.getNick() + "\t申请麦位(" + index + ")");
         viewHolder.ivRefuse.setOnClickListener((v) -> requestAction.refuse(queueInfo));
