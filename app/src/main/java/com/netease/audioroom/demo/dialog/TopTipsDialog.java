@@ -76,7 +76,6 @@ public class TopTipsDialog extends DialogFragment {
 
 
     private void initView() {
-
         content = view.findViewById(R.id.content);
         linearLayout = view.findViewById(R.id.root);
 

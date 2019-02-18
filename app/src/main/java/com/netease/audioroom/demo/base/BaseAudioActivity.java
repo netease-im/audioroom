@@ -2,8 +2,6 @@ package com.netease.audioroom.demo.base;
 
 import android.graphics.Color;
 import android.graphics.Rect;
-import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -30,6 +28,7 @@ import com.netease.audioroom.demo.util.ScreenUtil;
 import com.netease.audioroom.demo.util.ToastHelper;
 import com.netease.audioroom.demo.widget.HeadImageView;
 import com.netease.audioroom.demo.widget.VerticalItemDecoration;
+import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.ErrorCallback;
 import com.netease.nimlib.sdk.NIMClient;
 import com.netease.nimlib.sdk.Observer;
 import com.netease.nimlib.sdk.RequestCallback;
@@ -71,6 +70,7 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
     public static final String TAG = "AudioRoom";
     private static final int KEY_BOARD_MIN_SIZE = ScreenUtil.dip2px(DemoCache.getContext(), 80);
 
+
     //主播基础信息
     protected HeadImageView ivLiverAvatar;
     protected ImageView ivLiverAudioCloseHint;
@@ -102,7 +102,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
 
     // 聊天室信息
     protected DemoRoomInfo roomInfo;
-
 
     // 聊天室服务
     protected ChatRoomService chatRoomService;
@@ -170,7 +169,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
                                     append(",  account = ").append(memberExit.getOperator());
                             memberExit(memberExit);
                             break;
-
                         //成员被禁言
                         case ChatRoomMemberTempMuteAdd:
                             ChatRoomTempMuteAddAttachment addMuteMember = (ChatRoomTempMuteAddAttachment) message.getAttachment();
@@ -179,7 +177,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
                             memberMuteAdd(addMuteMember);
                             mute();
                             break;
-
                         //成员被解除禁言
                         case ChatRoomMemberTempMuteRemove:
                             ChatRoomTempMuteRemoveAttachment muteRemove = (ChatRoomTempMuteRemoveAttachment) message.getAttachment();
@@ -197,7 +194,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
 
                             onQueueChange(queueChange);
                             break;
-
                         //队列批量变更，好像没用了
                         case ChatRoomQueueBatchChange:
                             ChatRoomPartClearAttachment queuePartClear = (ChatRoomPartClearAttachment) message.getAttachment();
@@ -216,6 +212,33 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
             }
         }
     };
+
+
+    @Override
+    protected void initViews() {
+        roomInfo = getIntent().getParcelableExtra(ROOM_INFO_KEY);
+        if (roomInfo == null) {
+            ToastHelper.showToast("聊天室信息不能为空");
+            finish();
+        }
+    }
+
+    @Override
+    protected void onNetWork() {
+        chatRoomService = NIMClient.getService(ChatRoomService.class);
+        nrtcEx = (NRtcEx) NRtc.create(this, CommonUtil.readAppKey(), createNrtcCallBack());
+        nrtcEx.setParameter(NRtcParameters.KEY_SESSION_MULTI_MODE, true);//多人会话
+        nrtcEx.setParameter(NRtcParameters.KEY_AUDIO_HIGH_QUALITY, true);//高清晰度
+        audioUid = System.nanoTime();
+        enterChatRoom(roomInfo.getRoomId());
+        findBaseView();
+        setupBaseViewInner();
+        setupBaseView();
+        rootView = getWindow().getDecorView();
+        rootView.getViewTreeObserver().addOnGlobalLayoutListener(this);
+
+    }
+
 
 
     protected void memberMuteRemove(ChatRoomTempMuteRemoveAttachment muteRemove) {
@@ -257,30 +280,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
     }
 
 
-    @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        roomInfo = getIntent().getParcelableExtra(ROOM_INFO_KEY);
-        if (roomInfo == null) {
-            ToastHelper.showToast("聊天室信息不能为空");
-            finish();
-            return;
-        }
-        chatRoomService = NIMClient.getService(ChatRoomService.class);
-
-        nrtcEx = (NRtcEx) NRtc.create(this, CommonUtil.readAppKey(), createNrtcCallBack());
-        nrtcEx.setParameter(NRtcParameters.KEY_SESSION_MULTI_MODE, true);//多人会话
-        nrtcEx.setParameter(NRtcParameters.KEY_AUDIO_HIGH_QUALITY, true);//高清晰度
-        audioUid = System.nanoTime();
-        enterChatRoom(roomInfo.getRoomId());
-        findBaseView();
-        setupBaseViewInner();
-        setupBaseView();
-        rootView = getWindow().getDecorView();
-        rootView.getViewTreeObserver().addOnGlobalLayoutListener(this);
-    }
-
     protected NRtcCallback createNrtcCallBack() {
         return new SimpleNRtcCallback();
     }
@@ -288,7 +287,10 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
     @Override
     protected void onDestroy() {
         release();
-        rootView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+        if (rootView != null) {
+            rootView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+        }
+
         super.onDestroy();
     }
 
@@ -429,17 +431,20 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
         chatRoomService.enterChatRoomEx(roomData, 2).setCallback(new RequestCallback<EnterChatRoomResultData>() {
             @Override
             public void onSuccess(EnterChatRoomResultData resultData) {
+                loadService.showSuccess();
                 enterRoomSuccess(resultData);
             }
 
             @Override
             public void onFailed(int i) {
+                loadService.showCallback(ErrorCallback.class);
                 ToastHelper.showToast("进入聊天室失败 ， code = " + i);
                 finish();
             }
 
             @Override
             public void onException(Throwable throwable) {
+                loadService.showCallback(ErrorCallback.class);
                 ToastHelper.showToast("进入聊天室异常 ，  e = " + throwable);
                 finish();
             }
@@ -448,10 +453,10 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
     }
 
     protected void enterRoomSuccess(EnterChatRoomResultData resultData) {
-
         chatRoomService.fetchQueue(roomInfo.getRoomId()).setCallback(new RequestCallback<List<Entry<String, String>>>() {
             @Override
             public void onSuccess(List<Entry<String, String>> entries) {
+                loadService.showSuccess();
                 initQueue(entries);
             }
 

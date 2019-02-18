@@ -61,7 +61,7 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
 
 
     @Override
-    protected void initView() {
+    protected void initViews() {
         ivAvatar = findViewById(R.id.iv_self_avatar);
         tvNick = findViewById(R.id.tv_self_nick);
         RecyclerView rcyChatList = findViewById(R.id.rcy_chat_room_list);
@@ -84,12 +84,9 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
                 loadService.setCallBack(NetErrCallback.class, new Transport() {
                     @Override
                     public void order(Context context, View view) {
-                        view.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                if (new Network().isConnected()) {
-                                    onNetWork();
-                                }
+                        view.setOnClickListener((v) -> {
+                            if (new Network().isConnected()) {
+                                onNetWork();
                             }
                         });
                     }
@@ -237,8 +234,10 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
 
     }
 
+
     @Override
     protected void onLoginEvent(StatusCode statusCode) {
         loginStatus = statusCode;
     }
+
 }

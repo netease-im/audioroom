@@ -68,7 +68,7 @@ public class MemberActivity extends BaseActivity {
     }
 
     @Override
-    protected void initView() {
+    protected void initViews() {
         View view = findViewById(R.id.toolsbar);
         TextView title = view.findViewById(R.id.title);
         title.setText("选择成员");

@@ -25,6 +25,7 @@ import com.netease.audioroom.demo.custom.CloseRoomAttach;
 import com.netease.audioroom.demo.custom.P2PNotificationHelper;
 import com.netease.audioroom.demo.dialog.BottomMenuDialog;
 import com.netease.audioroom.demo.dialog.RequestLinkDialog;
+import com.netease.audioroom.demo.dialog.TopTipsDialog;
 import com.netease.audioroom.demo.http.ChatRoomHttpClient;
 import com.netease.audioroom.demo.model.AccountInfo;
 import com.netease.audioroom.demo.model.DemoRoomInfo;
@@ -38,6 +39,7 @@ import com.netease.audioroom.demo.permission.annotation.OnMPermissionNeverAskAga
 import com.netease.audioroom.demo.util.CommonUtil;
 import com.netease.audioroom.demo.util.JsonUtil;
 import com.netease.audioroom.demo.util.ToastHelper;
+import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.LoadingCallback;
 import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.RequestCallbackWrapper;
 import com.netease.nimlib.sdk.chatroom.ChatRoomMessageBuilder;
@@ -82,6 +84,8 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
 
     private int inviteIndex = -1;//抱麦位置
 
+    TopTipsDialog topTipsDialog;
+
 
     //聊天室队列元素
     private HashMap<String, QueueInfo> queueMap = new HashMap<>();
@@ -111,9 +115,9 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         checkFile();
     }
 
-
     @Override
-    protected void initView() {
+    protected void initViews() {
+        super.initViews();
         semicircleView = findViewById(R.id.semicircleView);
         tvMusicPlayHint = findViewById(R.id.tv_music_play_hint);
         ivPauseOrPlay = findViewById(R.id.iv_pause_or_play);
@@ -124,9 +128,38 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         semicircleView.setVisibility(View.GONE);
         semicircleView.setClickable(true);
         updateMusicPlayHint();
+        setNetworkReconnection(new NetworkReconnection() {
+            @Override
+            public void onNetworkReconnection() {
+                if (topTipsDialog != null && topTipsDialog.isVisible()) {
+                    topTipsDialog.dismiss();
+                }
+                onNetWork();
+            }
 
+            @Override
+            public void onNetworkInterrupt() {
+                topTipsDialog = new TopTipsDialog();
+                Bundle bundle = new Bundle();
+                TopTipsDialog.Style style = topTipsDialog.new Style(
+                        "网络断开",
+                        0,
+                        0,
+                        0);
+                bundle.putParcelable(TopTipsDialog.TOPTIPSDIALOG, style);
+                topTipsDialog.setArguments(bundle);
+                topTipsDialog.show(getFragmentManager(), "TopTipsDialog");
+                topTipsDialog.setClickListener(() -> {
+                });
+            }
+        });
     }
 
+
+    @Override
+    protected void onNetWork() {
+        super.onNetWork();
+    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -351,6 +384,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
 
     @Override
     protected void exitRoom() {
+        loadService.showCallback(LoadingCallback.class);
         release();
         if (roomInfo != null) {
             ChatRoomMessage closeRoomMessage = ChatRoomMessageBuilder
@@ -360,12 +394,16 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
                         @Override
                         public void onResult(int i, Void aVoid, Throwable throwable) {
                             ChatRoomHttpClient.getInstance().closeRoom(DemoCache.getAccountId(), roomInfo.getRoomId(), null);
+                            ToastHelper.showToast("房间已解散");
+                            RoomMemberCache.getInstance().removeCache(roomInfo.getRoomId());
+                            roomInfo = null;
+                            loadService.showSuccess();
+                            finish();
                         }
                     });
-            RoomMemberCache.getInstance().removeCache(roomInfo.getRoomId());
-            roomInfo = null;
+
         }
-        finish();
+
     }
 
     @Override
@@ -391,7 +429,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
     protected void enterRoomSuccess(EnterChatRoomResultData resultData) {
 //        super.enterRoomSuccess(resultData);
         // 主播进房间先清除一下原来的队列元素
-        loadService.showSuccess();
         chatRoomService.dropQueue(roomInfo.getRoomId());
         AccountInfo accountInfo = DemoCache.getAccountInfo();
         ivLiverAvatar.loadAvatar(accountInfo.avatar);
@@ -887,16 +924,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
                 break;
             case "退出并解散房间":
                 //主播退出房间
-                release();
-                ChatRoomMessage closeRoomMessage = ChatRoomMessageBuilder.createChatRoomCustomMessage(roomInfo.getRoomId(), new CloseRoomAttach());
-                chatRoomService.sendMessage(closeRoomMessage, false).setCallback(new RequestCallbackWrapper<Void>() {
-                    @Override
-                    public void onResult(int i, Void aVoid, Throwable throwable) {
-                        ChatRoomHttpClient.getInstance().closeRoom(DemoCache.getAccountId(), roomInfo.getRoomId(), null);
-                        ToastHelper.showToast("房间已解散");
-                    }
-                });
-                finish();
+                exitRoom();
                 break;
             case "取消":
                 dialog.dismiss();
@@ -927,6 +955,12 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         return new InnerNRtcCallBack();
     }
 
+    @Override
+    protected void onDestroy() {
+        exitRoom();
+        super.onDestroy();
+    }
+
     private class InnerNRtcCallBack extends SimpleNRtcCallback {
         @Override
         public void onDeviceEvent(int event, String desc) {
@@ -937,8 +971,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
             } else if (event == NRtcConstants.DeviceEvent.AUDIO_MIXING_FINISHED) {
                 playNextMusic();
             }
-
-
         }
     }
 

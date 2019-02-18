@@ -4,19 +4,20 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import com.netease.audioroom.demo.model.AccountInfo;
+import com.netease.audioroom.demo.model.DemoRoomInfo;
 
 
 public class DemoCache {
-
-
     private static final String ACCOUNT_INFO_KEY = "account_info_key";
-
+    private static final String ROOM_INFO_KEY = "room_info_key";
 
     private static Context context;
 
     private static String accountId;
     private static AccountInfo accountInfo;
 
+
+    private static DemoRoomInfo demoRoomInfo;
 
     public static String getAccountId() {
         return accountId;
@@ -40,6 +41,23 @@ public class DemoCache {
         getSharedPreferences().edit().putString(ACCOUNT_INFO_KEY, accountInfo.toString()).apply();
     }
 
+    public static void saveRoomInfo(DemoRoomInfo roomInfo) {
+        demoRoomInfo = roomInfo;
+        getSharedPreferences().edit().putString(ROOM_INFO_KEY, demoRoomInfo.toString()).apply();
+    }
+
+    public static DemoRoomInfo getDemoRoomInfo() {
+        if (demoRoomInfo != null) {
+            return demoRoomInfo;
+        }
+
+        String jsonStr = getSharedPreferences().getString(ROOM_INFO_KEY, null);
+        if (jsonStr == null) {
+            return null;
+        }
+        demoRoomInfo = new DemoRoomInfo(jsonStr);
+        return demoRoomInfo;
+    }
 
     public static AccountInfo getAccountInfo() {
 

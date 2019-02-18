@@ -317,7 +317,6 @@ public class ChatRoomHttpClient {
         String url = getServer() + API_ALL_MUTE;
         Map<String, String> headers = new HashMap<>(5);
         headers.put(HEADER_KEY_CONTENT_TYPE, "application/x-www-form-urlencoded;charset=utf-8");
-
         String bodyString = REQUEST_SID + "=" + account + "&" +
                 RESULT_KEY_ROOM_ID + "=" + roomID + "&" +
                 REQUEST_IS_MUTE + "=" + mute + "&" +

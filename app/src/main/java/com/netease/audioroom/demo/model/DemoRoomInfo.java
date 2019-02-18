@@ -3,6 +3,11 @@ package com.netease.audioroom.demo.model;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.netease.audioroom.demo.util.JsonUtil;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 
 /**
  * 聊天室信息
@@ -14,6 +19,7 @@ public class DemoRoomInfo implements Parcelable {
     private String name;         // 聊天室名称
     private int onlineUserCount; // 当前在线用户数量
     private String thumbnail; // 聊天室背景图
+    private boolean isMute;//是否禁言
 
     public String getCreator() {
         return creator;
@@ -25,6 +31,24 @@ public class DemoRoomInfo implements Parcelable {
 
     public DemoRoomInfo() {
     }
+
+    public DemoRoomInfo(String jsonStr) {
+        JSONObject jsonObject = JsonUtil.parse(jsonStr);
+        if (jsonObject == null) {
+            roomId = null;
+            creator = null;
+            name = null;
+            onlineUserCount = 0;
+            isMute = false;
+            return;
+        }
+        roomId = jsonObject.optString("roomId");
+        creator = jsonObject.optString("creator");
+        name = jsonObject.optString("name");
+        onlineUserCount = jsonObject.optInt("onlineUserCount");
+        isMute = jsonObject.optBoolean("isMute");
+    }
+
 
     public String getRoomId() {
         return roomId;
@@ -96,6 +120,24 @@ public class DemoRoomInfo implements Parcelable {
             return new DemoRoomInfo[size];
         }
     };
+
+
+    @Override
+    public String toString() {
+        JSONObject jsonObject = new JSONObject();
+        try {
+            jsonObject.put("roomId", roomId);
+            jsonObject.put("creator", creator);
+            jsonObject.put("name", name);
+            jsonObject.put("onlineUserCount", onlineUserCount);
+            jsonObject.put("thumbnail", thumbnail);
+            jsonObject.put("isMute", isMute);
+            return jsonObject.toString();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
 
 }

@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -23,6 +24,8 @@ import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.chatroom.ChatRoomService;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMember;
 import com.netease.nimlib.sdk.chatroom.model.MemberOption;
+
+import org.json.JSONException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,7 +60,7 @@ public class MuteMemberListActivity extends BaseActivity {
     }
 
     @Override
-    protected void initView() {
+    protected void initViews() {
         addMuteMember = findViewById(R.id.addMuteMember);
         muteAllMember = findViewById(R.id.muteAllMember);
         recyclerView = findViewById(R.id.member_recyclerView);
@@ -134,7 +137,9 @@ public class MuteMemberListActivity extends BaseActivity {
             public void onSuccess(List<ChatRoomMember> chatRoomMembers) {
                 loadService.showSuccess();
                 for (ChatRoomMember c : chatRoomMembers) {
-                    if (c.isTempMuted() || c.isMuted()) muteList.add(c);
+                    if (c.isTempMuted() || c.isMuted()) {
+                        muteList.add(c);
+                    }
                 }
                 if (muteList.size() != 0) {
                     empty_view.setVisibility(View.GONE);
@@ -147,7 +152,6 @@ public class MuteMemberListActivity extends BaseActivity {
                     empty_view.setVisibility(View.VISIBLE);
                     title.setText("禁言成员");
                 }
-
             }
 
             @Override
@@ -187,14 +191,14 @@ public class MuteMemberListActivity extends BaseActivity {
                 new ChatRoomHttpClient.ChatRoomHttpCallback() {
                     @Override
                     public void onSuccess(Object o) {
-                        getMuteList();
-                        ToastHelper.showToast("全体禁言Success");
 
+                        muteAllMember.setText("取消全部禁麦");
+                        ToastHelper.showToast("已全部禁麦");
                     }
 
                     @Override
                     public void onFailed(int code, String errorMsg) {
-                        ToastHelper.showToast("全体失败+" + errorMsg);
+                        ToastHelper.showToast("全部禁麦失败+" + errorMsg);
 
                     }
                 });

@@ -30,6 +30,7 @@ import com.netease.audioroom.demo.permission.annotation.OnMPermissionNeverAskAga
 import com.netease.audioroom.demo.util.CommonUtil;
 import com.netease.audioroom.demo.util.JsonUtil;
 import com.netease.audioroom.demo.util.ToastHelper;
+import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.ErrorCallback;
 import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMember;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMessage;
@@ -44,7 +45,6 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TreeSet;
 
 import static com.netease.audioroom.demo.dialog.BottomMenuDialog.BOTTOMMENUS;
 
@@ -53,9 +53,7 @@ import static com.netease.audioroom.demo.dialog.BottomMenuDialog.BOTTOMMENUS;
  * 观众页
  */
 public class AudienceActivity extends BaseAudioActivity implements IAudience, View.OnClickListener {
-    /**
-     * 是否正在申请连麦中
-     */
+
     TopTipsDialog topTipsDialog;
 
     public static void start(Context context, DemoRoomInfo model) {
@@ -81,8 +79,40 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         requestLivePermission();
     }
 
+
     @Override
-    protected void initView() {
+    protected void initViews() {
+        super.initViews();
+        setNetworkReconnection(new NetworkReconnection() {
+            @Override
+            public void onNetworkReconnection() {
+                if (topTipsDialog != null && topTipsDialog.isVisible()) {
+                    topTipsDialog.dismiss();
+                }
+                onNetWork();
+            }
+
+            @Override
+            public void onNetworkInterrupt() {
+                topTipsDialog = new TopTipsDialog();
+                Bundle bundle = new Bundle();
+                TopTipsDialog.Style style = topTipsDialog.new Style(
+                        "网络断开",
+                        0,
+                        R.drawable.neterricon,
+                        0);
+                bundle.putParcelable(TopTipsDialog.TOPTIPSDIALOG, style);
+                topTipsDialog.setArguments(bundle);
+                topTipsDialog.show(getFragmentManager(), "TopTipsDialog");
+                topTipsDialog.setClickListener(() -> {
+                });
+            }
+        });
+    }
+
+    @Override
+    protected void onNetWork() {
+        super.onNetWork();
     }
 
     @Override
@@ -95,7 +125,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 .setCallback(new RequestCallback<List<ChatRoomMember>>() {
                     @Override
                     public void onSuccess(List<ChatRoomMember> chatRoomMembers) {
-                        loadService.showSuccess();
                         if (CommonUtil.isEmpty(chatRoomMembers)) {
                             ToastHelper.showToast("获取主播信息失败 ， 结果为空");
                             return;
@@ -107,6 +136,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
 
                     @Override
                     public void onFailed(int i) {
+
                         ToastHelper.showToast("获取主播信息失败 ， code = " + i);
                     }
 

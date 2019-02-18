@@ -40,7 +40,6 @@ public abstract class BaseActivity extends AppCompatActivity {
         @Override
         public void update(Observable observable, Object data) {
             super.update(observable, data);
-            //观察者接受到被观察者的通知，来更新自己的数据操作。
             Network network = (Network) data;
             if (network.isConnected()) {
                 networkReconnection.onNetworkReconnection();
@@ -87,13 +86,14 @@ public abstract class BaseActivity extends AppCompatActivity {
         NetworkChange.getInstance().addObserver(watcher);
         mContext = this;
         setContentView(getContentViewID());
-        initView();
+        initViews();
         loadService = LoadSir.getDefault().register(BaseActivityManager.getInstance().getCurrentActivity());
     }
 
+    //加载页面
     protected abstract int getContentViewID();
 
-    protected abstract void initView();
+    protected abstract void initViews();
 
     @Override
     protected void onStart() {
@@ -123,6 +123,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     protected void onDestroy() {
         registerObserver(false);
         super.onDestroy();
+
 
     }
 

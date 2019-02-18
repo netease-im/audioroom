@@ -15,7 +15,6 @@ public class NetworkChange extends Observable {
     } //通知观察者数据改变
 
     public void notifyDataChange(Network net) {
-
         setChanged();
         notifyObservers(net);
     }

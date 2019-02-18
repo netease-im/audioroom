@@ -1,10 +1,7 @@
 package com.netease.audioroom.demo.model;
 
 
-import android.os.Parcelable;
-
 import com.netease.audioroom.demo.util.JsonUtil;
-
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -55,8 +52,6 @@ public class AccountInfo implements Serializable  {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-
-
         return null;
     }
 }
