@@ -10,8 +10,7 @@ import com.netease.audioroom.demo.util.Network;
 import com.netease.audioroom.demo.util.NetworkChange;
 
 public class NetworkConnectChangedReceiver extends BroadcastReceiver {
-    Network network = new Network();
-
+    Network network = Network.getInstance();
     @Override
     public void onReceive(Context context, Intent intent) {
         if (ConnectivityManager.CONNECTIVITY_ACTION.equals(intent.getAction())) {
@@ -22,23 +21,10 @@ public class NetworkConnectChangedReceiver extends BroadcastReceiver {
                     network.setConnected(true);
                     //通知观察者网络状态已改变
                     NetworkChange.getInstance().notifyDataChange(network);
-//                    if (activeNetworkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
-//                        network.setWifi(true);
-//                        //通知观察者网络状态已改变
-//                        NetworkChange.getInstance().notifyDataChange(network);
-////                        ToastHelper.showToast("当前wifi连接可用");
-//                    } else if (activeNetworkInfo.getType() == ConnectivityManager.TYPE_MOBILE) {
-//
-//                        network.setMobile(true);
-//                        //通知观察者网络状态已改变
-//                        NetworkChange.getInstance().notifyDataChange(network);
-////                        ToastHelper.showToast("当前移动网络连接可用");
-//                    }
                 } else {
                     network.setConnected(false);
-                    //通知观察者网络状态已改变
+                    //通知观察者网络状态已改变 当前没有网络连接
                     NetworkChange.getInstance().notifyDataChange(network);
-//                    ToastHelper.showToast("当前没有网络连接，请确保你已经打开网络");
                 }
             } else {
                 network.setWifi(false);

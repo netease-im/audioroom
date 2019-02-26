@@ -18,7 +18,8 @@ import android.widget.TextView;
 import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.audio.SimpleNRtcCallback;
 import com.netease.audioroom.demo.base.BaseAudioActivity;
-import com.netease.audioroom.demo.base.IAudioLive;
+import com.netease.audioroom.demo.base.LoginManager;
+import com.netease.audioroom.demo.base.action.INetworkReconnection;
 import com.netease.audioroom.demo.cache.DemoCache;
 import com.netease.audioroom.demo.cache.RoomMemberCache;
 import com.netease.audioroom.demo.custom.CloseRoomAttach;
@@ -38,8 +39,11 @@ import com.netease.audioroom.demo.permission.annotation.OnMPermissionGranted;
 import com.netease.audioroom.demo.permission.annotation.OnMPermissionNeverAskAgain;
 import com.netease.audioroom.demo.util.CommonUtil;
 import com.netease.audioroom.demo.util.JsonUtil;
+import com.netease.audioroom.demo.util.Network;
 import com.netease.audioroom.demo.util.ToastHelper;
+import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.ErrorCallback;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.LoadingCallback;
+import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.NetErrCallback;
 import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.RequestCallbackWrapper;
 import com.netease.nimlib.sdk.chatroom.ChatRoomMessageBuilder;
@@ -68,7 +72,7 @@ import static com.netease.audioroom.demo.dialog.RequestLinkDialog.QUEUEINFOLIST;
 /**
  * 主播页
  */
-public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, View.OnClickListener {
+public class AudioLiveActivity extends BaseAudioActivity implements LoginManager.IAudioLive, View.OnClickListener {
 
     public static void start(Context context, DemoRoomInfo demoRoomInfo) {
         Intent intent = new Intent(context, AudioLiveActivity.class);
@@ -108,33 +112,40 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        requestLivePermission();
         enterChatRoom(roomInfo.getRoomId());
         enableAudienceRole(false);
         joinChannel(audioUid);
         checkFile();
     }
 
+
+
     @Override
-    protected void initViews() {
-        super.initViews();
-        semicircleView = findViewById(R.id.semicircleView);
-        tvMusicPlayHint = findViewById(R.id.tv_music_play_hint);
-        ivPauseOrPlay = findViewById(R.id.iv_pause_or_play);
-        ivNext = findViewById(R.id.iv_next);
-        ivPauseOrPlay.setOnClickListener(this);
-        ivNext.setOnClickListener(this);
-        requestMemberList = new ArrayList<>();
-        semicircleView.setVisibility(View.GONE);
-        semicircleView.setClickable(true);
-        updateMusicPlayHint();
-        setNetworkReconnection(new NetworkReconnection() {
+    protected void onResume() {
+        super.onResume();
+        if (Network.getInstance().isConnected()){
+
+        }
+        setNetworkReconnection(new INetworkReconnection() {
             @Override
             public void onNetworkReconnection() {
                 if (topTipsDialog != null && topTipsDialog.isVisible()) {
                     topTipsDialog.dismiss();
                 }
-                onNetWork();
+                LoginManager loginManager = LoginManager.getInstance();
+                loginManager.tryLogin();
+                loginManager.setCallback(new LoginManager.Callback() {
+                    @Override
+                    public void onSuccess(AccountInfo accountInfo) {
+                        enterChatRoom(roomInfo.getRoomId());
+                    }
+
+                    @Override
+                    public void onFailed(int code, String errorMsg) {
+                        loadService.showCallback(ErrorCallback.class);
+                    }
+                });
+
             }
 
             @Override
@@ -155,12 +166,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
         });
     }
 
-
-    @Override
-    protected void onNetWork() {
-        super.onNetWork();
-    }
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -174,12 +179,26 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
 
     @Override
     protected void setupBaseView() {
+        semicircleView = findViewById(R.id.semicircleView);
+        tvMusicPlayHint = findViewById(R.id.tv_music_play_hint);
+        ivPauseOrPlay = findViewById(R.id.iv_pause_or_play);
+        ivNext = findViewById(R.id.iv_next);
         ivCancelLink.setVisibility(View.GONE);
         ivMuteOtherText.setOnClickListener(this);
         ivSelfAudioSwitch.setOnClickListener(this);
         ivRoomAudioSwitch.setOnClickListener(this);
         ivExistRoom.setOnClickListener(this);
         semicircleView.setOnClickListener(this);
+        ivPauseOrPlay.setOnClickListener(this);
+        ivNext.setOnClickListener(this);
+        ivPauseOrPlay.setOnClickListener(this);
+        ivNext.setOnClickListener(this);
+        requestMemberList = new ArrayList<>();
+        semicircleView.setVisibility(View.GONE);
+        semicircleView.setClickable(true);
+        updateMusicPlayHint();
+
+
     }
 
 
@@ -280,7 +299,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
                 mune.add("解除语音屏蔽");
                 mune.add("取消");
                 bundle.putStringArrayList(BOTTOMMENUS, mune);
-
                 bottomMenuDialog.setArguments(bundle);
                 bottomMenuDialog.setItemClickListener((d, p) -> {
                     switch (d.get(p)) {
@@ -311,7 +329,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
                         case "取消":
                             bottomButtonAction(bottomMenuDialog, queueInfo, "取消");
                             break;
-
                     }
                 });
                 break;
@@ -427,7 +444,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements IAudioLive, 
 
     @Override
     protected void enterRoomSuccess(EnterChatRoomResultData resultData) {
-//        super.enterRoomSuccess(resultData);
         // 主播进房间先清除一下原来的队列元素
         chatRoomService.dropQueue(roomInfo.getRoomId());
         AccountInfo accountInfo = DemoCache.getAccountInfo();

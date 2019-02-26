@@ -12,13 +12,16 @@ import android.view.View;
 
 import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.base.BaseAudioActivity;
-import com.netease.audioroom.demo.base.IAudience;
+import com.netease.audioroom.demo.base.LoginManager;
+import com.netease.audioroom.demo.base.action.IAudience;
+import com.netease.audioroom.demo.base.action.INetworkReconnection;
 import com.netease.audioroom.demo.cache.DemoCache;
 import com.netease.audioroom.demo.custom.CloseRoomAttach;
 import com.netease.audioroom.demo.custom.P2PNotificationHelper;
 import com.netease.audioroom.demo.dialog.BottomMenuDialog;
 import com.netease.audioroom.demo.dialog.TipsDialog;
 import com.netease.audioroom.demo.dialog.TopTipsDialog;
+import com.netease.audioroom.demo.model.AccountInfo;
 import com.netease.audioroom.demo.model.DemoRoomInfo;
 import com.netease.audioroom.demo.model.QueueInfo;
 import com.netease.audioroom.demo.model.QueueMember;
@@ -29,8 +32,10 @@ import com.netease.audioroom.demo.permission.annotation.OnMPermissionGranted;
 import com.netease.audioroom.demo.permission.annotation.OnMPermissionNeverAskAgain;
 import com.netease.audioroom.demo.util.CommonUtil;
 import com.netease.audioroom.demo.util.JsonUtil;
+import com.netease.audioroom.demo.util.Network;
 import com.netease.audioroom.demo.util.ToastHelper;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.ErrorCallback;
+import com.netease.audioroom.demo.widget.unitepage.loadsir.core.LoadService;
 import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMember;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMessage;
@@ -74,22 +79,37 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        enterChatRoom(roomInfo.getRoomId());
         enableAudienceRole(true);
         joinChannel(audioUid);
-        requestLivePermission();
     }
 
 
+
     @Override
-    protected void initViews() {
-        super.initViews();
-        setNetworkReconnection(new NetworkReconnection() {
+    protected void onResume() {
+        super.onResume();
+        setNetworkReconnection(new INetworkReconnection() {
             @Override
             public void onNetworkReconnection() {
                 if (topTipsDialog != null && topTipsDialog.isVisible()) {
                     topTipsDialog.dismiss();
                 }
-                onNetWork();
+                LoginManager loginManager = LoginManager.getInstance();
+                loginManager.tryLogin();
+                loginManager.setCallback(new LoginManager.Callback() {
+                    @Override
+                    public void onSuccess(AccountInfo accountInfo) {
+                        enterChatRoom(roomInfo.getRoomId());
+                    }
+
+                    @Override
+                    public void onFailed(int code, String errorMsg) {
+                        loadService.showCallback(ErrorCallback.class);
+
+                    }
+                });
+
             }
 
             @Override
@@ -99,7 +119,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 TopTipsDialog.Style style = topTipsDialog.new Style(
                         "网络断开",
                         0,
-                        R.drawable.neterricon,
+                        R.drawable.neterrricon,
                         0);
                 bundle.putParcelable(TopTipsDialog.TOPTIPSDIALOG, style);
                 topTipsDialog.setArguments(bundle);
@@ -111,13 +131,9 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     }
 
     @Override
-    protected void onNetWork() {
-        super.onNetWork();
-    }
-
-    @Override
     protected void enterRoomSuccess(EnterChatRoomResultData resultData) {
         super.enterRoomSuccess(resultData);
+        loadService.showSuccess();
         String creatorId = resultData.getRoomInfo().getCreator();
         ArrayList<String> accountList = new ArrayList<>();
         accountList.add(creatorId);

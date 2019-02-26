@@ -1,4 +1,4 @@
-package com.netease.audioroom.demo.base;
+package com.netease.audioroom.demo.base.action;
 
 import com.netease.audioroom.demo.model.QueueInfo;
 

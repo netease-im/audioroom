@@ -4,8 +4,17 @@ public class Network {
     private boolean wifi;
     private boolean mobile;
     private boolean connected;
+    private static Network network;
 
-    public Network() {
+    public static Network getInstance() {
+        if (null == network) {
+            network = new Network();
+        }
+        return network;
+    }
+
+
+    private Network() {
     }
 
     public boolean isConnected() {
@@ -31,5 +40,5 @@ public class Network {
     public void setMobile(boolean mobile) {
         this.mobile = mobile;
     }
-    
+
 }

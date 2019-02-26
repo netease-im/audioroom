@@ -24,11 +24,13 @@ import com.netease.audioroom.demo.model.QueueInfo;
 import com.netease.audioroom.demo.model.QueueMember;
 import com.netease.audioroom.demo.model.SimpleMessage;
 import com.netease.audioroom.demo.util.CommonUtil;
+import com.netease.audioroom.demo.util.Network;
 import com.netease.audioroom.demo.util.ScreenUtil;
 import com.netease.audioroom.demo.util.ToastHelper;
 import com.netease.audioroom.demo.widget.HeadImageView;
 import com.netease.audioroom.demo.widget.VerticalItemDecoration;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.ErrorCallback;
+import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.NetErrCallback;
 import com.netease.nimlib.sdk.NIMClient;
 import com.netease.nimlib.sdk.Observer;
 import com.netease.nimlib.sdk.RequestCallback;
@@ -65,12 +67,9 @@ import java.util.List;
  * 主播与观众基础页，包含所有的基本UI元素
  */
 public abstract class BaseAudioActivity extends BaseActivity implements ViewTreeObserver.OnGlobalLayoutListener {
-
     public static final String ROOM_INFO_KEY = "room_info_key";
     public static final String TAG = "AudioRoom";
     private static final int KEY_BOARD_MIN_SIZE = ScreenUtil.dip2px(DemoCache.getContext(), 80);
-
-
     //主播基础信息
     protected HeadImageView ivLiverAvatar;
     protected ImageView ivLiverAudioCloseHint;
@@ -106,7 +105,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
     // 聊天室服务
     protected ChatRoomService chatRoomService;
 
-
     //音视频接口
     protected NRtcEx nrtcEx;
     protected long audioUid;
@@ -136,7 +134,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
         }
     };
 
-
     //聊天室消息观察者
     private Observer<List<ChatRoomMessage>> messageObserver = new Observer<List<ChatRoomMessage>>() {
         @Override
@@ -159,7 +156,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
                             ChatRoomRoomMemberInAttachment memberIn = (ChatRoomRoomMemberInAttachment) message.getAttachment();
                             logInfo.append("成员进入聊天室：nick =  ").append(memberIn.getOperatorNick())
                                     .append(", account = ").append(memberIn.getOperator());
-
                             memberIn(memberIn);
                             break;
                         // 成员退出聊天室
@@ -217,29 +213,31 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
     @Override
     protected void initViews() {
         roomInfo = getIntent().getParcelableExtra(ROOM_INFO_KEY);
+        findBaseView();
         if (roomInfo == null) {
             ToastHelper.showToast("聊天室信息不能为空");
             finish();
         }
-    }
-
-    @Override
-    protected void onNetWork() {
         chatRoomService = NIMClient.getService(ChatRoomService.class);
         nrtcEx = (NRtcEx) NRtc.create(this, CommonUtil.readAppKey(), createNrtcCallBack());
         nrtcEx.setParameter(NRtcParameters.KEY_SESSION_MULTI_MODE, true);//多人会话
         nrtcEx.setParameter(NRtcParameters.KEY_AUDIO_HIGH_QUALITY, true);//高清晰度
         audioUid = System.nanoTime();
-        enterChatRoom(roomInfo.getRoomId());
-        findBaseView();
         setupBaseViewInner();
         setupBaseView();
         rootView = getWindow().getDecorView();
-        rootView.getViewTreeObserver().addOnGlobalLayoutListener(this);
-
+        rootView.getViewTreeObserver().addOnGlobalLayoutListener(BaseAudioActivity.this);
     }
 
-
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (Network.getInstance().isConnected()) {
+            loadService.showSuccess();
+        } else {
+            loadService.showCallback(NetErrCallback.class);
+        }
+    }
 
     protected void memberMuteRemove(ChatRoomTempMuteRemoveAttachment muteRemove) {
     }
@@ -290,13 +288,11 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
         if (rootView != null) {
             rootView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
         }
-
         super.onDestroy();
     }
 
     private void findBaseView() {
         View baseAudioView = findViewById(R.id.rl_base_audio_ui);
-
         if (baseAudioView == null) {
             throw new IllegalStateException("xml layout must include base_audio_ui.xml layout");
         }
@@ -319,21 +315,14 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
 
         edtInput = baseAudioView.findViewById(R.id.edt_input_text);
         sendButton = baseAudioView.findViewById(R.id.tv_send_text);
-        sendButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                sendTextMessage();
-            }
-        });
+        sendButton.setOnClickListener((view) -> sendTextMessage());
 
 
     }
 
-
     private void setupBaseViewInner() {
         String name = roomInfo.getName();
         name = "房间：" + (TextUtils.isEmpty(name) ? roomInfo.getRoomId() : name) + "（" + roomInfo.getOnlineUserCount() + "人）";
-
         tvRoomName.setText(name);
 
         rcyQueueRecyclerView.setLayoutManager(new GridLayoutManager(this, 4));
@@ -342,7 +331,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
 
         queueAdapter.setItemClickListener(itemClickListener);
         queueAdapter.setItemLongClickListener(itemLongClickListener);
-
 
         msgLayoutManager = new LinearLayoutManager(this);
         rcyChatMsgList.setLayoutManager(msgLayoutManager);
@@ -353,7 +341,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
 
     protected void initQueue(List<Entry<String, String>> entries) {
         ArrayList<QueueInfo> queueInfoList = new ArrayList<>();
-
         for (int i = 0; i < 8; i++) {
             QueueInfo queue = new QueueInfo();
             queue.setIndex(i);
@@ -363,7 +350,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
             queueAdapter.setItems(queueInfoList);
             return;
         }
-
         for (Entry<String, String> entry : entries) {
             if (TextUtils.isEmpty(entry.key) || !entry.key.startsWith(QueueInfo.QUEUE_KEY_PREFIX)) {
                 continue;
@@ -377,7 +363,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
             if (member != null && TextUtils.equals(member.getAccount(), DemoCache.getAccountId())) {
                 selfQueue = queueInfo;
             }
-
         }
         queueAdapter.setItems(queueInfoList);
     }
@@ -390,23 +375,7 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
             return;
         }
         ChatRoomMessage chatRoomMessage = ChatRoomMessageBuilder.createChatRoomTextMessage(roomInfo.getRoomId(), content);
-        chatRoomService.sendMessage(chatRoomMessage, false).setCallback(new RequestCallback<Void>() {
-            @Override
-            public void onSuccess(Void aVoid) {
-
-            }
-
-            @Override
-            public void onFailed(int i) {
-
-            }
-
-            @Override
-            public void onException(Throwable throwable) {
-
-            }
-        });
-
+        chatRoomService.sendMessage(chatRoomMessage, false);
         msgAdapter.appendItem(new SimpleMessage(DemoCache.getAccountInfo().nick, content, SimpleMessage.TYPE_NORMAL_MESSAGE));
         edtInput.setText("");
     }
@@ -449,7 +418,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
                 finish();
             }
         });
-
     }
 
     protected void enterRoomSuccess(EnterChatRoomResultData resultData) {
@@ -477,7 +445,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
     @Override
     protected void registerObserver(boolean register) {
         super.registerObserver(register);
-
         NIMClient.getService(MsgServiceObserve.class).observeCustomNotification(customNotification, register);
         NIMClient.getService(ChatRoomServiceObserver.class).observeReceiveMessage(messageObserver, register);
     }
@@ -560,7 +527,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
             return;
         }
     }
-
 
     @Override
     public void onGlobalLayout() {

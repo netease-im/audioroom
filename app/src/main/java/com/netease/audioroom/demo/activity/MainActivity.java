@@ -6,7 +6,6 @@ import android.graphics.Color;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.TextView;
@@ -15,6 +14,8 @@ import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.adapter.ChatRoomListAdapter;
 import com.netease.audioroom.demo.base.BaseActivity;
 import com.netease.audioroom.demo.base.BaseAdapter;
+import com.netease.audioroom.demo.base.LoginManager;
+import com.netease.audioroom.demo.base.action.INetworkReconnection;
 import com.netease.audioroom.demo.cache.DemoCache;
 import com.netease.audioroom.demo.http.ChatRoomHttpClient;
 import com.netease.audioroom.demo.model.AccountInfo;
@@ -29,23 +30,18 @@ import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.ErrorCallbac
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.LoadingCallback;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.NetErrCallback;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.core.Transport;
-import com.netease.nimlib.sdk.NIMClient;
-import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.StatusCode;
-import com.netease.nimlib.sdk.auth.AuthService;
-import com.netease.nimlib.sdk.auth.LoginInfo;
 
 import java.util.ArrayList;
 
 public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickListener<DemoRoomInfo> {
 
-
-    private static final String TAG = "AudioRoom";
     private HeadImageView ivAvatar;
     private TextView tvNick;
     private ChatRoomListAdapter chatRoomListAdapter;
 
     private StatusCode loginStatus = StatusCode.UNLOGIN;
+
 
     @Override
     protected int getContentViewID() {
@@ -55,7 +51,6 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
     @Override
     protected void onRestart() {
         super.onRestart();
-        loadService.showSuccess();
         fetchChatRoomList();
     }
 
@@ -71,7 +66,18 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
         rcyChatList.addItemDecoration(new VerticalItemDecoration(Color.TRANSPARENT, ScreenUtil.dip2px(this, 16)));
         rcyChatList.setAdapter(chatRoomListAdapter);
         chatRoomListAdapter.setItemClickListener(this);
-        setNetworkReconnection(new NetworkReconnection() {
+
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+//        if (Network.getInstance().isConnected()) {
+//            onNetWork();
+//        } else {
+//            loadService.showCallback(NetErrCallback.class);
+//        }
+        setNetworkReconnection(new INetworkReconnection() {
             @Override
             public void onNetworkReconnection() {
                 loadService.showCallback(LoadingCallback.class);
@@ -85,7 +91,7 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
                     @Override
                     public void order(Context context, View view) {
                         view.setOnClickListener((v) -> {
-                            if (new Network().isConnected()) {
+                            if (Network.getInstance().isConnected()) {
                                 onNetWork();
                             }
                         });
@@ -96,92 +102,25 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
 
     }
 
-
-    @Override
-    protected void onNetWork() {
-        super.onNetWork();
-        tryLogin();
-        fetchChatRoomList();
-    }
-
-
-    private void tryLogin() {
-        final AccountInfo accountInfo = DemoCache.getAccountInfo();
-        if (accountInfo == null) {
-            fetchLoginAccount(null);
-            return;
-        }
-        LoginInfo loginInfo = new LoginInfo(accountInfo.account, accountInfo.token);
-
-        NIMClient.getService(AuthService.class).login(loginInfo).setCallback(new RequestCallback() {
-            @Override
-            public void onSuccess(Object o) {
-                afterLogin(accountInfo);
-            }
-
-            @Override
-            public void onFailed(int i) {
-                loadService.showCallback(ErrorCallback.class);
-                fetchLoginAccount(accountInfo.account);
-            }
-
-            @Override
-            public void onException(Throwable throwable) {
-                loadService.showCallback(ErrorCallback.class);
-                fetchLoginAccount(accountInfo.account);
-            }
-        });
-
-    }
-
-    private void fetchLoginAccount(String preAccount) {
-        ChatRoomHttpClient.getInstance().fetchAccount(preAccount, new ChatRoomHttpClient.ChatRoomHttpCallback<AccountInfo>() {
+    private void onNetWork() {
+        LoginManager loginManager = LoginManager.getInstance();
+        loginManager.tryLogin();
+        loginManager.setCallback(new LoginManager.Callback() {
             @Override
             public void onSuccess(AccountInfo accountInfo) {
-
-                login(accountInfo);
+                fetchChatRoomList();
+                ivAvatar.loadAvatar(accountInfo.avatar);
+                tvNick.setText(accountInfo.nick);
+                requestLivePermission();
             }
 
             @Override
             public void onFailed(int code, String errorMsg) {
-                ToastHelper.showToast("获取登录帐号失败 ， code = " + code);
+                loadService.showCallback(ErrorCallback.class);
             }
         });
-    }
-
-    private void login(final AccountInfo accountInfo) {
-        LoginInfo loginInfo = new LoginInfo(accountInfo.account, accountInfo.token);
-        NIMClient.getService(AuthService.class).login(loginInfo).setCallback(new RequestCallback() {
-            @Override
-            public void onSuccess(Object o) {
-                loadService.showCallback(EmptyChatRoomListCallback.class);
-                afterLogin(accountInfo);
-            }
-
-            @Override
-            public void onFailed(int i) {
-                loadService.showCallback(ErrorCallback.class);
-                ToastHelper.showToast("SDK登录失败 , code = " + i);
-            }
-
-            @Override
-            public void onException(Throwable throwable) {
-                loadService.showCallback(ErrorCallback.class);
-                ToastHelper.showToast("SDK登录异常 , e = " + throwable);
-            }
-        });
-    }
-
-    private void afterLogin(AccountInfo accountInfo) {
-//        ToastHelper.showToast("登录成功");
-        DemoCache.setAccountId(accountInfo.account);
-        DemoCache.saveAccountInfo(accountInfo);
-        ivAvatar.loadAvatar(accountInfo.avatar);
-        tvNick.setText(accountInfo.nick);
-        Log.i(TAG, "after login  , account = " + accountInfo.account + " , nick = " + accountInfo.nick);
 
     }
-
 
     private void fetchChatRoomList() {
         ChatRoomHttpClient.getInstance().fetchChatRoomList(0, 20
@@ -189,8 +128,8 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
                     @Override
                     public void onSuccess(ArrayList<DemoRoomInfo> roomList) {
                         if (roomList.size() > 0) {
-                            chatRoomListAdapter.clearAll();
                             loadService.showSuccess();
+                            chatRoomListAdapter.clearAll();
                             chatRoomListAdapter.appendItems(roomList);
                         } else {
                             loadService.showCallback(EmptyChatRoomListCallback.class);
@@ -239,5 +178,6 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
     protected void onLoginEvent(StatusCode statusCode) {
         loginStatus = statusCode;
     }
+
 
 }
