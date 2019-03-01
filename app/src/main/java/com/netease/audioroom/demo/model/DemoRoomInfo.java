@@ -13,8 +13,7 @@ public class DemoRoomInfo extends ChatRoomUpdateInfo {
     private String name;         // 聊天室名称
     private int onlineUserCount; // 当前在线用户数量
     private String thumbnail; // 聊天室背景图
-    private boolean isMute;//是否禁言
-    private boolean isMicrophoneOpen;//麦克是否打开
+
 
     public DemoRoomInfo() {
     }
@@ -82,19 +81,4 @@ public class DemoRoomInfo extends ChatRoomUpdateInfo {
         this.thumbnail = thumbnail;
     }
 
-    public void setMute(boolean mute) {
-        isMute = mute;
-    }
-
-    public void setMicrophoneOpen(boolean microphoneOpen) {
-        isMicrophoneOpen = microphoneOpen;
-    }
-
-    public boolean isMute() {
-        return isMute;
-    }
-
-    public boolean isMicrophoneOpen() {
-        return isMicrophoneOpen;
-    }
 }

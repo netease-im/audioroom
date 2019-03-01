@@ -88,14 +88,11 @@ public class CreateRoomNameDialog extends DialogFragment {
 
     //创建房间
     private void createRoom(String roomName) {
-
         ChatRoomHttpClient.getInstance().createRoom(DemoCache.getAccountId(), roomName, new ChatRoomHttpClient.ChatRoomHttpCallback<DemoRoomInfo>() {
             @Override
             public void onSuccess(DemoRoomInfo roomInfo) {
                 if (roomInfo != null) {
                     dismiss();
-                    roomInfo.setMute(false);
-                    roomInfo.setMicrophoneOpen(true);
                     AudioLiveActivity.start(getContext(), roomInfo);
                 } else {
                     ToastHelper.showToast("创建房间失败，返回信息为空");

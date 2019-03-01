@@ -22,11 +22,15 @@ import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.ErrorCallbac
 import com.netease.nimlib.sdk.NIMClient;
 import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.chatroom.ChatRoomService;
+import com.netease.nimlib.sdk.chatroom.model.ChatRoomInfo;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMember;
+import com.netease.nimlib.sdk.chatroom.model.ChatRoomUpdateInfo;
 import com.netease.nimlib.sdk.chatroom.model.MemberOption;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 禁言成员页面（可侧滑）
@@ -42,6 +46,8 @@ public class MuteMemberListActivity extends BaseActivity {
 
     List<ChatRoomMember> muteList;
     LinearLayout empty_view;
+
+    boolean isAllMute;
 
     int muteTime = 30 * 24 * 60 * 60;
 
@@ -73,7 +79,7 @@ public class MuteMemberListActivity extends BaseActivity {
             ToastHelper.showToast("传值错误");
         }
         addMuteMember.setOnClickListener(v -> addMuteMember());
-        muteAllMember.setOnClickListener(v -> muteAllMember());
+        muteAllMember.setOnClickListener(v -> muteAllMemberAndnotify());
         recyclerView.addOnScrollListener(onScrollListener);
         icon = findViewById(R.id.toolsbar).findViewById(R.id.icon);
         title = findViewById(R.id.toolsbar).findViewById(R.id.title);
@@ -127,6 +133,40 @@ public class MuteMemberListActivity extends BaseActivity {
         }
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        NIMClient.getService(ChatRoomService.class).fetchRoomInfo(roomInfo.getRoomId())
+                .setCallback(new RequestCallback<ChatRoomInfo>() {
+                    @Override
+                    public void onSuccess(ChatRoomInfo param) {
+                        // 成功
+                        if (param.getExtension() != null) {
+                            for (Map.Entry<String, Object> entry : param.getExtension().entrySet()) {
+                                if (entry.getKey().equals(ROOM_INFO_MUTE)) {
+                                    if ((Boolean) entry.getValue()) {
+                                        muteAllMember.setText("取消全部禁麦");
+                                        ToastHelper.showToast("已全部禁麦");
+                                        isAllMute = true;
+                                    } else {
+                                        isAllMute = false;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onFailed(int code) {
+                        // 失败
+                    }
+
+                    @Override
+                    public void onException(Throwable exception) {
+                        // 错误
+                    }
+                });
+    }
 
     //获取临时禁言成员列表
     private void getMuteList() {
@@ -184,21 +224,25 @@ public class MuteMemberListActivity extends BaseActivity {
     }
 
     //禁言所有成员
-    private void muteAllMember() {
-        ChatRoomHttpClient.getInstance().muteAll(DemoCache.getAccountId(), roomInfo.getRoomId(), true, true, false,
+    private void muteAllMember(boolean mute) {
+        ChatRoomHttpClient.getInstance().muteAll(DemoCache.getAccountId(), roomInfo.getRoomId(), mute, true, false,
                 new ChatRoomHttpClient.ChatRoomHttpCallback() {
                     @Override
                     public void onSuccess(Object o) {
-                        muteAllMember.setText("取消全部禁麦");
-                        ToastHelper.showToast("已全部禁麦");
-                        roomInfo.setMute(true);
+                        if (isAllMute) {
+                            muteAllMember.setText("取消全部禁麦");
+                            ToastHelper.showToast("已全部禁麦");
 
+                        } else {
+                            muteAllMember.setText("全部禁言");
+                            ToastHelper.showToast("取消全部禁麦");
+                        }
+                        isAllMute = !mute;
                     }
 
                     @Override
                     public void onFailed(int code, String errorMsg) {
                         ToastHelper.showToast("全部禁麦失败+" + errorMsg);
-
                     }
                 });
     }
@@ -210,8 +254,6 @@ public class MuteMemberListActivity extends BaseActivity {
                 .setCallback(new RequestCallback<Void>() {
                     @Override
                     public void onSuccess(Void param) {
-                        roomInfo.setMute(false);
-                        muteAllMember.setText("全部禁言");
                         ToastHelper.showToast("解禁成功" + "\t 解禁成员" + member.getAccount());
                         muteList.remove(p);
                         if (muteList.size() == 0) {
@@ -241,5 +283,31 @@ public class MuteMemberListActivity extends BaseActivity {
     protected void onDestroy() {
         super.onDestroy();
         recyclerView.removeOnScrollListener(onScrollListener);
+    }
+
+    private void muteAllMemberAndnotify() {
+        ChatRoomUpdateInfo chatRoomUpdateInfo = new ChatRoomUpdateInfo();
+        Map<String, Object> param = new HashMap<>();
+        param.put(ROOM_INFO_MUTE, isAllMute);
+        chatRoomUpdateInfo.setExtension(param);
+        NIMClient.getService(ChatRoomService.class).updateRoomInfo(roomInfo.getRoomId(), chatRoomUpdateInfo, true, param).setCallback(new RequestCallback<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                muteAllMember(isAllMute);
+            }
+
+            @Override
+            public void onFailed(int i) {
+                ToastHelper.showToast("全部禁言失败code" + i);
+
+            }
+
+            @Override
+            public void onException(Throwable throwable) {
+                ToastHelper.showToast("全部禁言失败code" + throwable.getMessage());
+            }
+        });
+
+
     }
 }

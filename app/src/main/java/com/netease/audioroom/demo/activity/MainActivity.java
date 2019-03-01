@@ -80,9 +80,11 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
         }
     }
 
+
     @Override
     protected void onResume() {
         super.onResume();
+        onRefresh();
         setNetworkReconnection(new INetworkReconnection() {
             @Override
             public void onNetworkReconnection() {
@@ -98,11 +100,6 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
         });
     }
 
-    @Override
-    protected void onRestart() {
-        super.onRestart();
-        onRefresh();
-    }
 
     private void onNetWork() {
         LoginManager loginManager = LoginManager.getInstance();
@@ -177,9 +174,7 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
             return;
         }
         //当前帐号创建的房间
-        if (TextUtils.equals(DemoCache.getAccountId(), model.getCreator()) && model != null) {
-            model.setMute(false);
-            model.setMicrophoneOpen(true);
+        if (TextUtils.equals(DemoCache.getAccountId(), model.getCreator())) {
             AudioLiveActivity.start(mContext, model);
         } else {
             AudienceActivity.start(mContext, model);

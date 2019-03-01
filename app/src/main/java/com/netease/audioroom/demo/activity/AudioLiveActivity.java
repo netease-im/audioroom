@@ -10,6 +10,7 @@ import android.support.annotation.Nullable;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -42,9 +43,11 @@ import com.netease.audioroom.demo.util.Network;
 import com.netease.audioroom.demo.util.ToastHelper;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.ErrorCallback;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.LoadingCallback;
+import com.netease.nimlib.sdk.NIMClient;
 import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.RequestCallbackWrapper;
 import com.netease.nimlib.sdk.chatroom.ChatRoomMessageBuilder;
+import com.netease.nimlib.sdk.chatroom.ChatRoomService;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMember;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMessage;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomQueueChangeAttachment;
@@ -73,6 +76,7 @@ import static com.netease.audioroom.demo.dialog.RequestLinkDialog.QUEUEINFOLIST;
  * 主播页
  */
 public class AudioLiveActivity extends BaseAudioActivity implements LoginManager.IAudioLive, View.OnClickListener {
+    boolean isMicrophone;
 
     public static void start(Context context, DemoRoomInfo demoRoomInfo) {
         Intent intent = new Intent(context, AudioLiveActivity.class);
@@ -119,6 +123,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
     @Override
     protected void onResume() {
         super.onResume();
+        initRoomInfo();
         setNetworkReconnection(new INetworkReconnection() {
             @Override
             public void onNetworkReconnection() {
@@ -190,7 +195,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
         semicircleView.setVisibility(View.GONE);
         semicircleView.setClickable(true);
         updateMusicPlayHint();
-
     }
 
 
@@ -605,65 +609,68 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
             //禁言
             MuteMemberListActivity.start(mContext, roomInfo);
         } else if (view == ivSelfAudioSwitch) {
-            boolean mutex = ivSelfAudioSwitch.isSelected();
+
             ivSelfAudioSwitch.setEnabled(false);
             ChatRoomUpdateInfo chatRoomUpdateInfo = new ChatRoomUpdateInfo();
             Map<String, Object> param = new HashMap<>();
-            if (mutex) {
-                param.put("123", true);
+            if (!isMicrophone) {
+                param.put(ROOM_INFO_KEY_MICROPHONE, true);
+                chatRoomUpdateInfo.setExtension(param);
+                chatRoomService.updateRoomInfo(roomInfo.getRoomId(), null, true, param)
+                        .setCallback(new RequestCallback() {
+                            @Override
+                            public void onSuccess(Object o) {
+                                ivLiverAvatar.startWaveAnimation();
+                                ToastHelper.showToast("话筒已开启");
+                                boolean mutex = ivSelfAudioSwitch.isSelected();
+                                ivSelfAudioSwitch.setSelected(!mutex);
+                                muteSelfAudio(!mutex);
+
+                                isMicrophone = !isMicrophone;
+                                ivSelfAudioSwitch.setEnabled(true);
+                            }
+
+                            @Override
+                            public void onFailed(int i) {
+                                ToastHelper.showToast("话筒关闭失败，请重试");
+                                ivSelfAudioSwitch.setEnabled(true);
+                            }
+
+                            @Override
+                            public void onException(Throwable throwable) {
+                                ToastHelper.showToast("话筒关闭失败，请重试");
+                                ivSelfAudioSwitch.setEnabled(true);
+                            }
+                        });
+            } else {
+                param.put(ROOM_INFO_KEY_MICROPHONE, false);
                 chatRoomUpdateInfo.setExtension(param);
                 chatRoomService.updateRoomInfo(roomInfo.getRoomId(), chatRoomUpdateInfo, true, param)
                         .setCallback(new RequestCallback() {
-                    @Override
-                    public void onSuccess(Object o) {
-                        ivLiverAvatar.startWaveAnimation();
-                        ToastHelper.showToast("话筒已开启");
-                        boolean mutex = ivSelfAudioSwitch.isSelected();
-                        ivSelfAudioSwitch.setSelected(!mutex);
-                        muteSelfAudio(!mutex);
-                        ivSelfAudioSwitch.setEnabled(true);
-                    }
+                            @Override
+                            public void onSuccess(Object o) {
+                                ToastHelper.showToast("话筒已关闭");
+                                ivLiverAvatar.stopWaveAnimation();
+                                boolean mutex = ivSelfAudioSwitch.isSelected();
+                                ivSelfAudioSwitch.setSelected(!mutex);
+                                muteSelfAudio(!mutex);
 
-                    @Override
-                    public void onFailed(int i) {
-                        ToastHelper.showToast("话筒关闭失败，请重试");
-                        ivSelfAudioSwitch.setEnabled(true);
-                    }
+                                isMicrophone = !isMicrophone;
+                                ivSelfAudioSwitch.setEnabled(true);
+                            }
 
-                    @Override
-                    public void onException(Throwable throwable) {
-                        ToastHelper.showToast("话筒关闭失败，请重试");
-                        ivSelfAudioSwitch.setEnabled(true);
-                    }
-                });
-            } else {
-                param.put("123", false);
-                chatRoomUpdateInfo.setExtension(param);
-                roomInfo.setMicrophoneOpen(false);
-                chatRoomService.updateRoomInfo(roomInfo.getRoomId(), chatRoomUpdateInfo, true, null)
-                        .setCallback(new RequestCallback() {
-                    @Override
-                    public void onSuccess(Object o) {
-                        ToastHelper.showToast("话筒已关闭");
-                        ivLiverAvatar.stopWaveAnimation();
-                        boolean mutex = ivSelfAudioSwitch.isSelected();
-                        ivSelfAudioSwitch.setSelected(!mutex);
-                        muteSelfAudio(!mutex);
-                        ivSelfAudioSwitch.setEnabled(true);
-                    }
+                            @Override
+                            public void onFailed(int i) {
+                                ToastHelper.showToast("话筒关闭失败，请重试");
+                                ivSelfAudioSwitch.setEnabled(true);
+                            }
 
-                    @Override
-                    public void onFailed(int i) {
-                        ToastHelper.showToast("话筒关闭失败，请重试");
-                        ivSelfAudioSwitch.setEnabled(true);
-                    }
-
-                    @Override
-                    public void onException(Throwable throwable) {
-                        ToastHelper.showToast("话筒关闭失败，请重试");
-                        ivSelfAudioSwitch.setEnabled(true);
-                    }
-                });
+                            @Override
+                            public void onException(Throwable throwable) {
+                                ToastHelper.showToast("话筒关闭失败，请重试");
+                                ivSelfAudioSwitch.setEnabled(true);
+                            }
+                        });
             }
 
         } else if (view == ivRoomAudioSwitch) {
@@ -1036,6 +1043,35 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                 playNextMusic();
             }
         }
+    }
+
+
+    //初始化聊天室扩展字段
+    private void initRoomInfo() {
+        ChatRoomUpdateInfo chatRoomUpdateInfo = new ChatRoomUpdateInfo();
+        Map<String, Object> param = new HashMap<>();
+        param.put(ROOM_INFO_KEY_MICROPHONE, true);
+        param.put(ROOM_INFO_MUTE, false);
+        chatRoomUpdateInfo.setExtension(param);
+        chatRoomService.updateRoomInfo(roomInfo.getRoomId(), chatRoomUpdateInfo, true, null).setCallback(new RequestCallback<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                ToastHelper.showToast("初始化成功");
+                isMicrophone = true;
+
+            }
+
+            @Override
+            public void onFailed(int i) {
+                ToastHelper.showToast("初始化失败code" + i);
+            }
+
+            @Override
+            public void onException(Throwable throwable) {
+                ToastHelper.showToast("初始化失败" + throwable.getMessage());
+                Log.e(TAG, throwable.getMessage());
+            }
+        });
     }
 
 

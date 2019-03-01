@@ -109,11 +109,10 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         joinChannel(audioUid);
     }
 
-
     @Override
-    protected void onResume() {
-        super.onResume();
-        //获取聊天室主播麦克风状态
+    protected void onStart() {
+        super.onStart();
+        //获取聊天室初始状态
         NIMClient.getService(ChatRoomService.class).fetchRoomInfo(roomInfo.getRoomId())
                 .setCallback(new RequestCallback<ChatRoomInfo>() {
                     @Override
@@ -121,14 +120,18 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                         // 成功
                         if (param.getExtension() != null) {
                             for (Map.Entry<String, Object> entry : param.getExtension().entrySet()) {
-                                if (entry.getKey().equals(ROOM__INFO_KEY_MICROPHONE)) {
+                                if (entry.getKey().equals(ROOM_INFO_KEY_MICROPHONE)) {
                                     if ((Boolean) entry.getValue()) {
                                         ivLiverAvatar.startWaveAnimation();
                                     } else {
                                         ivLiverAvatar.stopWaveAnimation();
                                     }
-                                    break;
+                                } else if (entry.getKey().equals(ROOM_INFO_MUTE)) {
+                                    if ((Boolean) entry.getValue()) {
+                                        mute();
+                                    }
                                 }
+
                             }
                         }
                     }
@@ -143,11 +146,11 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                         // 错误
                     }
                 });
-        if (roomInfo.isMicrophoneOpen()) {
-            ivLiverAvatar.startWaveAnimation();
-        } else {
-            ivLiverAvatar.stopWaveAnimation();
-        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
         setNetworkReconnection(new INetworkReconnection() {
             @Override
             public void onNetworkReconnection() {

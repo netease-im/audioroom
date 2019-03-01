@@ -25,6 +25,8 @@ public abstract class BaseActivity extends AppCompatActivity {
 
     protected static final int LIVE_PERMISSION_REQUEST_CODE = 1001;
 
+    public static final String ROOM_INFO_MUTE = "room_info_mute";//房间是否禁言
+
     protected boolean isPermissionGrant = false;
     protected boolean isPaused = true;
     protected Context mContext;

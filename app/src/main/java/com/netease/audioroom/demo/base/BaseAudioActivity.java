@@ -73,7 +73,7 @@ import java.util.Map;
 public abstract class BaseAudioActivity extends BaseActivity implements ViewTreeObserver.OnGlobalLayoutListener {
     public static final String ROOM_INFO_KEY = "room_info_key";
     public static final String TAG = "AudioRoom";
-    public static final String ROOM__INFO_KEY_MICROPHONE = "room__info_key_microphone";
+    public static final String ROOM_INFO_KEY_MICROPHONE = "room_info_key_microphone";
 
 
     private static final int KEY_BOARD_MIN_SIZE = ScreenUtil.dip2px(DemoCache.getContext(), 80);
@@ -209,33 +209,33 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
                         case ChatRoomInfoUpdated:
                             NIMClient.getService(ChatRoomService.class).fetchRoomInfo(roomInfo.getRoomId())
                                     .setCallback(new RequestCallback<ChatRoomInfo>() {
-                                @Override
-                                public void onSuccess(ChatRoomInfo param) {
-                                    // 成功
-                                    if (param.getExtension() != null) {
-                                        for (Map.Entry<String, Object> entry : param.getExtension().entrySet()) {
-                                            if (entry.getKey().equals(ROOM__INFO_KEY_MICROPHONE)) {
-                                                if ((Boolean) entry.getValue()) {
-                                                    ivLiverAvatar.startWaveAnimation();
-                                                } else {
-                                                    ivLiverAvatar.stopWaveAnimation();
+                                        @Override
+                                        public void onSuccess(ChatRoomInfo param) {
+                                            // 成功
+                                            if (param.getExtension() != null) {
+                                                for (Map.Entry<String, Object> entry : param.getExtension().entrySet()) {
+                                                    if (entry.getKey().equals(ROOM_INFO_KEY_MICROPHONE)) {
+                                                        if ((Boolean) entry.getValue()) {
+                                                            ivLiverAvatar.startWaveAnimation();
+                                                        } else {
+                                                            ivLiverAvatar.stopWaveAnimation();
+                                                        }
+                                                        break;
+                                                    }
                                                 }
-                                                break;
                                             }
                                         }
-                                    }
-                                }
 
-                                @Override
-                                public void onFailed(int code) {
-                                    // 失败
-                                }
+                                        @Override
+                                        public void onFailed(int code) {
+                                            // 失败
+                                        }
 
-                                @Override
-                                public void onException(Throwable exception) {
-                                    // 错误
-                                }
-                            });
+                                        @Override
+                                        public void onException(Throwable exception) {
+                                            // 错误
+                                        }
+                                    });
 
                     }
                 } else {
@@ -589,9 +589,8 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
             scrollToBottom();
             return;
         }
-
-
     }
+
 
 
 }
