@@ -11,6 +11,7 @@ import android.text.TextUtils;
 import android.view.View;
 
 import com.netease.audioroom.demo.R;
+import com.netease.audioroom.demo.audio.SimpleNRtcCallback;
 import com.netease.audioroom.demo.base.BaseAudioActivity;
 import com.netease.audioroom.demo.base.LoginManager;
 import com.netease.audioroom.demo.base.action.IAudience;
@@ -32,11 +33,12 @@ import com.netease.audioroom.demo.permission.annotation.OnMPermissionGranted;
 import com.netease.audioroom.demo.permission.annotation.OnMPermissionNeverAskAgain;
 import com.netease.audioroom.demo.util.CommonUtil;
 import com.netease.audioroom.demo.util.JsonUtil;
-import com.netease.audioroom.demo.util.Network;
 import com.netease.audioroom.demo.util.ToastHelper;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.ErrorCallback;
-import com.netease.audioroom.demo.widget.unitepage.loadsir.core.LoadService;
+import com.netease.nimlib.sdk.NIMClient;
 import com.netease.nimlib.sdk.RequestCallback;
+import com.netease.nimlib.sdk.chatroom.ChatRoomService;
+import com.netease.nimlib.sdk.chatroom.model.ChatRoomInfo;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMember;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMessage;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomQueueChangeAttachment;
@@ -45,11 +47,13 @@ import com.netease.nimlib.sdk.msg.attachment.MsgAttachment;
 import com.netease.nimlib.sdk.msg.constant.ChatRoomQueueChangeType;
 import com.netease.nimlib.sdk.msg.model.CustomNotification;
 import com.netease.nimlib.sdk.util.Entry;
+import com.netease.nrtc.sdk.NRtcCallback;
 
 import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static com.netease.audioroom.demo.dialog.BottomMenuDialog.BOTTOMMENUS;
 
@@ -60,6 +64,7 @@ import static com.netease.audioroom.demo.dialog.BottomMenuDialog.BOTTOMMENUS;
 public class AudienceActivity extends BaseAudioActivity implements IAudience, View.OnClickListener {
 
     TopTipsDialog topTipsDialog;
+    String creator;
 
     public static void start(Context context, DemoRoomInfo model) {
         Intent intent = new Intent(context, AudienceActivity.class);
@@ -79,16 +84,70 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // roomId为聊天室ID
+        NIMClient.getService(ChatRoomService.class).fetchRoomInfo(roomInfo.getRoomId()).setCallback(new RequestCallback<ChatRoomInfo>() {
+            @Override
+            public void onSuccess(ChatRoomInfo param) {
+                // 成功
+                creator = param.getCreator();
+            }
+
+            @Override
+            public void onFailed(int code) {
+                // 失败
+                ToastHelper.showToast(code + "");
+            }
+
+            @Override
+            public void onException(Throwable exception) {
+                // 错误
+                ToastHelper.showToast(exception.getMessage() + "");
+            }
+        });
         enterChatRoom(roomInfo.getRoomId());
         enableAudienceRole(true);
         joinChannel(audioUid);
     }
 
 
-
     @Override
     protected void onResume() {
         super.onResume();
+        //获取聊天室主播麦克风状态
+        NIMClient.getService(ChatRoomService.class).fetchRoomInfo(roomInfo.getRoomId())
+                .setCallback(new RequestCallback<ChatRoomInfo>() {
+                    @Override
+                    public void onSuccess(ChatRoomInfo param) {
+                        // 成功
+                        if (param.getExtension() != null) {
+                            for (Map.Entry<String, Object> entry : param.getExtension().entrySet()) {
+                                if (entry.getKey().equals(ROOM__INFO_KEY_MICROPHONE)) {
+                                    if ((Boolean) entry.getValue()) {
+                                        ivLiverAvatar.startWaveAnimation();
+                                    } else {
+                                        ivLiverAvatar.stopWaveAnimation();
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onFailed(int code) {
+                        // 失败
+                    }
+
+                    @Override
+                    public void onException(Throwable exception) {
+                        // 错误
+                    }
+                });
+        if (roomInfo.isMicrophoneOpen()) {
+            ivLiverAvatar.startWaveAnimation();
+        } else {
+            ivLiverAvatar.stopWaveAnimation();
+        }
         setNetworkReconnection(new INetworkReconnection() {
             @Override
             public void onNetworkReconnection() {
@@ -128,6 +187,8 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 });
             }
         });
+
+//        ((SimpleNRtcCallback)createNrtcCallBack()).onReportSpeaker(creator,);
     }
 
     @Override
@@ -243,7 +304,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     protected void initQueue(List<Entry<String, String>> entries) {
         super.initQueue(entries);
         if (selfQueue != null) {
-            //todo
             hasMicrophone(true);
         }
     }
@@ -383,7 +443,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         tipsDialog.setClickListener(() -> tipsDialog.dismiss());
     }
 
-
     @Override
     public void queueLinkNormal(QueueInfo queueInfo) {
         Bundle bundle = new Bundle();
@@ -396,6 +455,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                                 "现在可以进行语音互动啦\n" +
                                 "如需下麦，可点击自己的头像或下麦按钮");
                 tipsDialog.setArguments(bundle);
+
                 tipsDialog.show(getSupportFragmentManager(), TipsDialog.TIPSDIALOG);
                 tipsDialog.setClickListener(() -> tipsDialog.dismiss());
                 break;
@@ -412,9 +472,21 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 bundle.putParcelable(TopTipsDialog.TOPTIPSDIALOG, style);
                 topTipsDialog.setArguments(bundle);
                 topTipsDialog.show(getFragmentManager(), TopTipsDialog.TOPTIPSDIALOG);
+
                 new Handler().postDelayed(() -> topTipsDialog.dismiss(), 2000); // 延时2秒
                 break;
+            case QueueInfo.Reason.cancelMuted:
+                TipsDialog tipsDialog2 = new TipsDialog();
+                bundle.putString(TipsDialog.TIPSDIALOG,
+                        "该麦位被主播“解除语音屏蔽”\n" +
+                                "现在您可以再次进行语音互动了");
+                tipsDialog2.setArguments(bundle);
+
+                tipsDialog2.show(getSupportFragmentManager(), TipsDialog.TIPSDIALOG);
+                tipsDialog2.setClickListener(() -> tipsDialog2.dismiss());
+                break;
         }
+
         hasMicrophone(true);
         enableAudienceRole(false);
         selfQueue = queueInfo;
@@ -462,7 +534,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                     break;
                 case "取消":
                     bottomButtonAction(bottomMenuDialog, null, "取消");
-                    topTipsDialog.show(getFragmentManager(), "TopTipsDialog");
+//                    topTipsDialog.show(getFragmentManager(), "TopTipsDialog");
                     break;
             }
         });
@@ -620,6 +692,27 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         } else {
             ivCancelLink.setVisibility(View.GONE);
             ivSelfAudioSwitch.setVisibility(View.GONE);
+        }
+    }
+
+    @Override
+    protected NRtcCallback createNrtcCallBack() {
+
+        return new InnerNRtcCallBack();
+    }
+
+    private class InnerNRtcCallBack extends SimpleNRtcCallback {
+
+        @Override
+        public void onReportSpeaker(int activated, long[] speakers, int[] energies, int mixedEnergy) {
+            super.onReportSpeaker(activated, speakers, energies, mixedEnergy);
+            ToastHelper.showToast("接收到回调");
+        }
+
+        @Override
+        public void onUserMuteAudio(long uid, boolean muted) {
+            super.onUserMuteAudio(uid, muted);
+            ToastHelper.showToast("接收到回调");
         }
     }
 }

@@ -4,7 +4,6 @@ import android.content.Context;
 import android.view.View;
 
 import com.netease.audioroom.demo.R;
-import com.netease.audioroom.demo.util.ToastHelper;
 
 public class NetErrCallback extends BaseCallback {
 
@@ -17,4 +16,5 @@ public class NetErrCallback extends BaseCallback {
     protected boolean onReloadEvent(final Context context, View view) {
         return true;
     }
+
 }

@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -16,6 +15,7 @@ import com.netease.audioroom.demo.base.BaseActivity;
 import com.netease.audioroom.demo.cache.DemoCache;
 import com.netease.audioroom.demo.cache.RoomMemberCache;
 import com.netease.audioroom.demo.http.ChatRoomHttpClient;
+import com.netease.audioroom.demo.model.DemoRoomInfo;
 import com.netease.audioroom.demo.util.ToastHelper;
 import com.netease.audioroom.demo.widget.VerticalItemDecoration;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.ErrorCallback;
@@ -24,8 +24,6 @@ import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.chatroom.ChatRoomService;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMember;
 import com.netease.nimlib.sdk.chatroom.model.MemberOption;
-
-import org.json.JSONException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +34,7 @@ import java.util.List;
 public class MuteMemberListActivity extends BaseActivity {
     public static String MUTEMEMBERLISTACTIVITY = "MuteMemberListActivity";
 
-    String roomId;
+    DemoRoomInfo roomInfo;
 
     TextView addMuteMember, muteAllMember, icon, title;
     RecyclerView recyclerView;
@@ -47,9 +45,9 @@ public class MuteMemberListActivity extends BaseActivity {
 
     int muteTime = 30 * 24 * 60 * 60;
 
-    public static void start(Context context, String roomId) {
+    public static void start(Context context, DemoRoomInfo roomInfo) {
         Intent intent = new Intent(context, MuteMemberListActivity.class);
-        intent.putExtra(MUTEMEMBERLISTACTIVITY, roomId);
+        intent.putExtra(MUTEMEMBERLISTACTIVITY, roomInfo);
         context.startActivity(intent);
     }
 
@@ -69,7 +67,7 @@ public class MuteMemberListActivity extends BaseActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(mContext));
         recyclerView.addItemDecoration(new VerticalItemDecoration(Color.WHITE, 1));
         if (getIntent() != null) {
-            roomId = getIntent().getStringExtra(MUTEMEMBERLISTACTIVITY);
+            roomInfo = (DemoRoomInfo) getIntent().getSerializableExtra(MUTEMEMBERLISTACTIVITY);
             getMuteList();
         } else {
             ToastHelper.showToast("传值错误");
@@ -94,7 +92,7 @@ public class MuteMemberListActivity extends BaseActivity {
             } else {
                 empty_view.setVisibility(View.GONE);
                 recyclerView.setVisibility(View.VISIBLE);
-                MemberOption option = new MemberOption(roomId, muteList.get(0).getAccount());
+                MemberOption option = new MemberOption(roomInfo.getRoomId(), muteList.get(0).getAccount());
                 //临时禁言30天
                 NIMClient.getService(ChatRoomService.class).markChatRoomTempMute(true, muteTime, option)
                         .setCallback(new RequestCallback<Void>() {
@@ -132,7 +130,7 @@ public class MuteMemberListActivity extends BaseActivity {
 
     //获取临时禁言成员列表
     private void getMuteList() {
-        RoomMemberCache.getInstance().fetchMembers(roomId, 0, 100, new RequestCallback<List<ChatRoomMember>>() {
+        RoomMemberCache.getInstance().fetchMembers(roomInfo.getRoomId(), 0, 100, new RequestCallback<List<ChatRoomMember>>() {
             @Override
             public void onSuccess(List<ChatRoomMember> chatRoomMembers) {
                 loadService.showSuccess();
@@ -182,18 +180,19 @@ public class MuteMemberListActivity extends BaseActivity {
 
     //添加禁言成员
     private void addMuteMember() {
-        MemberActivity.start(this, roomId);
+        MemberActivity.start(this, roomInfo.getRoomId());
     }
 
     //禁言所有成员
     private void muteAllMember() {
-        ChatRoomHttpClient.getInstance().muteAll(DemoCache.getAccountId(), roomId, true, true, false,
+        ChatRoomHttpClient.getInstance().muteAll(DemoCache.getAccountId(), roomInfo.getRoomId(), true, true, false,
                 new ChatRoomHttpClient.ChatRoomHttpCallback() {
                     @Override
                     public void onSuccess(Object o) {
-
                         muteAllMember.setText("取消全部禁麦");
                         ToastHelper.showToast("已全部禁麦");
+                        roomInfo.setMute(true);
+
                     }
 
                     @Override
@@ -206,16 +205,19 @@ public class MuteMemberListActivity extends BaseActivity {
 
     //解除禁言
     private void removeMuteMember(int p, ChatRoomMember member) {
-        MemberOption option = new MemberOption(roomId, member.getAccount());
+        MemberOption option = new MemberOption(roomInfo.getRoomId(), member.getAccount());
         NIMClient.getService(ChatRoomService.class).markChatRoomTempMute(true, 0, option)
                 .setCallback(new RequestCallback<Void>() {
                     @Override
                     public void onSuccess(Void param) {
+                        roomInfo.setMute(false);
+                        muteAllMember.setText("全部禁言");
                         ToastHelper.showToast("解禁成功" + "\t 解禁成员" + member.getAccount());
                         muteList.remove(p);
                         if (muteList.size() == 0) {
                             adapter.notifyDataSetChanged();
                             empty_view.setVisibility(View.VISIBLE);
+
                         } else {
                             adapter.notifyDataSetChanged();
                         }

@@ -135,6 +135,7 @@ public abstract class BaseAdapter<T> extends RecyclerView.Adapter {
         int start = dataList.size();
         dataList.addAll(items);
         notifyItemRangeChanged(start, items.size());
+//        notifyDataSetChanged();
     }
 
 

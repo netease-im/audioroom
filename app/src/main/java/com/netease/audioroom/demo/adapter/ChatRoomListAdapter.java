@@ -14,9 +14,10 @@ import com.netease.audioroom.demo.model.DemoRoomInfo;
 import com.netease.audioroom.demo.util.CommonUtil;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class ChatRoomListAdapter extends BaseAdapter<DemoRoomInfo> {
-
+    ArrayList<DemoRoomInfo> dataList;
 
     public ChatRoomListAdapter(ArrayList<DemoRoomInfo> dataList, Context context) {
         super(dataList, context);
@@ -57,4 +58,11 @@ public class ChatRoomListAdapter extends BaseAdapter<DemoRoomInfo> {
             tvMember = itemView.findViewById(R.id.tv_chat_room_member_num);
         }
     }
+
+    public void refrshList(ArrayList<DemoRoomInfo> dataList) {
+        this.dataList = dataList;
+        notifyDataSetChanged();
+
+    }
+
 }

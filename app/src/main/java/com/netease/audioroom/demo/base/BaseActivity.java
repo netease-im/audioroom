@@ -31,7 +31,7 @@ public abstract class BaseActivity extends AppCompatActivity {
 
     protected LoadService loadService;//提示页面
     INetworkReconnection networkReconnection;
-    Network network = Network.getInstance();
+
 
 
     //网络状态监听

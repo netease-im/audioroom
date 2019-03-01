@@ -17,7 +17,11 @@ import java.io.Serializable;
  */
 public class QueueInfo implements Serializable, Parcelable {
 
-    //status 0:麦位初始化状态 , 1: 正在申请 , 2: 麦位上有人 , 3: 麦位关闭 , 4:麦位上没人，但是被主播屏蔽 , 5:麦位上有人，但是语音被屏蔽 , 6:麦位上有人，但是他关闭了自己的语音;
+    //status 0:麦位初始化状态 , 1: 正在申请 , 2: 麦位上有人 , 3: 麦位关闭 ,
+    // 4:麦位上没人，但是被主播屏蔽 , 5:麦位上有人，但是语音被屏蔽 ,
+    // 6:麦位上有人，但是他关闭了自己的语音;
+    // 7:麦位在屏蔽状态中被申请
+    //8:麦位取消屏蔽状态
 
     //reason(状态改变原因) 1: 主播同意上麦 ; 2:抱麦  ; 3:被踢 ;4:主动下麦 ; 5:主动取消申请; 6:被拒绝;7：麦位在屏蔽状态中被申请
 
@@ -32,6 +36,7 @@ public class QueueInfo implements Serializable, Parcelable {
         int cancelApplyBySelf = 5;//主动取消申请
         int cancelApplyByHost = 6;//被拒绝
         int applyInMute = 7;//麦位在屏蔽状态中被申请
+        int cancelMuted = 8;//麦位取消屏蔽状态
     }
 
 

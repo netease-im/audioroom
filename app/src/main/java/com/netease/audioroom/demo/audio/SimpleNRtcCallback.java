@@ -144,6 +144,7 @@ public class SimpleNRtcCallback implements NRtcCallback {
      */
     @Override
     public void onUserMuteVideo(long uid, boolean muted) {
+
         Log.d(TAG, "onUserMuteVideo , uid =  " + uid + " , muted = " + muted);
     }
 
@@ -267,7 +268,7 @@ public class SimpleNRtcCallback implements NRtcCallback {
      */
     @Override
     public void onReportSpeaker(int activated, long[] speakers, int[] energies, int mixedEnergy) {
-//        Log.d(TAG, "onReportSpeaker ,  speakers =  " + speakers);
+        Log.d(TAG, "onReportSpeaker ,  speakers =  " + speakers);
     }
 
 

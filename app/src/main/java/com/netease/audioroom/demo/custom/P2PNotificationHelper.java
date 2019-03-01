@@ -16,7 +16,6 @@ import org.json.JSONObject;
  * 用于发送点对点的通知消息
  */
 public class P2PNotificationHelper {
-
     public static final String COMMAND = "command"; //自定义命令标识
     public static final String INDEX = "index";//麦位
     public static final String NICK = "nick"; // 昵称
@@ -33,6 +32,7 @@ public class P2PNotificationHelper {
      * 观众取消连麦请求
      */
     public static final int CANCEL_REQUEST_LINK = 3;
+
 
     /**
      * 请求连麦
@@ -95,5 +95,6 @@ public class P2PNotificationHelper {
             callback.onException(e);
         }
     }
+
 
 }

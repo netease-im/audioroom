@@ -1,19 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/rl_base_audio_ui"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <com.netease.audioroom.demo.widget.HeadImageView
+    <com.netease.audioroom.demo.widget.RippleImageView
         android:id="@+id/iv_liver_avatar"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
         android:layout_marginLeft="10dp"
         android:layout_marginTop="10dp"
-        android:layout_marginRight="10dp"
-        android:src="@color/color_0888ff" />
+        app:imageViewHeigth="50dp"
+        app:imageViewWidth="50dp"
+        app:show_spacing_time="800" />
 
     <ImageView
         android:id="@+id/iv_liver_audio_close_hint"
@@ -25,7 +27,6 @@
         android:src="@drawable/audio_close_hint"
         android:visibility="gone"
         tools:visibility="visible" />
-
 
     <TextView
         android:id="@+id/tv_liver_nick"

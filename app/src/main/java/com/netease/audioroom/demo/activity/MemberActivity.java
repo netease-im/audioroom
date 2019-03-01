@@ -24,8 +24,12 @@ import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.ErrorCallbac
 import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMember;
 
+import java.text.Collator;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * 选择成员
@@ -90,6 +94,14 @@ public class MemberActivity extends BaseActivity {
                     loadService.showCallback(EmptyChatRoomListCallback.class);
                 } else {
                     loadService.showSuccess();
+                    Collections.sort(chatRoomMembers, new Comparator<ChatRoomMember>() {
+                        @Override
+                        public int compare(ChatRoomMember o1, ChatRoomMember o2) {
+                            Collator collator = Collator.getInstance(Locale.CHINA);
+                            return collator.compare(o1.getNick(), o2.getNick());
+                        }
+                    });
+
                     adapter = new MemberListAdapter((ArrayList<ChatRoomMember>) chatRoomMembers, mContext);
                     recyclerView.setLayoutManager(new LinearLayoutManager(mContext));
                     recyclerView.setAdapter(adapter);

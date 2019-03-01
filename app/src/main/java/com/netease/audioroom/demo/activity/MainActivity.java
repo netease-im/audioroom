@@ -1,13 +1,12 @@
 package com.netease.audioroom.demo.activity;
 
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
-import android.support.v7.widget.LinearLayoutManager;
+import android.os.Handler;
+
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.view.KeyEvent;
-import android.view.View;
 import android.widget.TextView;
 
 import com.netease.audioroom.demo.R;
@@ -25,22 +24,28 @@ import com.netease.audioroom.demo.util.ScreenUtil;
 import com.netease.audioroom.demo.util.ToastHelper;
 import com.netease.audioroom.demo.widget.HeadImageView;
 import com.netease.audioroom.demo.widget.VerticalItemDecoration;
-import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.EmptyChatRoomListCallback;
+import com.netease.audioroom.demo.widget.pullloadmorerecyclerview.PullLoadMoreRecyclerView;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.ErrorCallback;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.LoadingCallback;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.NetErrCallback;
-import com.netease.audioroom.demo.widget.unitepage.loadsir.core.Transport;
 import com.netease.nimlib.sdk.StatusCode;
 
 import java.util.ArrayList;
 
-public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickListener<DemoRoomInfo> {
+
+public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickListener<DemoRoomInfo>, PullLoadMoreRecyclerView.PullLoadMoreListener {
 
     private HeadImageView ivAvatar;
     private TextView tvNick;
     private ChatRoomListAdapter chatRoomListAdapter;
-
     private StatusCode loginStatus = StatusCode.UNLOGIN;
+    private PullLoadMoreRecyclerView mPullLoadMoreRecyclerView;
+    RecyclerView mRecyclerView;
+
+    ArrayList<DemoRoomInfo> mRoomList;
+
+    private int limitPage = 50;
+    private int addPage = 20;
 
 
     @Override
@@ -48,35 +53,36 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
         return R.layout.activity_main;
     }
 
-    @Override
-    protected void onRestart() {
-        super.onRestart();
-        fetchChatRoomList();
-    }
-
 
     @Override
     protected void initViews() {
+        mRoomList = new ArrayList<>();
         ivAvatar = findViewById(R.id.iv_self_avatar);
         tvNick = findViewById(R.id.tv_self_nick);
-        RecyclerView rcyChatList = findViewById(R.id.rcy_chat_room_list);
-        rcyChatList.setLayoutManager(new LinearLayoutManager(this));
-        chatRoomListAdapter = new ChatRoomListAdapter(null, this);
+        chatRoomListAdapter = new ChatRoomListAdapter(mRoomList, this);
         // 每个item 16dp 的间隔
-        rcyChatList.addItemDecoration(new VerticalItemDecoration(Color.TRANSPARENT, ScreenUtil.dip2px(this, 16)));
-        rcyChatList.setAdapter(chatRoomListAdapter);
         chatRoomListAdapter.setItemClickListener(this);
 
+        mPullLoadMoreRecyclerView = findViewById(R.id.pullLoadMoreRecyclerView);
+        //获取mRecyclerView对象
+        mRecyclerView = mPullLoadMoreRecyclerView.getRecyclerView();
+        mRecyclerView.addItemDecoration(new VerticalItemDecoration(Color.TRANSPARENT, ScreenUtil.dip2px(this, 16)));
+        mRecyclerView.setVerticalScrollBarEnabled(true);
+        mPullLoadMoreRecyclerView.setRefreshing(true);
+        mPullLoadMoreRecyclerView.setFooterViewText("加载中");
+        mPullLoadMoreRecyclerView.setLinearLayout();
+        mPullLoadMoreRecyclerView.setOnPullLoadMoreListener(this);
+        mPullLoadMoreRecyclerView.setAdapter(chatRoomListAdapter);
+        if (Network.getInstance().isConnected()) {
+            onNetWork();
+        } else {
+            netErrCallback();
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-//        if (Network.getInstance().isConnected()) {
-//            onNetWork();
-//        } else {
-//            loadService.showCallback(NetErrCallback.class);
-//        }
         setNetworkReconnection(new INetworkReconnection() {
             @Override
             public void onNetworkReconnection() {
@@ -86,20 +92,16 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
 
             @Override
             public void onNetworkInterrupt() {
-                loadService.showCallback(NetErrCallback.class);
-                loadService.setCallBack(NetErrCallback.class, new Transport() {
-                    @Override
-                    public void order(Context context, View view) {
-                        view.setOnClickListener((v) -> {
-                            if (Network.getInstance().isConnected()) {
-                                onNetWork();
-                            }
-                        });
-                    }
-                });
+                netErrCallback();
+
             }
         });
+    }
 
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        onRefresh();
     }
 
     private void onNetWork() {
@@ -122,27 +124,51 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
 
     }
 
+
     private void fetchChatRoomList() {
-        ChatRoomHttpClient.getInstance().fetchChatRoomList(0, 20
+        int limit;
+        if (mRoomList.size() == 0) {
+            chatRoomListAdapter.clearAll();
+            limit = limitPage;
+        } else {
+            limit = addPage;
+        }
+        ChatRoomHttpClient.getInstance().fetchChatRoomList(mRoomList.size(), limit
                 , new ChatRoomHttpClient.ChatRoomHttpCallback<ArrayList<DemoRoomInfo>>() {
                     @Override
                     public void onSuccess(ArrayList<DemoRoomInfo> roomList) {
+                        loadService.showSuccess();
                         if (roomList.size() > 0) {
-                            loadService.showSuccess();
-                            chatRoomListAdapter.clearAll();
-                            chatRoomListAdapter.appendItems(roomList);
-                        } else {
-                            loadService.showCallback(EmptyChatRoomListCallback.class);
+                            mRoomList.addAll(roomList);
+                            chatRoomListAdapter.refrshList(mRoomList);
                         }
+                        mPullLoadMoreRecyclerView.setPullLoadMoreCompleted();
                     }
 
                     @Override
                     public void onFailed(int code, String errorMsg) {
+                        mPullLoadMoreRecyclerView.setPullLoadMoreCompleted();
                         loadService.showCallback(ErrorCallback.class);
                     }
                 });
     }
 
+    @Override
+    public void onRefresh() {
+        mRoomList.clear();
+        if (Network.getInstance().isConnected())
+            fetchChatRoomList();
+        else
+            loadService.showCallback(NetErrCallback.class);
+    }
+
+    @Override
+    public void onLoadMore() {
+        if (Network.getInstance().isConnected())
+            fetchChatRoomList();
+        else
+            loadService.showCallback(NetErrCallback.class);
+    }
 
     @Override
     public void onItemClick(DemoRoomInfo model, int position) {
@@ -152,6 +178,8 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
         }
         //当前帐号创建的房间
         if (TextUtils.equals(DemoCache.getAccountId(), model.getCreator()) && model != null) {
+            model.setMute(false);
+            model.setMicrophoneOpen(true);
             AudioLiveActivity.start(mContext, model);
         } else {
             AudienceActivity.start(mContext, model);
@@ -177,6 +205,20 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
     @Override
     protected void onLoginEvent(StatusCode statusCode) {
         loginStatus = statusCode;
+    }
+
+    private void netErrCallback() {
+        loadService.showCallback(NetErrCallback.class);
+        loadService.setCallBack(NetErrCallback.class, (context, view) -> {
+            view.setOnClickListener((v) -> {
+                loadService.showCallback(LoadingCallback.class);
+                if (Network.getInstance().isConnected()) {
+                    new Handler().postDelayed(() -> onNetWork(), 10000); // 延时10秒
+                } else {
+                    new Handler().postDelayed(() -> loadService.showCallback(NetErrCallback.class), 10000);
+                }
+            });
+        });
     }
 
 

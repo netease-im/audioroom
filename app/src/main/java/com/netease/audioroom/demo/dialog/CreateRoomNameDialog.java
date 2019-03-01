@@ -12,6 +12,7 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.activity.AudioLiveActivity;
@@ -53,7 +54,8 @@ public class CreateRoomNameDialog extends DialogFragment {
         mEditText = mConentView.findViewById(R.id.eturl);
         mBtnCancal = mConentView.findViewById(R.id.btnCancal);
         mBtnCreaterRoom = mConentView.findViewById(R.id.btnCreaterRoom);
-        mBtnCreaterRoom.setClickable(false);
+        mBtnCreaterRoom.setEnabled(false);
+
     }
 
     private void initListener() {
@@ -71,31 +73,32 @@ public class CreateRoomNameDialog extends DialogFragment {
             @Override
             public void afterTextChanged(Editable s) {
                 if (!TextUtils.isEmpty(s)) {
-                    mBtnCreaterRoom.setClickable(true);
+                    mBtnCreaterRoom.setEnabled(true);
                     mBtnCreaterRoom.setTextColor(getContext().getResources().getColor(R.color.color_2799ff));
                 } else {
-                    mBtnCreaterRoom.setClickable(false);
+                    mBtnCreaterRoom.setEnabled(false);
                     mBtnCreaterRoom.setTextColor(getContext().getResources().getColor(R.color.color_8fb5e1));
                 }
             }
         });
-        mBtnCancal.setOnClickListener((v) ->
-                dismiss());
+        mBtnCancal.setOnClickListener((v) -> dismiss());
         mBtnCreaterRoom.setOnClickListener((v) -> createRoom(mEditText.getText().toString()));
     }
 
 
     //创建房间
     private void createRoom(String roomName) {
+
         ChatRoomHttpClient.getInstance().createRoom(DemoCache.getAccountId(), roomName, new ChatRoomHttpClient.ChatRoomHttpCallback<DemoRoomInfo>() {
             @Override
             public void onSuccess(DemoRoomInfo roomInfo) {
-                if (roomInfo == null) {
-                    ToastHelper.showToast("创建房间失败，返回信息为空");
-                } else {
+                if (roomInfo != null) {
                     dismiss();
-                    //开启主播页
+                    roomInfo.setMute(false);
+                    roomInfo.setMicrophoneOpen(true);
                     AudioLiveActivity.start(getContext(), roomInfo);
+                } else {
+                    ToastHelper.showToast("创建房间失败，返回信息为空");
                 }
 
             }

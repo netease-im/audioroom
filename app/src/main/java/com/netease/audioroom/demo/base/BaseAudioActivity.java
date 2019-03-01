@@ -27,7 +27,7 @@ import com.netease.audioroom.demo.util.CommonUtil;
 import com.netease.audioroom.demo.util.Network;
 import com.netease.audioroom.demo.util.ScreenUtil;
 import com.netease.audioroom.demo.util.ToastHelper;
-import com.netease.audioroom.demo.widget.HeadImageView;
+import com.netease.audioroom.demo.widget.RippleImageView;
 import com.netease.audioroom.demo.widget.VerticalItemDecoration;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.ErrorCallback;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.NetErrCallback;
@@ -37,13 +37,16 @@ import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.chatroom.ChatRoomMessageBuilder;
 import com.netease.nimlib.sdk.chatroom.ChatRoomService;
 import com.netease.nimlib.sdk.chatroom.ChatRoomServiceObserver;
+import com.netease.nimlib.sdk.chatroom.model.ChatRoomInfo;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMessage;
+import com.netease.nimlib.sdk.chatroom.model.ChatRoomMessageExtension;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomNotificationAttachment;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomPartClearAttachment;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomQueueChangeAttachment;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomRoomMemberInAttachment;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomTempMuteAddAttachment;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomTempMuteRemoveAttachment;
+import com.netease.nimlib.sdk.chatroom.model.ChatRoomUpdateInfo;
 import com.netease.nimlib.sdk.chatroom.model.EnterChatRoomData;
 import com.netease.nimlib.sdk.chatroom.model.EnterChatRoomResultData;
 import com.netease.nimlib.sdk.msg.MsgServiceObserve;
@@ -61,6 +64,7 @@ import com.netease.nrtc.sdk.NRtcParameters;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -69,9 +73,12 @@ import java.util.List;
 public abstract class BaseAudioActivity extends BaseActivity implements ViewTreeObserver.OnGlobalLayoutListener {
     public static final String ROOM_INFO_KEY = "room_info_key";
     public static final String TAG = "AudioRoom";
+    public static final String ROOM__INFO_KEY_MICROPHONE = "room__info_key_microphone";
+
+
     private static final int KEY_BOARD_MIN_SIZE = ScreenUtil.dip2px(DemoCache.getContext(), 80);
     //主播基础信息
-    protected HeadImageView ivLiverAvatar;
+    protected RippleImageView ivLiverAvatar;
     protected ImageView ivLiverAudioCloseHint;
     protected TextView tvLiverNick;
     protected TextView tvRoomName;
@@ -112,6 +119,8 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
     private int rootViewVisibleHeight;
     private View rootView;
 
+    protected SimpleNRtcCallback simpleNRtcCallback;
+
 
     private BaseAdapter.ItemClickListener<QueueInfo> itemClickListener = new BaseAdapter.ItemClickListener<QueueInfo>() {
         @Override
@@ -147,7 +156,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
                         || !TextUtils.equals(message.getSessionId(), roomInfo.getRoomId())) {
                     continue;
                 }
-
                 if (message.getAttachment() instanceof ChatRoomNotificationAttachment) {
                     NotificationType type = ((ChatRoomNotificationAttachment) message.getAttachment()).getType();
                     switch (type) {
@@ -198,6 +206,37 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
                                 logInfo.append("key = " + key + ", value= " + queuePartClear.getContentMap().get(key)).append(" ");
                             }
                             break;
+                        case ChatRoomInfoUpdated:
+                            NIMClient.getService(ChatRoomService.class).fetchRoomInfo(roomInfo.getRoomId())
+                                    .setCallback(new RequestCallback<ChatRoomInfo>() {
+                                @Override
+                                public void onSuccess(ChatRoomInfo param) {
+                                    // 成功
+                                    if (param.getExtension() != null) {
+                                        for (Map.Entry<String, Object> entry : param.getExtension().entrySet()) {
+                                            if (entry.getKey().equals(ROOM__INFO_KEY_MICROPHONE)) {
+                                                if ((Boolean) entry.getValue()) {
+                                                    ivLiverAvatar.startWaveAnimation();
+                                                } else {
+                                                    ivLiverAvatar.stopWaveAnimation();
+                                                }
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+
+                                @Override
+                                public void onFailed(int code) {
+                                    // 失败
+                                }
+
+                                @Override
+                                public void onException(Throwable exception) {
+                                    // 错误
+                                }
+                            });
+
                     }
                 } else {
                     messageInComing(message);
@@ -212,8 +251,8 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
 
     @Override
     protected void initViews() {
-        roomInfo = getIntent().getParcelableExtra(ROOM_INFO_KEY);
         findBaseView();
+        roomInfo = (DemoRoomInfo) getIntent().getSerializableExtra(ROOM_INFO_KEY);
         if (roomInfo == null) {
             ToastHelper.showToast("聊天室信息不能为空");
             finish();
@@ -279,7 +318,10 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
 
 
     protected NRtcCallback createNrtcCallBack() {
-        return new SimpleNRtcCallback();
+        if (simpleNRtcCallback == null) {
+            simpleNRtcCallback = new SimpleNRtcCallback();
+        }
+        return simpleNRtcCallback;
     }
 
     @Override
@@ -382,9 +424,11 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
 
 
     protected void messageInComing(ChatRoomMessage message) {
+
         if (message.getMsgType() != MsgTypeEnum.text) {
             return;
         }
+
         msgAdapter.appendItem(new SimpleMessage(message.getChatRoomMessageExtension().getSenderNick(),
                 message.getContent(),
                 SimpleMessage.TYPE_NORMAL_MESSAGE));
@@ -418,6 +462,7 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
                 finish();
             }
         });
+
     }
 
     protected void enterRoomSuccess(EnterChatRoomResultData resultData) {
