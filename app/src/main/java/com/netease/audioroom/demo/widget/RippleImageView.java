@@ -106,8 +106,8 @@ public class RippleImageView extends RelativeLayout {
      * 开始动态布局
      */
     private void setLayout(Context context) {
-//        LayoutParams params = new LayoutParams(Math.round(imageViewWidth), Math.round(imageViewHeigth));
-        LayoutParams params = new LayoutParams(dip2px(context, imageViewWidth) / 3, dip2px(context, imageViewWidth) / 3);
+        LayoutParams params = new LayoutParams(Math.round(imageViewWidth), Math.round(imageViewHeigth));
+//        LayoutParams params = new LayoutParams(dip2px(context, imageViewWidth) / 3, dip2px(context, imageViewWidth) / 3);
         //添加一个规则
         params.addRule(RelativeLayout.CENTER_IN_PARENT, RelativeLayout.TRUE);
         /**添加水波纹图片*/
@@ -116,12 +116,9 @@ public class RippleImageView extends RelativeLayout {
             imgs[i].setImageResource(R.mipmap.point_empty);
             addView(imgs[i], params);
         }
-        LayoutParams params_bg = new LayoutParams(dip2px(context, imageViewWidth) / 3, dip2px(context, imageViewWidth) / 3);
-        //添加一个规则
-        params_bg.addRule(RelativeLayout.CENTER_IN_PARENT, RelativeLayout.TRUE);
         /**添加背景图片*/
         img_bg = new HeadImageView(getContext());
-        addView(img_bg, params_bg);
+        addView(img_bg, params);
     }
 
     /**

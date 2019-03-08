@@ -11,7 +11,7 @@ import android.text.TextUtils;
 import android.view.View;
 
 import com.netease.audioroom.demo.R;
-import com.netease.audioroom.demo.audio.SimpleNRtcCallback;
+import com.netease.audioroom.demo.audio.SimpleAVChatCallback;
 import com.netease.audioroom.demo.base.BaseAudioActivity;
 import com.netease.audioroom.demo.base.LoginManager;
 import com.netease.audioroom.demo.base.action.IAudience;
@@ -47,7 +47,6 @@ import com.netease.nimlib.sdk.msg.attachment.MsgAttachment;
 import com.netease.nimlib.sdk.msg.constant.ChatRoomQueueChangeType;
 import com.netease.nimlib.sdk.msg.model.CustomNotification;
 import com.netease.nimlib.sdk.util.Entry;
-import com.netease.nrtc.sdk.NRtcCallback;
 
 import org.json.JSONObject;
 
@@ -65,6 +64,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
 
     TopTipsDialog topTipsDialog;
     String creator;
+
 
     public static void start(Context context, DemoRoomInfo model) {
         Intent intent = new Intent(context, AudienceActivity.class);
@@ -106,8 +106,9 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         });
         enterChatRoom(roomInfo.getRoomId());
         enableAudienceRole(true);
-        joinChannel(audioUid);
+        joinChannel();
     }
+
 
     @Override
     protected void onStart() {
@@ -176,22 +177,20 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
 
             @Override
             public void onNetworkInterrupt() {
-                topTipsDialog = new TopTipsDialog();
                 Bundle bundle = new Bundle();
                 TopTipsDialog.Style style = topTipsDialog.new Style(
                         "网络断开",
                         0,
                         R.drawable.neterrricon,
                         0);
-                bundle.putParcelable(TopTipsDialog.TOPTIPSDIALOG, style);
+                bundle.putParcelable(topTipsDialog.TAG, style);
                 topTipsDialog.setArguments(bundle);
-                topTipsDialog.show(getFragmentManager(), "TopTipsDialog");
+                topTipsDialog.show(getSupportFragmentManager(), topTipsDialog.TAG);
                 topTipsDialog.setClickListener(() -> {
                 });
             }
         });
 
-//        ((SimpleNRtcCallback)createNrtcCallBack()).onReportSpeaker(creator,);
     }
 
     @Override
@@ -216,7 +215,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
 
                     @Override
                     public void onFailed(int i) {
-
                         ToastHelper.showToast("获取主播信息失败 ， code = " + i);
                     }
 
@@ -225,12 +223,12 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                         ToastHelper.showToast("获取主播信息异常 ， e = " + throwable);
                     }
                 });
-
     }
 
 
     @Override
     protected void setupBaseView() {
+        topTipsDialog = new TopTipsDialog();
         ivMuteOtherText.setVisibility(View.GONE);
         hasMicrophone(false);
         ivSelfAudioSwitch.setOnClickListener(this);
@@ -263,9 +261,9 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 //麦位被禁止
                 TipsDialog tipsDialog = new TipsDialog();
                 Bundle bundle = new Bundle();
-                bundle.putString(TipsDialog.TIPSDIALOG, "该麦位被主播“屏蔽语音”\n现在您已无法进行语音互动");
+                bundle.putString(tipsDialog.TAG, "该麦位被主播“屏蔽语音”\n现在您已无法进行语音互动");
                 tipsDialog.setArguments(bundle);
-                tipsDialog.show(getSupportFragmentManager(), TipsDialog.TIPSDIALOG);
+                tipsDialog.show(getSupportFragmentManager(), tipsDialog.TAG);
                 tipsDialog.setClickListener(() -> tipsDialog.dismiss());
                 break;
         }
@@ -295,12 +293,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     @Override
     protected void exitRoom() {
         release();
-        //退出
-        if (roomInfo != null) {
-            chatRoomService.exitChatRoom(roomInfo.getRoomId());
-            roomInfo = null;
-        }
-        finish();
+
     }
 
     @Override
@@ -323,16 +316,15 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         P2PNotificationHelper.requestLink(model, DemoCache.getAccountInfo(), roomInfo.getCreator(), new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
-                topTipsDialog = new TopTipsDialog();
                 Bundle bundle = new Bundle();
                 TopTipsDialog.Style style = topTipsDialog.new Style(
                         "已申请上麦，等待通过...  <font color=\"#0888ff\">取消</color>",
                         0,
                         0,
                         0);
-                bundle.putParcelable(TopTipsDialog.TOPTIPSDIALOG, style);
+                bundle.putParcelable(topTipsDialog.TAG, style);
                 topTipsDialog.setArguments(bundle);
-                topTipsDialog.show(getFragmentManager(), "TopTipsDialog");
+                topTipsDialog.show(getSupportFragmentManager(), topTipsDialog.TAG);
                 topTipsDialog.setClickListener(() -> {
                     topTipsDialog.dismiss();
                     BottomMenuDialog bottomMenuDialog = new BottomMenuDialog();
@@ -342,7 +334,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                     mune.add("取消");
                     bundle1.putStringArrayList(BOTTOMMENUS, mune);
                     bottomMenuDialog.setArguments(bundle1);
-                    bottomMenuDialog.show(getFragmentManager(), "BottomMenuDialog");
+                    bottomMenuDialog.show(getSupportFragmentManager(), bottomMenuDialog.TAG);
                     bottomMenuDialog.setItemClickListener((d, p) -> {
                         switch (d.get(p)) {
                             case "<font color=\"#ff4f4f\">确认取消申请上麦</color>":
@@ -350,7 +342,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                                 break;
                             case "取消":
                                 bottomButtonAction(bottomMenuDialog, model, "取消");
-                                topTipsDialog.show(getFragmentManager(), "TopTipsDialog");
+                                topTipsDialog.show(getSupportFragmentManager(), topTipsDialog.TAG);
                                 break;
                         }
 
@@ -440,7 +432,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         }
         TipsDialog tipsDialog = new TipsDialog();
         Bundle bundle = new Bundle();
-        bundle.putString(TipsDialog.TIPSDIALOG, "您的申请已被拒绝");
+        bundle.putString(tipsDialog.TAG, "您的申请已被拒绝");
         tipsDialog.setArguments(bundle);
         tipsDialog.show(getSupportFragmentManager(), "TipsDialog");
         tipsDialog.setClickListener(() -> tipsDialog.dismiss());
@@ -453,13 +445,13 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             case QueueInfo.Reason.inviteByHost:
                 int position = queueInfo.getIndex() + 1;
                 TipsDialog tipsDialog = new TipsDialog();
-                bundle.putString(TipsDialog.TIPSDIALOG,
+                bundle.putString(tipsDialog.TAG,
                         "您已被主播抱上“麦位”" + position + "\n" +
                                 "现在可以进行语音互动啦\n" +
                                 "如需下麦，可点击自己的头像或下麦按钮");
                 tipsDialog.setArguments(bundle);
 
-                tipsDialog.show(getSupportFragmentManager(), TipsDialog.TIPSDIALOG);
+                tipsDialog.show(getSupportFragmentManager(), tipsDialog.TAG);
                 tipsDialog.setClickListener(() -> tipsDialog.dismiss());
                 break;
             case QueueInfo.Reason.agreeApply:
@@ -467,25 +459,23 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 if (topTipsDialog != null && topTipsDialog.isVisible()) {
                     topTipsDialog.dismiss();
                 }
-                topTipsDialog = new TopTipsDialog();
                 TopTipsDialog.Style style = topTipsDialog.new Style("申请通过!",
                         R.color.color_0888ff,
                         R.drawable.right,
                         R.color.color_ffffff);
-                bundle.putParcelable(TopTipsDialog.TOPTIPSDIALOG, style);
+                bundle.putParcelable(topTipsDialog.TAG, style);
                 topTipsDialog.setArguments(bundle);
-                topTipsDialog.show(getFragmentManager(), TopTipsDialog.TOPTIPSDIALOG);
-
+                topTipsDialog.show(getSupportFragmentManager(), topTipsDialog.TAG);
                 new Handler().postDelayed(() -> topTipsDialog.dismiss(), 2000); // 延时2秒
                 break;
             case QueueInfo.Reason.cancelMuted:
                 TipsDialog tipsDialog2 = new TipsDialog();
-                bundle.putString(TipsDialog.TIPSDIALOG,
+                bundle.putString(tipsDialog2.TAG,
                         "该麦位被主播“解除语音屏蔽”\n" +
                                 "现在您可以再次进行语音互动了");
                 tipsDialog2.setArguments(bundle);
 
-                tipsDialog2.show(getSupportFragmentManager(), TipsDialog.TIPSDIALOG);
+                tipsDialog2.show(getSupportFragmentManager(), tipsDialog2.TAG);
                 tipsDialog2.setClickListener(() -> tipsDialog2.dismiss());
                 break;
         }
@@ -505,9 +495,9 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             case QueueInfo.Reason.kickByHost:
                 TipsDialog tipsDialog = new TipsDialog();
                 Bundle bundle = new Bundle();
-                bundle.putString(TipsDialog.TIPSDIALOG, "您已被主播请下麦位");
+                bundle.putString(tipsDialog.TAG, "您已被主播请下麦位");
                 tipsDialog.setArguments(bundle);
-                tipsDialog.show(getSupportFragmentManager(), TipsDialog.TIPSDIALOG);
+                tipsDialog.show(getSupportFragmentManager(), tipsDialog.TAG);
                 tipsDialog.setClickListener(() -> tipsDialog.dismiss());
                 hasMicrophone(false);
                 enableAudienceRole(true);
@@ -529,7 +519,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         mune.add("取消");
         bundle1.putStringArrayList(BOTTOMMENUS, mune);
         bottomMenuDialog.setArguments(bundle1);
-        bottomMenuDialog.show(getFragmentManager(), "BottomMenuDialog");
+        bottomMenuDialog.show(getSupportFragmentManager(), bottomMenuDialog.TAG);
         bottomMenuDialog.setItemClickListener((d, p) -> {
             switch (d.get(p)) {
                 case "<font color=\"#ff4f4f\">下麦</color>":
@@ -552,10 +542,10 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     public void beMutedAudio(QueueInfo queueInfo) {
         TipsDialog tipsDialog = new TipsDialog();
         Bundle bundle = new Bundle();
-        bundle.putString(TipsDialog.TIPSDIALOG,
+        bundle.putString(tipsDialog.TAG,
                 "该麦位被主播“屏蔽语音”\n 现在您已无法进行语音互动");
         tipsDialog.setArguments(bundle);
-        tipsDialog.show(getSupportFragmentManager(), TipsDialog.TIPSDIALOG);
+        tipsDialog.show(getSupportFragmentManager(), tipsDialog.TAG);
         tipsDialog.setClickListener(() -> tipsDialog.dismiss());
         selfQueue = queueInfo;
         enableAudienceRole(true);
@@ -619,9 +609,9 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             release();
             TipsDialog tipsDialog = new TipsDialog();
             Bundle bundle = new Bundle();
-            bundle.putString(TipsDialog.TIPSDIALOG, "该房间已被主播解散");
+            bundle.putString(tipsDialog.TAG, "该房间已被主播解散");
             tipsDialog.setArguments(bundle);
-            tipsDialog.show(getSupportFragmentManager(), "TipsDialog");
+            tipsDialog.show(getSupportFragmentManager(), tipsDialog.TAG);
             tipsDialog.setClickListener(() -> {
                 finish();
                 tipsDialog.dismiss();
@@ -698,24 +688,5 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         }
     }
 
-    @Override
-    protected NRtcCallback createNrtcCallBack() {
 
-        return new InnerNRtcCallBack();
-    }
-
-    private class InnerNRtcCallBack extends SimpleNRtcCallback {
-
-        @Override
-        public void onReportSpeaker(int activated, long[] speakers, int[] energies, int mixedEnergy) {
-            super.onReportSpeaker(activated, speakers, energies, mixedEnergy);
-            ToastHelper.showToast("接收到回调");
-        }
-
-        @Override
-        public void onUserMuteAudio(long uid, boolean muted) {
-            super.onUserMuteAudio(uid, muted);
-            ToastHelper.showToast("接收到回调");
-        }
-    }
 }

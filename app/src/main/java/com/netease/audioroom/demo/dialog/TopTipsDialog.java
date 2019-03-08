@@ -22,17 +22,11 @@ import android.widget.TextView;
 
 import com.netease.audioroom.demo.R;
 
-public class TopTipsDialog extends DialogFragment {
-
-    public static final String TOPTIPSDIALOG = "TopTipsDialog";
-
+public class TopTipsDialog extends BaseDialogFragment {
     View view;
-
     TextView content;
     LinearLayout linearLayout;
-
     Style style;
-
 
     public interface IClickListener {
         void onClickLister();
@@ -52,7 +46,7 @@ public class TopTipsDialog extends DialogFragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
         Bundle bundle = getArguments();
         if (bundle != null) {
-            style = getArguments().getParcelable(TOPTIPSDIALOG);
+            style = getArguments().getParcelable(TAG);
         } else {
             dismiss();
         }

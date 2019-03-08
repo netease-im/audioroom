@@ -16,7 +16,6 @@ import android.widget.TextView;
 import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.adapter.MessageListAdapter;
 import com.netease.audioroom.demo.adapter.QueueAdapter;
-import com.netease.audioroom.demo.audio.SimpleNRtcCallback;
 import com.netease.audioroom.demo.cache.DemoCache;
 import com.netease.audioroom.demo.model.AccountInfo;
 import com.netease.audioroom.demo.model.DemoRoomInfo;
@@ -34,19 +33,27 @@ import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.NetErrCallba
 import com.netease.nimlib.sdk.NIMClient;
 import com.netease.nimlib.sdk.Observer;
 import com.netease.nimlib.sdk.RequestCallback;
+import com.netease.nimlib.sdk.avchat.AVChatCallback;
+import com.netease.nimlib.sdk.avchat.AVChatManager;
+import com.netease.nimlib.sdk.avchat.constant.AVChatAudioEffectMode;
+import com.netease.nimlib.sdk.avchat.constant.AVChatChannelProfile;
+import com.netease.nimlib.sdk.avchat.constant.AVChatMediaCodecMode;
+import com.netease.nimlib.sdk.avchat.constant.AVChatType;
+import com.netease.nimlib.sdk.avchat.constant.AVChatUserRole;
+import com.netease.nimlib.sdk.avchat.model.AVChatChannelInfo;
+import com.netease.nimlib.sdk.avchat.model.AVChatData;
+import com.netease.nimlib.sdk.avchat.model.AVChatParameters;
 import com.netease.nimlib.sdk.chatroom.ChatRoomMessageBuilder;
 import com.netease.nimlib.sdk.chatroom.ChatRoomService;
 import com.netease.nimlib.sdk.chatroom.ChatRoomServiceObserver;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomInfo;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMessage;
-import com.netease.nimlib.sdk.chatroom.model.ChatRoomMessageExtension;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomNotificationAttachment;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomPartClearAttachment;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomQueueChangeAttachment;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomRoomMemberInAttachment;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomTempMuteAddAttachment;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomTempMuteRemoveAttachment;
-import com.netease.nimlib.sdk.chatroom.model.ChatRoomUpdateInfo;
 import com.netease.nimlib.sdk.chatroom.model.EnterChatRoomData;
 import com.netease.nimlib.sdk.chatroom.model.EnterChatRoomResultData;
 import com.netease.nimlib.sdk.msg.MsgServiceObserve;
@@ -56,25 +63,19 @@ import com.netease.nimlib.sdk.msg.constant.NotificationType;
 import com.netease.nimlib.sdk.msg.constant.SessionTypeEnum;
 import com.netease.nimlib.sdk.msg.model.CustomNotification;
 import com.netease.nimlib.sdk.util.Entry;
-import com.netease.nrtc.engine.rawapi.RtcRole;
-import com.netease.nrtc.sdk.NRtc;
-import com.netease.nrtc.sdk.NRtcCallback;
-import com.netease.nrtc.sdk.NRtcEx;
-import com.netease.nrtc.sdk.NRtcParameters;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-
 /**
- * 主播与观众基础页，包含所有的基本UI元素
+ * 主播与观众基础页，包含所有的通用UI元素
  */
 public abstract class BaseAudioActivity extends BaseActivity implements ViewTreeObserver.OnGlobalLayoutListener {
     public static final String ROOM_INFO_KEY = "room_info_key";
     public static final String TAG = "AudioRoom";
     public static final String ROOM_INFO_KEY_MICROPHONE = "room_info_key_microphone";
-
+    protected int channelProfile = AVChatChannelProfile.CHANNEL_PROFILE_DEFAULT;
 
     private static final int KEY_BOARD_MIN_SIZE = ScreenUtil.dip2px(DemoCache.getContext(), 80);
     //主播基础信息
@@ -113,13 +114,10 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
     protected ChatRoomService chatRoomService;
 
     //音视频接口
-    protected NRtcEx nrtcEx;
     protected long audioUid;
 
     private int rootViewVisibleHeight;
     private View rootView;
-
-    protected SimpleNRtcCallback simpleNRtcCallback;
 
 
     private BaseAdapter.ItemClickListener<QueueInfo> itemClickListener = new BaseAdapter.ItemClickListener<QueueInfo>() {
@@ -195,7 +193,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
                             logInfo.append("队列变更：type = ").append(queueChange.getChatRoomQueueChangeType())
                                     .append(", key = ").append(queueChange.getKey())
                                     .append(", value = ").append(queueChange.getContent());
-
                             onQueueChange(queueChange);
                             break;
                         //队列批量变更，好像没用了
@@ -258,9 +255,22 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
             finish();
         }
         chatRoomService = NIMClient.getService(ChatRoomService.class);
-        nrtcEx = (NRtcEx) NRtc.create(this, CommonUtil.readAppKey(), createNrtcCallBack());
-        nrtcEx.setParameter(NRtcParameters.KEY_SESSION_MULTI_MODE, true);//多人会话
-        nrtcEx.setParameter(NRtcParameters.KEY_AUDIO_HIGH_QUALITY, true);//高清晰度
+        AVChatManager.getInstance().createRoom(roomInfo.getRoomId(), CommonUtil.readAppKey(), new AVChatCallback<AVChatChannelInfo>() {
+            @Override
+            public void onSuccess(AVChatChannelInfo avChatChannelInfo) {
+
+            }
+
+            @Override
+            public void onFailed(int code) {
+
+            }
+
+            @Override
+            public void onException(Throwable exception) {
+
+            }
+        });
         audioUid = System.nanoTime();
         setupBaseViewInner();
         setupBaseView();
@@ -300,6 +310,7 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
         for (String nick : exitNicks) {
             SimpleMessage simpleMessage = new SimpleMessage("", "“" + nick + "”离开了房间", SimpleMessage.TYPE_MEMBER_CHANGE);
             msgAdapter.appendItem(simpleMessage);
+            updateRoonInfo();
         }
         scrollToBottom();
     }
@@ -312,17 +323,11 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
         for (String nick : inNicks) {
             SimpleMessage simpleMessage = new SimpleMessage("", "“" + nick + "”进了房间", SimpleMessage.TYPE_MEMBER_CHANGE);
             msgAdapter.appendItem(simpleMessage);
+            updateRoonInfo();
         }
         scrollToBottom();
     }
 
-
-    protected NRtcCallback createNrtcCallBack() {
-        if (simpleNRtcCallback == null) {
-            simpleNRtcCallback = new SimpleNRtcCallback();
-        }
-        return simpleNRtcCallback;
-    }
 
     @Override
     protected void onDestroy() {
@@ -494,48 +499,57 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
         NIMClient.getService(ChatRoomServiceObserver.class).observeReceiveMessage(messageObserver, register);
     }
 
-    /**
-     * 加入音视频 频道
-     */
-    protected boolean joinChannel(long selfUid) {
-        if (nrtcEx == null) {
-            return false;
-        }
-        return nrtcEx.joinChannel(null, roomInfo.getRoomId(), selfUid) == 0;
-    }
 
     /**
      * 关闭自己的语音
      */
     protected void muteSelfAudio(boolean isMutex) {
-        nrtcEx.muteLocalAudioStream(isMutex);
+        AVChatManager.getInstance().muteLocalAudio(isMutex);
+
     }
 
     /**
      * 关闭聊天室的语音
      */
     protected void muteRoomAudio(boolean isMutex) {
-        nrtcEx.muteAllRemoteAudioStream(isMutex);
+        AVChatManager.getInstance().muteAllRemoteAudio(isMutex);
     }
 
     /**
      * 设置观众模式，主播和连麦者都属于非观众
      */
-    protected boolean enableAudienceRole(boolean enable) {
-        if (nrtcEx == null) {
-            return false;
-        }
-        return nrtcEx.setRole(enable ? RtcRole.AUDIENCE : RtcRole.NORMAL) == 0;
+    protected void enableAudienceRole(boolean enable) {
+        AVChatManager.getInstance().enableAudienceRole(enable);
     }
 
 
     protected void release() {
-        if (nrtcEx == null) {
-            return;
-        }
-        nrtcEx.leaveChannel();
-        nrtcEx.dispose();
-        nrtcEx = null;
+        /**
+         * 离开房间
+         */
+        AVChatManager.getInstance().leaveRoom2(roomInfo.getRoomId(), new AVChatCallback<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                AVChatManager.getInstance().disableRtc();
+                //退出
+                if (roomInfo != null) {
+                    chatRoomService.exitChatRoom(roomInfo.getRoomId());
+                    roomInfo = null;
+                }
+                finish();
+            }
+
+            @Override
+            public void onFailed(int code) {
+
+            }
+
+            @Override
+            public void onException(Throwable exception) {
+
+            }
+        });
+
     }
 
     private void scrollToBottom() {
@@ -591,6 +605,77 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
         }
     }
 
+    protected void joinChannel() {
+        AVChatManager.getInstance().enableRtc();
+        //设置场景, 如果需要高清音乐场景，设置 AVChatChannelProfile#CHANNEL_PROFILE_HIGH_QUALITY_MUSIC
+        AVChatManager.getInstance().setChannelProfile(channelProfile);
+        //设置通话可选参数
+        AVChatParameters parameters = getRtcParameters();
+        AVChatManager.getInstance().setParameters(parameters);
+
+        AVChatManager.getInstance().joinRoom2(roomInfo.getRoomId(), AVChatType.AUDIO, new AVChatCallback<AVChatData>() {
+            @Override
+            public void onSuccess(AVChatData avChatData) {
+                //加入成功
+                ToastHelper.showToast("成功加入聊天室");
+            }
+
+            @Override
+            public void onFailed(int code) {
+                ToastHelper.showToast("加入聊天室失败" + code);
+                Log.e(TAG, "加入聊天室失败" + roomInfo.getRoomId());
+            }
+
+            @Override
+            public void onException(Throwable exception) {
+                ToastHelper.showToast("加入聊天室失败" + exception.getMessage());
+                Log.e(TAG, "加入聊天室失败" + roomInfo.getRoomId());
+            }
+        });
+    }
+
+    private void updateRoonInfo() {
+        String name = roomInfo.getName();
+        name = "房间：" + (TextUtils.isEmpty(name) ? roomInfo.getRoomId() : name) + "（" + roomInfo.getOnlineUserCount() + "人）";
+        tvRoomName.setText(name);
+    }
+
+    private AVChatParameters getRtcParameters() {
+        /**
+         *
+         */
+        AVChatParameters parameters = new AVChatParameters();
+        parameters.setBoolean(AVChatParameters.KEY_SERVER_AUDIO_RECORD, false);
+        parameters.setBoolean(AVChatParameters.KEY_VIDEO_ROTATE_IN_RENDING, true);
+        parameters.setString(AVChatParameters.KEY_AUDIO_EFFECT_ACOUSTIC_ECHO_CANCELER,
+                AVChatAudioEffectMode.PLATFORM_BUILTIN);
+        parameters.setBoolean(AVChatParameters.KEY_SERVER_RECORD_SPEAKER, false);
+        parameters.setString(AVChatParameters.KEY_AUDIO_EFFECT_NOISE_SUPPRESSOR,
+                AVChatAudioEffectMode.PLATFORM_BUILTIN);
+        parameters.setString(AVChatParameters.KEY_VIDEO_DECODER_MODE,
+                AVChatMediaCodecMode.MEDIA_CODEC_SOFTWARE);
+        parameters.setBoolean(AVChatParameters.KEY_SERVER_VIDEO_RECORD, false);
+        parameters.setInteger(AVChatParameters.KEY_SERVER_RECORD_MODE, 0);
+
+        parameters.setBoolean(AVChatParameters.KEY_AUDIO_CALL_PROXIMITY, true);
+        parameters.setBoolean(AVChatParameters.KEY_SERVER_AUDIO_RECORD, false);
+        parameters.setBoolean(AVChatParameters.KEY_AUDIO_EXTERNAL_CAPTURE, false);
+        parameters.setBoolean(AVChatParameters.KEY_AUDIO_HIGH_QUALITY, false);
+        parameters.setBoolean(AVChatParameters.KEY_AUDIO_CALL_PROXIMITY, true);
+        parameters.setBoolean(AVChatParameters.KEY_SERVER_RECORD_SPEAKER, false);
+        parameters.setBoolean(AVChatParameters.KEY_SESSION_LIVE_MODE, false);
+        parameters.setInteger(AVChatParameters.KEY_DEVICE_DEFAULT_ROTATION, 0);
+
+        parameters.setBoolean(AVChatParameters.KEY_AUDIO_FRAME_FILTER, true);
+
+
+        parameters.setString(AVChatParameters.KEY_AUDIO_EFFECT_AUTOMATIC_GAIN_CONTROL,
+                AVChatAudioEffectMode.PLATFORM_BUILTIN);
+        parameters.setInteger(AVChatParameters.KEY_SESSION_MULTI_MODE_USER_ROLE, AVChatUserRole.NORMAL);
+
+
+        return parameters;
+    }
 
 
 }

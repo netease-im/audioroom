@@ -3,6 +3,8 @@ package com.netease.audioroom.demo.dialog;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -21,7 +23,8 @@ import com.netease.audioroom.demo.http.ChatRoomHttpClient;
 import com.netease.audioroom.demo.model.DemoRoomInfo;
 import com.netease.audioroom.demo.util.ToastHelper;
 
-public class CreateRoomNameDialog extends DialogFragment {
+public class CreateRoomNameDialog extends BaseDialogFragment {
+
     View mConentView;
 
     EditText mEditText;
@@ -58,6 +61,11 @@ public class CreateRoomNameDialog extends DialogFragment {
 
     }
 
+    @Override
+    public int show(FragmentTransaction transaction, String tag) {
+        return super.show(transaction, tag);
+    }
+
     private void initListener() {
         mEditText.addTextChangedListener(new TextWatcher() {
             @Override
@@ -86,18 +94,20 @@ public class CreateRoomNameDialog extends DialogFragment {
     }
 
 
+
     //创建房间
     private void createRoom(String roomName) {
-        ChatRoomHttpClient.getInstance().createRoom(DemoCache.getAccountId(), roomName, new ChatRoomHttpClient.ChatRoomHttpCallback<DemoRoomInfo>() {
+        ChatRoomHttpClient.getInstance().createRoom(DemoCache.getAccountId(), roomName,
+                new ChatRoomHttpClient.ChatRoomHttpCallback<DemoRoomInfo>() {
             @Override
             public void onSuccess(DemoRoomInfo roomInfo) {
                 if (roomInfo != null) {
+                    mEditText.setText("");
                     dismiss();
                     AudioLiveActivity.start(getContext(), roomInfo);
                 } else {
                     ToastHelper.showToast("创建房间失败，返回信息为空");
                 }
-
             }
 
             @Override
@@ -105,8 +115,6 @@ public class CreateRoomNameDialog extends DialogFragment {
                 ToastHelper.showToast("创建房间失败");
             }
         });
-
-
     }
 
 }

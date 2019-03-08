@@ -16,7 +16,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.netease.audioroom.demo.R;
-import com.netease.audioroom.demo.audio.SimpleNRtcCallback;
 import com.netease.audioroom.demo.base.BaseAudioActivity;
 import com.netease.audioroom.demo.base.LoginManager;
 import com.netease.audioroom.demo.base.action.INetworkReconnection;
@@ -29,6 +28,7 @@ import com.netease.audioroom.demo.dialog.RequestLinkDialog;
 import com.netease.audioroom.demo.dialog.TopTipsDialog;
 import com.netease.audioroom.demo.http.ChatRoomHttpClient;
 import com.netease.audioroom.demo.model.AccountInfo;
+import com.netease.audioroom.demo.model.AudioMixingInfo;
 import com.netease.audioroom.demo.model.DemoRoomInfo;
 import com.netease.audioroom.demo.model.QueueInfo;
 import com.netease.audioroom.demo.model.QueueMember;
@@ -39,15 +39,15 @@ import com.netease.audioroom.demo.permission.annotation.OnMPermissionGranted;
 import com.netease.audioroom.demo.permission.annotation.OnMPermissionNeverAskAgain;
 import com.netease.audioroom.demo.util.CommonUtil;
 import com.netease.audioroom.demo.util.JsonUtil;
-import com.netease.audioroom.demo.util.Network;
 import com.netease.audioroom.demo.util.ToastHelper;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.ErrorCallback;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.LoadingCallback;
-import com.netease.nimlib.sdk.NIMClient;
 import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.RequestCallbackWrapper;
+import com.netease.nimlib.sdk.avchat.AVChatCallback;
+import com.netease.nimlib.sdk.avchat.AVChatManager;
+import com.netease.nimlib.sdk.avchat.model.AVChatChannelInfo;
 import com.netease.nimlib.sdk.chatroom.ChatRoomMessageBuilder;
-import com.netease.nimlib.sdk.chatroom.ChatRoomService;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMember;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMessage;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomQueueChangeAttachment;
@@ -58,8 +58,6 @@ import com.netease.nimlib.sdk.chatroom.model.ChatRoomUpdateInfo;
 import com.netease.nimlib.sdk.chatroom.model.EnterChatRoomResultData;
 import com.netease.nimlib.sdk.msg.constant.ChatRoomQueueChangeType;
 import com.netease.nimlib.sdk.msg.model.CustomNotification;
-import com.netease.nrtc.sdk.NRtcCallback;
-import com.netease.nrtc.sdk.NRtcConstants;
 
 import org.json.JSONObject;
 
@@ -70,13 +68,15 @@ import java.util.List;
 import java.util.Map;
 
 import static com.netease.audioroom.demo.dialog.BottomMenuDialog.BOTTOMMENUS;
-import static com.netease.audioroom.demo.dialog.RequestLinkDialog.QUEUEINFOLIST;
 
 /**
  * 主播页
  */
 public class AudioLiveActivity extends BaseAudioActivity implements LoginManager.IAudioLive, View.OnClickListener {
     boolean isMicrophone;
+    BottomMenuDialog bottomMenuDialog;
+    private boolean isAudioMixing;
+
 
     public static void start(Context context, DemoRoomInfo demoRoomInfo) {
         Intent intent = new Intent(context, AudioLiveActivity.class);
@@ -104,6 +104,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
     private ImageView ivPauseOrPlay;
     private ImageView ivNext;
     private RequestLinkDialog requestLinkDialog;
+    protected AudioMixingInfo mixingInfo = new AudioMixingInfo();
 
     @Override
     protected int getContentViewID() {
@@ -115,8 +116,30 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
         super.onCreate(savedInstanceState);
         enterChatRoom(roomInfo.getRoomId());
         enableAudienceRole(false);
-        joinChannel(audioUid);
+        createRoom(roomInfo.getRoomId());
         checkFile();
+    }
+
+    private void createRoom(String roomId) {
+        AVChatManager.getInstance().createRoom(roomId, "", new AVChatCallback<AVChatChannelInfo>() {
+            @Override
+            public void onSuccess(AVChatChannelInfo avChatChannelInfo) {
+                ToastHelper.showToast("创建房间成功");
+                //加入房间
+                joinChannel();
+            }
+
+            @Override
+            public void onFailed(int code) {
+                ToastHelper.showToast("创建房间失败" + code);
+            }
+
+            @Override
+            public void onException(Throwable exception) {
+                ToastHelper.showToast("创建房间失败" + exception.getMessage());
+            }
+        });
+
     }
 
 
@@ -127,9 +150,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
         setNetworkReconnection(new INetworkReconnection() {
             @Override
             public void onNetworkReconnection() {
-                if (topTipsDialog != null && topTipsDialog.isVisible()) {
-                    topTipsDialog.dismiss();
-                }
                 LoginManager loginManager = LoginManager.getInstance();
                 loginManager.tryLogin();
                 loginManager.setCallback(new LoginManager.Callback() {
@@ -148,16 +168,15 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
 
             @Override
             public void onNetworkInterrupt() {
-                topTipsDialog = new TopTipsDialog();
                 Bundle bundle = new Bundle();
                 TopTipsDialog.Style style = topTipsDialog.new Style(
                         "网络断开",
                         0,
                         0,
                         0);
-                bundle.putParcelable(TopTipsDialog.TOPTIPSDIALOG, style);
+                bundle.putParcelable(topTipsDialog.TAG, style);
                 topTipsDialog.setArguments(bundle);
-                topTipsDialog.show(getFragmentManager(), "TopTipsDialog");
+                topTipsDialog.show(getSupportFragmentManager(), topTipsDialog.TAG);
                 topTipsDialog.setClickListener(() -> {
                 });
             }
@@ -177,6 +196,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
 
     @Override
     protected void setupBaseView() {
+        topTipsDialog = new TopTipsDialog();
         semicircleView = findViewById(R.id.semicircleView);
         tvMusicPlayHint = findViewById(R.id.tv_music_play_hint);
         ivPauseOrPlay = findViewById(R.id.iv_pause_or_play);
@@ -201,7 +221,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
     @Override
     protected void onQueueItemClick(QueueInfo queueInfo, int position) {
         Bundle bundle = new Bundle();
-        final BottomMenuDialog bottomMenuDialog = new BottomMenuDialog();
+        bottomMenuDialog = new BottomMenuDialog();
         ArrayList<String> mune = new ArrayList<>();
         //当前麦位有人了
         switch (queueInfo.getStatus()) {
@@ -333,7 +353,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                 });
                 break;
         }
-        bottomMenuDialog.show(getFragmentManager(), BOTTOMMENUS);
+        bottomMenuDialog.show(getSupportFragmentManager(), bottomMenuDialog.TAG);
     }
 
     @Override
@@ -392,7 +412,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                     queueInfo.setStatus(QueueInfo.STATUS_INIT);
                     queueInfo.setReason(QueueInfo.Reason.kickedBySelf);
                     chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString());
-//                    ToastHelper.showToast("有人请求下麦");
                 }
                 break;
         }
@@ -605,130 +624,129 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
 
     @Override
     public void onClick(View view) {
-        if (view == ivMuteOtherText) {
-            //禁言
-            MuteMemberListActivity.start(mContext, roomInfo);
-        } else if (view == ivSelfAudioSwitch) {
+        switch (view.getId()) {
+            case R.id.iv_mute_other_text:
+                //禁言
+                MuteMemberListActivity.start(mContext, roomInfo);
+                break;
+            case R.id.iv_close_self_audio_switch:
+                ivSelfAudioSwitch.setEnabled(false);
+                ChatRoomUpdateInfo chatRoomUpdateInfo = new ChatRoomUpdateInfo();
+                Map<String, Object> param = new HashMap<>();
+                if (!isMicrophone) {
+                    param.put(ROOM_INFO_KEY_MICROPHONE, true);
 
-            ivSelfAudioSwitch.setEnabled(false);
-            ChatRoomUpdateInfo chatRoomUpdateInfo = new ChatRoomUpdateInfo();
-            Map<String, Object> param = new HashMap<>();
-            if (!isMicrophone) {
-                param.put(ROOM_INFO_KEY_MICROPHONE, true);
-                chatRoomUpdateInfo.setExtension(param);
-                chatRoomService.updateRoomInfo(roomInfo.getRoomId(), null, true, param)
-                        .setCallback(new RequestCallback() {
-                            @Override
-                            public void onSuccess(Object o) {
-                                ivLiverAvatar.startWaveAnimation();
-                                ToastHelper.showToast("话筒已开启");
-                                boolean mutex = ivSelfAudioSwitch.isSelected();
-                                ivSelfAudioSwitch.setSelected(!mutex);
-                                muteSelfAudio(!mutex);
 
-                                isMicrophone = !isMicrophone;
-                                ivSelfAudioSwitch.setEnabled(true);
-                            }
+                } else {
+                    param.put(ROOM_INFO_KEY_MICROPHONE, false);
 
-                            @Override
-                            public void onFailed(int i) {
-                                ToastHelper.showToast("话筒关闭失败，请重试");
-                                ivSelfAudioSwitch.setEnabled(true);
-                            }
-
-                            @Override
-                            public void onException(Throwable throwable) {
-                                ToastHelper.showToast("话筒关闭失败，请重试");
-                                ivSelfAudioSwitch.setEnabled(true);
-                            }
-                        });
-            } else {
-                param.put(ROOM_INFO_KEY_MICROPHONE, false);
+                }
                 chatRoomUpdateInfo.setExtension(param);
                 chatRoomService.updateRoomInfo(roomInfo.getRoomId(), chatRoomUpdateInfo, true, param)
                         .setCallback(new RequestCallback() {
                             @Override
                             public void onSuccess(Object o) {
-                                ToastHelper.showToast("话筒已关闭");
-                                ivLiverAvatar.stopWaveAnimation();
+                                if (!isMicrophone) {
+                                    ivLiverAvatar.startWaveAnimation();
+                                    ToastHelper.showToast("话筒已开启");
+                                } else {
+                                    ivLiverAvatar.stopWaveAnimation();
+                                    ToastHelper.showToast("话筒已关闭");
+                                }
                                 boolean mutex = ivSelfAudioSwitch.isSelected();
                                 ivSelfAudioSwitch.setSelected(!mutex);
                                 muteSelfAudio(!mutex);
-
                                 isMicrophone = !isMicrophone;
                                 ivSelfAudioSwitch.setEnabled(true);
+
                             }
 
                             @Override
                             public void onFailed(int i) {
-                                ToastHelper.showToast("话筒关闭失败，请重试");
+                                if (!isMicrophone) {
+                                    ToastHelper.showToast("话筒开启失败，请重试");
+
+                                } else {
+                                    ToastHelper.showToast("话筒关闭失败，请重试");
+                                }
                                 ivSelfAudioSwitch.setEnabled(true);
+
                             }
 
                             @Override
                             public void onException(Throwable throwable) {
-                                ToastHelper.showToast("话筒关闭失败，请重试");
+                                if (!isMicrophone) {
+                                    ToastHelper.showToast("话筒开启失败，请重试");
+
+                                } else {
+                                    ToastHelper.showToast("话筒关闭失败，请重试");
+                                }
                                 ivSelfAudioSwitch.setEnabled(true);
                             }
                         });
-            }
-
-        } else if (view == ivRoomAudioSwitch) {
-            boolean close = ivRoomAudioSwitch.isSelected();
-            ivRoomAudioSwitch.setSelected(!close);
-            muteRoomAudio(!close);
-            if (close) {
-                ToastHelper.showToast("已关闭“聊天室声音”");
-            } else {
-                ToastHelper.showToast("已打开“聊天室声音”");
-            }
-        } else if (view == ivExistRoom) {
-            BottomMenuDialog bottomMenuDialog = new BottomMenuDialog();
-            Bundle bundle1 = new Bundle();
-            ArrayList<String> mune = new ArrayList<>();
-            mune.add("<font color=\"#ff4f4f\">退出并解散房间</color>");
-            mune.add("取消");
-            bundle1.putStringArrayList(BOTTOMMENUS, mune);
-            bottomMenuDialog.setArguments(bundle1);
-            bottomMenuDialog.show(getFragmentManager(), "BottomMenuDialog");
-            bottomMenuDialog.setItemClickListener((d, p) -> {
-                switch (d.get(p)) {
-                    case "<font color=\"#ff4f4f\">退出并解散房间</color>":
-                        bottomButtonAction(bottomMenuDialog, null, "退出并解散房间");
-                        break;
-                    case "取消":
-                        bottomButtonAction(bottomMenuDialog, null, "取消");
-                        break;
+                break;
+            case R.id.iv_close_room_audio_switch:
+                boolean close = ivRoomAudioSwitch.isSelected();
+                ivRoomAudioSwitch.setSelected(!close);
+                muteRoomAudio(!close);
+                if (close) {
+                    ToastHelper.showToast("已关闭“聊天室声音”");
+                } else {
+                    ToastHelper.showToast("已打开“聊天室声音”");
                 }
+                break;
+            case R.id.iv_exist_room:
+                bottomMenuDialog = new BottomMenuDialog();
+                Bundle bundle1 = new Bundle();
+                ArrayList<String> mune = new ArrayList<>();
+                mune.add("<font color=\"#ff4f4f\">退出并解散房间</color>");
+                mune.add("取消");
+                bundle1.putStringArrayList(BOTTOMMENUS, mune);
+                bottomMenuDialog.setArguments(bundle1);
+                bottomMenuDialog.show(getSupportFragmentManager(), bottomMenuDialog.TAG);
+                bottomMenuDialog.setItemClickListener((d, p) -> {
+                    switch (d.get(p)) {
+                        case "<font color=\"#ff4f4f\">退出并解散房间</color>":
+                            bottomButtonAction(bottomMenuDialog, null, "退出并解散房间");
+                            break;
+                        case "取消":
+                            bottomButtonAction(bottomMenuDialog, null, "取消");
+                            break;
+                    }
 
 
-            });
-        } else if (view == semicircleView) {
-            requestLinkDialog = new RequestLinkDialog();
-            Bundle bundle = new Bundle();
-            bundle.putParcelableArrayList(QUEUEINFOLIST, requestMemberList);
-            requestLinkDialog.setArguments(bundle);
-            requestLinkDialog.show(getFragmentManager(), "RequestLinkDialog");
-            requestLinkDialog.setRequestAction(new RequestLinkDialog.IRequestAction() {
-                @Override
-                public void refuse(QueueInfo queueInfo) {
-                    //拒绝上麦
-                    rejectLink(queueInfo);
-                }
+                });
+                break;
+            case R.id.semicircleView:
+                requestLinkDialog = new RequestLinkDialog();
+                Bundle bundle = new Bundle();
+                bundle.putParcelableArrayList(requestLinkDialog.TAG, requestMemberList);
+                requestLinkDialog.setArguments(bundle);
+                requestLinkDialog.show(getSupportFragmentManager(), requestLinkDialog.TAG);
+                requestLinkDialog.setRequestAction(new RequestLinkDialog.IRequestAction() {
+                    @Override
+                    public void refuse(QueueInfo queueInfo) {
+                        //拒绝上麦
+                        rejectLink(queueInfo);
+                    }
 
-                @Override
-                public void agree(QueueInfo queueInfo) {
-                    //同意上麦
-                    acceptLink(queueInfo);
+                    @Override
+                    public void agree(QueueInfo queueInfo) {
+                        //同意上麦
+                        acceptLink(queueInfo);
 
 
-                }
-            });
-        } else if (view == ivPauseOrPlay) {
-            playOrPauseMusic();
-        } else if (view == ivNext) {
-            playNextMusic();
+                    }
+                });
+                break;
+            case R.id.iv_pause_or_play:
+                playOrPauseMusic();
+                break;
+            case R.id.iv_next:
+                playNextMusic();
+                break;
         }
+
     }
 
 
@@ -736,13 +754,13 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
         ToastHelper.showToast("伴音发现错误");
         ivPauseOrPlay.setTag(null);
         ivPauseOrPlay.setSelected(false);
-        nrtcEx.stopAudioMixing();
+        AVChatManager.getInstance().stopAudioMixing();
         updateMusicPlayHint();
     }
 
     private void playNextMusic() {
         currentPlayIndex = (currentPlayIndex + 1) % musicPathArray.length;
-        nrtcEx.startAudioMixing(musicPathArray[currentPlayIndex], true, false, 0, 1.0f);
+        AVChatManager.getInstance().startAudioMixing(musicPathArray[currentPlayIndex], true, false, 0, 1.0f);
         ivPauseOrPlay.setTag(musicPathArray[currentPlayIndex]);
         ivPauseOrPlay.setSelected(true);
         updateMusicPlayHint();
@@ -753,15 +771,15 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
         String oldPath = (String) ivPauseOrPlay.getTag();
         // 如果正在播放，暂停
         if (isPlaying) {
-            nrtcEx.pauseAudioMixing();
+            AVChatManager.getInstance().pauseAudioMixing();
         }
         //如果已经暂停了，重新播放
         else if (!TextUtils.isEmpty(oldPath)) {
-            nrtcEx.resumeAudioMixing();
+            AVChatManager.getInstance().resumeAudioMixing();
         }
         //之前没有设置任何音乐在播放或暂停
         else {
-            nrtcEx.startAudioMixing(musicPathArray[currentPlayIndex], true, false, 100, 1.0f);
+            AVChatManager.getInstance().startAudioMixing(musicPathArray[currentPlayIndex], true, false, 100, 1.0f);
             ivPauseOrPlay.setTag(musicPathArray[currentPlayIndex]);
         }
         ivPauseOrPlay.setSelected(!isPlaying);
@@ -959,7 +977,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
     private void bottomButtonAction(BottomMenuDialog dialog, QueueInfo queueInfo, String s) {
         switch (s) {
             case "确定踢下麦位":
-                BottomMenuDialog bottomMenuDialog = new BottomMenuDialog();
+                bottomMenuDialog = new BottomMenuDialog();
                 ArrayList arrayList = new ArrayList();
                 arrayList.add("<font color = \"#ff4f4f\">确定踢下麦位</color>");
                 arrayList.add("取消");
@@ -1007,42 +1025,27 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
     }
 
     private void checkFile() {
-        String musicRootPath = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + getPackageName() + File.separator + "music" + File.separator;
-
+        mixingInfo.path = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + getPackageName() + File.separator + "music" + File.separator;
+        mixingInfo.cycle = 3;
+        mixingInfo.loop = true;
+        mixingInfo.replace = false;
+        mixingInfo.volume =1f;
         musicPathArray = new String[2];
-        musicPathArray[0] = musicRootPath + "first_song.mp3";
-        musicPathArray[1] = musicRootPath + "second_song.mp3";
+        musicPathArray[0] = mixingInfo.path + "first_song.mp3";
+        musicPathArray[1] = mixingInfo.path + "second_song.mp3";
         currentPlayIndex = 0;
 
         new Thread(() -> {
-            CommonUtil.copyAssetToFile(this, "music/first_song.mp3", musicRootPath, "first_song.mp3");
-            CommonUtil.copyAssetToFile(this, "music/second_song.mp3", musicRootPath, "second_song.mp3");
+            CommonUtil.copyAssetToFile(this, "music/first_song.mp3", mixingInfo.path, "first_song.mp3");
+            CommonUtil.copyAssetToFile(this, "music/second_song.mp3", mixingInfo.path, "second_song.mp3");
         }).start();
     }
 
-    @Override
-    protected NRtcCallback createNrtcCallBack() {
-
-        return new InnerNRtcCallBack();
-    }
 
     @Override
     protected void onDestroy() {
         exitRoom();
         super.onDestroy();
-    }
-
-    private class InnerNRtcCallBack extends SimpleNRtcCallback {
-        @Override
-        public void onDeviceEvent(int event, String desc) {
-            super.onDeviceEvent(event, desc);
-            if (event == NRtcConstants.DeviceEvent.AUDIO_MIXING_ERROR) {
-
-                playMusicErr();
-            } else if (event == NRtcConstants.DeviceEvent.AUDIO_MIXING_FINISHED) {
-                playNextMusic();
-            }
-        }
     }
 
 
@@ -1058,7 +1061,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
             public void onSuccess(Void aVoid) {
                 ToastHelper.showToast("初始化成功");
                 isMicrophone = true;
-
             }
 
             @Override
@@ -1074,5 +1076,10 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
         });
     }
 
+    private void setAudioMixing(boolean mixing) {
+
+        isAudioMixing = mixing;
+
+    }
 
 }

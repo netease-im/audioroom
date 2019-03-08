@@ -1,12 +1,14 @@
 package com.netease.audioroom.demo.base;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
+import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.base.action.INetworkReconnection;
 import com.netease.audioroom.demo.permission.MPermission;
 import com.netease.audioroom.demo.util.Network;
@@ -33,7 +35,6 @@ public abstract class BaseActivity extends AppCompatActivity {
 
     protected LoadService loadService;//提示页面
     INetworkReconnection networkReconnection;
-
 
 
     //网络状态监听
@@ -116,6 +117,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         registerObserver(false);
+        NetworkChange.getInstance().deleteObservers();
         super.onDestroy();
     }
 
@@ -137,5 +139,9 @@ public abstract class BaseActivity extends AppCompatActivity {
         this.networkReconnection = networkReconnection;
     }
 
-
+    @Override
+    public void finish() {
+        super.finish();
+        overridePendingTransition(R.anim.in_from_left, R.anim.out_from_right);
+    }
 }

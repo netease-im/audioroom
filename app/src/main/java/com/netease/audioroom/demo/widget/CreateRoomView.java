@@ -37,7 +37,7 @@ public class CreateRoomView extends AppCompatImageView implements View.OnTouchLi
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN://按下
                 CreateRoomNameDialog dialog = new CreateRoomNameDialog();
-                dialog.show(((AppCompatActivity) getContext()).getSupportFragmentManager(), "");
+                dialog.show(((AppCompatActivity) getContext()).getSupportFragmentManager(), dialog.TAG);
                 break;
             default:
                 break;

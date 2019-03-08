@@ -20,6 +20,7 @@ import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.LoadingCallb
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.NetErrCallback;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.TimeoutCallback;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.core.LoadSir;
+import com.squareup.leakcanary.LeakCanary;
 
 public class BaseApplication extends Application {
     private NetworkConnectChangedReceiver networkConnectChangedReceiver = new NetworkConnectChangedReceiver();
@@ -86,6 +87,14 @@ public class BaseApplication extends Application {
         filter.addAction("android.net.wifi.WIFI_STATE_CHANGE");
         filter.addAction("android.net.conn.STATE_CHANGE");
         registerReceiver(networkConnectChangedReceiver, filter);
+
+        //内存泄漏检测
+        if (LeakCanary.isInAnalyzerProcess(this)) {
+            // This process is dedicated to LeakCanary for heap analysis.
+            // You should not init your app in this process.
+            return;
+        }
+        LeakCanary.install(this);
 
 
     }

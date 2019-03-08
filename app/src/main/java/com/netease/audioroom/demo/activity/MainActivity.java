@@ -95,11 +95,15 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
             @Override
             public void onNetworkInterrupt() {
                 netErrCallback();
-
             }
         });
     }
 
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        onRefresh();
+    }
 
     private void onNetWork() {
         LoginManager loginManager = LoginManager.getInstance();
@@ -158,6 +162,7 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
         else
             loadService.showCallback(NetErrCallback.class);
     }
+
 
     @Override
     public void onLoadMore() {

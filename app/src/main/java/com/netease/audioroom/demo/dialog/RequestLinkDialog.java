@@ -20,8 +20,8 @@ import com.netease.audioroom.demo.widget.VerticalItemDecoration;
 
 import java.util.ArrayList;
 
-public class RequestLinkDialog extends DialogFragment {
-    public static final String QUEUEINFOLIST = "queueInfoList";
+public class RequestLinkDialog extends BaseDialogFragment {
+
 
     RecyclerView requesterRecyclerView;
     RequestlinkAdapter adapter;
@@ -53,7 +53,7 @@ public class RequestLinkDialog extends DialogFragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
         Bundle bundle = getArguments();
         if (bundle != null) {
-            queueMemberList = getArguments().getParcelableArrayList(QUEUEINFOLIST);
+            queueMemberList = getArguments().getParcelableArrayList(TAG);
         } else {
             dismiss();
         }

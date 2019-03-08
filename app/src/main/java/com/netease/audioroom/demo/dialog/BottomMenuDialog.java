@@ -1,6 +1,7 @@
 package com.netease.audioroom.demo.dialog;
 
 import android.app.DialogFragment;
+import android.app.FragmentManager;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -23,7 +24,7 @@ import com.netease.audioroom.demo.widget.VerticalItemDecoration;
 
 import java.util.ArrayList;
 
-public class BottomMenuDialog extends DialogFragment {
+public class BottomMenuDialog extends BaseDialogFragment {
     public final static String BOTTOMMENUS = "bottommenus";
 
     ArrayList<String> dataList;
@@ -31,6 +32,7 @@ public class BottomMenuDialog extends DialogFragment {
     View rootView;
     RecyclerView recyclerView;
     MyAdapter adapter;
+
 
     public interface ItemClickListener {
         void onItemClick(ArrayList<String> dataArray, int position);
@@ -82,6 +84,7 @@ public class BottomMenuDialog extends DialogFragment {
             );
         }
     }
+
 
     public void setItemClickListener(ItemClickListener itemClickListener) {
         this.itemClickListener = itemClickListener;

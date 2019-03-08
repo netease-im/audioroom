@@ -13,8 +13,8 @@ import android.widget.TextView;
 
 import com.netease.audioroom.demo.R;
 
-public class TipsDialog extends DialogFragment {
-    public final static String TIPSDIALOG = "TipsDialog";
+public class TipsDialog extends BaseDialogFragment {
+
     View mConentView;
 
     TextView tvContent;
@@ -42,7 +42,7 @@ public class TipsDialog extends DialogFragment {
         }
         getDialog().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         if (getArguments() != null) {
-            content = getArguments().getString(TIPSDIALOG);
+            content = getArguments().getString(TAG);
         }
         mConentView = inflater.inflate(R.layout.dialog_tips, container, false);
         return mConentView;
