@@ -773,7 +773,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
 
     private void playNextMusic() {
         currentPlayIndex = (currentPlayIndex + 1) % musicPathArray.length;
-        AVChatManager.getInstance().startAudioMixing(musicPathArray[currentPlayIndex], true, false, 0, 1.0f);
+        AVChatManager.getInstance().startAudioMixing(musicPathArray[currentPlayIndex], true, false, 0, 0.3f);
         ivPauseOrPlay.setTag(musicPathArray[currentPlayIndex]);
         ivPauseOrPlay.setSelected(true);
         updateMusicPlayHint();
@@ -792,7 +792,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
         }
         //之前没有设置任何音乐在播放或暂停
         else {
-            AVChatManager.getInstance().startAudioMixing(musicPathArray[currentPlayIndex], true, false, 100, 1.0f);
+            AVChatManager.getInstance().startAudioMixing(musicPathArray[currentPlayIndex], true, false, 100, 0.3f);
             ivPauseOrPlay.setTag(musicPathArray[currentPlayIndex]);
         }
         ivPauseOrPlay.setSelected(!isPlaying);
