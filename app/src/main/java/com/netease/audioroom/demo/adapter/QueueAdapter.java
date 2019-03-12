@@ -49,7 +49,8 @@ public class QueueAdapter extends BaseAdapter<QueueInfo> {
                 break;
             case QueueInfo.STATUS_LOAD:
                 viewHolder.ivAvatar.setImageResource(R.color.color_292929);
-                viewHolder.iv_user_status.setVisibility(View.GONE);
+                viewHolder.iv_user_status.setVisibility(View.VISIBLE);
+                viewHolder.iv_user_status.setImageResource(R.drawable.threepoints);
                 if (queueInfo.getReason() != QueueInfo.Reason.applyInMute) {
                     viewHolder.ivStatusHint.setVisibility(View.GONE);
                 } else {
@@ -64,9 +65,13 @@ public class QueueAdapter extends BaseAdapter<QueueInfo> {
             case QueueInfo.STATUS_CLOSE:
                 viewHolder.iv_user_status.setVisibility(View.VISIBLE);
                 viewHolder.ivStatusHint.setVisibility(View.GONE);
-                viewHolder.iv_user_status.setImageResource(R.drawable.queue_close);
+                viewHolder.iv_user_status.setImageResource(R.drawable.close);
                 break;
             case QueueInfo.STATUS_FORBID:
+                viewHolder.iv_user_status.setVisibility(View.VISIBLE);
+                viewHolder.ivStatusHint.setVisibility(View.GONE);
+                viewHolder.iv_user_status.setImageResource(R.drawable.queue_close);
+                break;
             case QueueInfo.STATUS_BE_MUTED_AUDIO:
                 viewHolder.iv_user_status.setVisibility(View.GONE);
                 viewHolder.iv_user_status.setVisibility(View.GONE);

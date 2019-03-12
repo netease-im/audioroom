@@ -17,6 +17,7 @@ import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.adapter.MessageListAdapter;
 import com.netease.audioroom.demo.adapter.QueueAdapter;
 import com.netease.audioroom.demo.cache.DemoCache;
+import com.netease.audioroom.demo.cache.RoomMemberCache;
 import com.netease.audioroom.demo.model.AccountInfo;
 import com.netease.audioroom.demo.model.DemoRoomInfo;
 import com.netease.audioroom.demo.model.QueueInfo;
@@ -163,6 +164,7 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
                             logInfo.append("成员进入聊天室：nick =  ").append(memberIn.getOperatorNick())
                                     .append(", account = ").append(memberIn.getOperator());
                             memberIn(memberIn);
+                            updateRoonInfo();
                             break;
                         // 成员退出聊天室
                         case ChatRoomMemberExit:
@@ -170,6 +172,8 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
                             logInfo.append("成员退出聊天室：nick = ").append(memberExit.getOperatorNick()).
                                     append(",  account = ").append(memberExit.getOperator());
                             memberExit(memberExit);
+
+                            updateRoonInfo();
                             break;
                         //成员被禁言
                         case ChatRoomMemberTempMuteAdd:
@@ -331,7 +335,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
 
     @Override
     protected void onDestroy() {
-        release();
         if (rootView != null) {
             rootView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
         }
@@ -429,7 +432,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
 
 
     protected void messageInComing(ChatRoomMessage message) {
-
         if (message.getMsgType() != MsgTypeEnum.text) {
             return;
         }
@@ -522,17 +524,17 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
         AVChatManager.getInstance().enableAudienceRole(enable);
     }
 
-
+    /**
+     * 离开聊天室
+     */
     protected void release() {
-        /**
-         * 离开房间
-         */
         AVChatManager.getInstance().leaveRoom2(roomInfo.getRoomId(), new AVChatCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
                 AVChatManager.getInstance().disableRtc();
                 //退出
                 if (roomInfo != null) {
+                    RoomMemberCache.getInstance().removeCache(roomInfo.getRoomId());
                     chatRoomService.exitChatRoom(roomInfo.getRoomId());
                     roomInfo = null;
                 }
@@ -541,12 +543,12 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
 
             @Override
             public void onFailed(int code) {
-
+                ToastHelper.showToast("解散失败code：" + code);
             }
 
             @Override
             public void onException(Throwable exception) {
-
+                ToastHelper.showToast("解散失败code：" + exception.getMessage());
             }
         });
 
@@ -588,6 +590,12 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
     }
 
     @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+
+    }
+
+    @Override
     public void onGlobalLayout() {
         int preHeight = rootViewVisibleHeight;
         //获取当前根视图在屏幕上显示的大小
@@ -610,14 +618,19 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
         //设置场景, 如果需要高清音乐场景，设置 AVChatChannelProfile#CHANNEL_PROFILE_HIGH_QUALITY_MUSIC
         AVChatManager.getInstance().setChannelProfile(channelProfile);
         //设置通话可选参数
-        AVChatParameters parameters = getRtcParameters();
-        AVChatManager.getInstance().setParameters(parameters);
+        try {
+            AVChatParameters parameters = getRtcParameters();
+            AVChatManager.getInstance().setParameters(parameters);
+        } catch (Exception e) {
+            e.printStackTrace();
+            ToastHelper.showToast("参数设置错误");
+            loadService.showCallback(ErrorCallback.class);
+        }
 
         AVChatManager.getInstance().joinRoom2(roomInfo.getRoomId(), AVChatType.AUDIO, new AVChatCallback<AVChatData>() {
             @Override
             public void onSuccess(AVChatData avChatData) {
-                //加入成功
-                ToastHelper.showToast("成功加入聊天室");
+                AVChatManager.getInstance().setSpeaker(true);//使用扬声器
             }
 
             @Override
@@ -640,29 +653,23 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
         tvRoomName.setText(name);
     }
 
-    private AVChatParameters getRtcParameters() {
-        /**
-         *
-         */
+    private AVChatParameters getRtcParameters() throws Exception {
         AVChatParameters parameters = new AVChatParameters();
         parameters.setBoolean(AVChatParameters.KEY_SERVER_AUDIO_RECORD, false);
         parameters.setBoolean(AVChatParameters.KEY_VIDEO_ROTATE_IN_RENDING, true);
         parameters.setString(AVChatParameters.KEY_AUDIO_EFFECT_ACOUSTIC_ECHO_CANCELER,
                 AVChatAudioEffectMode.PLATFORM_BUILTIN);
-        parameters.setBoolean(AVChatParameters.KEY_SERVER_RECORD_SPEAKER, false);
         parameters.setString(AVChatParameters.KEY_AUDIO_EFFECT_NOISE_SUPPRESSOR,
                 AVChatAudioEffectMode.PLATFORM_BUILTIN);
         parameters.setString(AVChatParameters.KEY_VIDEO_DECODER_MODE,
                 AVChatMediaCodecMode.MEDIA_CODEC_SOFTWARE);
         parameters.setBoolean(AVChatParameters.KEY_SERVER_VIDEO_RECORD, false);
         parameters.setInteger(AVChatParameters.KEY_SERVER_RECORD_MODE, 0);
-
         parameters.setBoolean(AVChatParameters.KEY_AUDIO_CALL_PROXIMITY, true);
-        parameters.setBoolean(AVChatParameters.KEY_SERVER_AUDIO_RECORD, false);
         parameters.setBoolean(AVChatParameters.KEY_AUDIO_EXTERNAL_CAPTURE, false);
+
         parameters.setBoolean(AVChatParameters.KEY_AUDIO_HIGH_QUALITY, false);
         parameters.setBoolean(AVChatParameters.KEY_AUDIO_CALL_PROXIMITY, true);
-        parameters.setBoolean(AVChatParameters.KEY_SERVER_RECORD_SPEAKER, false);
         parameters.setBoolean(AVChatParameters.KEY_SESSION_LIVE_MODE, false);
         parameters.setInteger(AVChatParameters.KEY_DEVICE_DEFAULT_ROTATION, 0);
 

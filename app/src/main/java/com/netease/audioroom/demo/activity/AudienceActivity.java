@@ -7,11 +7,11 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
+import android.support.v4.app.DialogFragment;
 import android.text.TextUtils;
 import android.view.View;
 
 import com.netease.audioroom.demo.R;
-import com.netease.audioroom.demo.audio.SimpleAVChatCallback;
 import com.netease.audioroom.demo.base.BaseAudioActivity;
 import com.netease.audioroom.demo.base.LoginManager;
 import com.netease.audioroom.demo.base.action.IAudience;
@@ -61,9 +61,8 @@ import static com.netease.audioroom.demo.dialog.BottomMenuDialog.BOTTOMMENUS;
  * 观众页
  */
 public class AudienceActivity extends BaseAudioActivity implements IAudience, View.OnClickListener {
-
-    TopTipsDialog topTipsDialog;
     String creator;
+    TopTipsDialog topTipsDialog;
 
 
     public static void start(Context context, DemoRoomInfo model) {
@@ -95,13 +94,14 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             @Override
             public void onFailed(int code) {
                 // 失败
-                ToastHelper.showToast(code + "");
+                creator = "获取当前聊天室信息失败";
+                ToastHelper.showToast("获取当前聊天室信息失败code" + code);
             }
 
             @Override
             public void onException(Throwable exception) {
                 // 错误
-                ToastHelper.showToast(exception.getMessage() + "");
+                ToastHelper.showToast("获取当前聊天室信息失败" + exception.getMessage());
             }
         });
         enterChatRoom(roomInfo.getRoomId());
@@ -109,6 +109,11 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         joinChannel();
     }
 
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        exitRoom();
+    }
 
     @Override
     protected void onStart() {
@@ -155,8 +160,9 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         setNetworkReconnection(new INetworkReconnection() {
             @Override
             public void onNetworkReconnection() {
-                if (topTipsDialog != null && topTipsDialog.isVisible()) {
-                    topTipsDialog.dismiss();
+                if (getFragmentManager().findFragmentByTag("TopTipsDialog") != null
+                        && getFragmentManager().findFragmentByTag("TopTipsDialog").isVisible()) {
+                    ((DialogFragment) getSupportFragmentManager().findFragmentByTag("TopTipsDialog")).dismiss();
                 }
                 LoginManager loginManager = LoginManager.getInstance();
                 loginManager.tryLogin();
@@ -178,6 +184,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             @Override
             public void onNetworkInterrupt() {
                 Bundle bundle = new Bundle();
+                TopTipsDialog topTipsDialog = new TopTipsDialog();
                 TopTipsDialog.Style style = topTipsDialog.new Style(
                         "网络断开",
                         0,
@@ -186,8 +193,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 bundle.putParcelable(topTipsDialog.TAG, style);
                 topTipsDialog.setArguments(bundle);
                 topTipsDialog.show(getSupportFragmentManager(), topTipsDialog.TAG);
-                topTipsDialog.setClickListener(() -> {
-                });
+
             }
         });
 
@@ -228,7 +234,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
 
     @Override
     protected void setupBaseView() {
-        topTipsDialog = new TopTipsDialog();
         ivMuteOtherText.setVisibility(View.GONE);
         hasMicrophone(false);
         ivSelfAudioSwitch.setOnClickListener(this);
@@ -290,10 +295,10 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         }
     }
 
+
     @Override
     protected void exitRoom() {
         release();
-
     }
 
     @Override
@@ -317,6 +322,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             @Override
             public void onSuccess(Void aVoid) {
                 Bundle bundle = new Bundle();
+                topTipsDialog = new TopTipsDialog();
                 TopTipsDialog.Style style = topTipsDialog.new Style(
                         "已申请上麦，等待通过...  <font color=\"#0888ff\">取消</color>",
                         0,
@@ -403,7 +409,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     }
 
 
-    //取消连麦
     @Override
     public void cancelLinkRequest(QueueInfo queueInfo) {
         P2PNotificationHelper.cancelLinkRequest(queueInfo, DemoCache.getAccountId(), roomInfo.getCreator(), new RequestCallback<Void>() {
@@ -427,15 +432,20 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
 
     @Override
     public void linkBeRejected() {
-        if (topTipsDialog != null && topTipsDialog.isVisible()) {
-            topTipsDialog.dismiss();
-        }
         TipsDialog tipsDialog = new TipsDialog();
         Bundle bundle = new Bundle();
         bundle.putString(tipsDialog.TAG, "您的申请已被拒绝");
         tipsDialog.setArguments(bundle);
         tipsDialog.show(getSupportFragmentManager(), "TipsDialog");
-        tipsDialog.setClickListener(() -> tipsDialog.dismiss());
+        tipsDialog.setClickListener(() -> {
+            tipsDialog.dismiss();
+            if (topTipsDialog != null && topTipsDialog.isVisible()) {
+                topTipsDialog.dismiss();
+            }
+
+        });
+
+
     }
 
     @Override
@@ -456,6 +466,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 break;
             case QueueInfo.Reason.agreeApply:
                 //主动申请上麦
+                TopTipsDialog topTipsDialog = new TopTipsDialog();
                 if (topTipsDialog != null && topTipsDialog.isVisible()) {
                     topTipsDialog.dismiss();
                 }
@@ -474,12 +485,10 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                         "该麦位被主播“解除语音屏蔽”\n" +
                                 "现在您可以再次进行语音互动了");
                 tipsDialog2.setArguments(bundle);
-
                 tipsDialog2.show(getSupportFragmentManager(), tipsDialog2.TAG);
                 tipsDialog2.setClickListener(() -> tipsDialog2.dismiss());
                 break;
         }
-
         hasMicrophone(true);
         enableAudienceRole(false);
         selfQueue = queueInfo;
@@ -488,9 +497,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
 
     @Override
     public void removed(QueueInfo queueInfo) {
-        if (topTipsDialog != null && topTipsDialog.isVisible()) {
-            topTipsDialog.dismiss();
-        }
+
         switch (queueInfo.getReason()) {
             case QueueInfo.Reason.kickByHost:
                 TipsDialog tipsDialog = new TipsDialog();
@@ -527,7 +534,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                     break;
                 case "取消":
                     bottomButtonAction(bottomMenuDialog, null, "取消");
-//                    topTipsDialog.show(getFragmentManager(), "TopTipsDialog");
+
                     break;
             }
         });
@@ -605,16 +612,16 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     protected void messageInComing(ChatRoomMessage message) {
         super.messageInComing(message);
         MsgAttachment msgAttachment = message.getAttachment();
-        if (msgAttachment != null && msgAttachment instanceof CloseRoomAttach) {
-            release();
+        if (msgAttachment instanceof CloseRoomAttach) {
             TipsDialog tipsDialog = new TipsDialog();
             Bundle bundle = new Bundle();
             bundle.putString(tipsDialog.TAG, "该房间已被主播解散");
             tipsDialog.setArguments(bundle);
             tipsDialog.show(getSupportFragmentManager(), tipsDialog.TAG);
             tipsDialog.setClickListener(() -> {
-                finish();
                 tipsDialog.dismiss();
+                release();
+
             });
         }
     }

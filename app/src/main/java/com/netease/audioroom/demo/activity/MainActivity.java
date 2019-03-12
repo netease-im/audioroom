@@ -3,7 +3,6 @@ package com.netease.audioroom.demo.activity;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Handler;
-
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.view.KeyEvent;
@@ -41,7 +40,6 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
     private StatusCode loginStatus = StatusCode.UNLOGIN;
     private PullLoadMoreRecyclerView mPullLoadMoreRecyclerView;
     RecyclerView mRecyclerView;
-
     ArrayList<DemoRoomInfo> mRoomList;
 
     private int limitPage = 50;
@@ -62,7 +60,6 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
         chatRoomListAdapter = new ChatRoomListAdapter(mRoomList, this);
         // 每个item 16dp 的间隔
         chatRoomListAdapter.setItemClickListener(this);
-
         mPullLoadMoreRecyclerView = findViewById(R.id.pullLoadMoreRecyclerView);
         //获取mRecyclerView对象
         mRecyclerView = mPullLoadMoreRecyclerView.getRecyclerView();
@@ -84,6 +81,7 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
     @Override
     protected void onResume() {
         super.onResume();
+        loadService.showCallback(LoadingCallback.class);
         onRefresh();
         setNetworkReconnection(new INetworkReconnection() {
             @Override
@@ -180,7 +178,23 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
         }
         //当前帐号创建的房间
         if (TextUtils.equals(DemoCache.getAccountId(), model.getCreator())) {
-            AudioLiveActivity.start(mContext, model);
+            mPullLoadMoreRecyclerView.setRefreshing(true);
+            //关闭应用服务器聊天室
+            ChatRoomHttpClient.getInstance().closeRoom(DemoCache.getAccountId(),
+                    model.getRoomId(), new ChatRoomHttpClient.ChatRoomHttpCallback() {
+                        @Override
+                        public void onSuccess(Object o) {
+                            ToastHelper.showToast("房间不存在");
+                            onRefresh();
+                        }
+
+                        @Override
+                        public void onFailed(int code, String errorMsg) {
+                            mPullLoadMoreRecyclerView.setPullLoadMoreCompleted();
+                            loadService.showSuccess();
+                            ToastHelper.showToast("房间异常" + errorMsg);
+                        }
+                    });
         } else {
             AudienceActivity.start(mContext, model);
         }
@@ -213,7 +227,7 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
             view.setOnClickListener((v) -> {
                 loadService.showCallback(LoadingCallback.class);
                 if (Network.getInstance().isConnected()) {
-                    new Handler().postDelayed(() -> onNetWork(), 10000); // 延时10秒
+                    new Handler().postDelayed(() -> onNetWork(), 10 * 000); // 延时10秒
                 } else {
                     new Handler().postDelayed(() -> loadService.showCallback(NetErrCallback.class), 10000);
                 }

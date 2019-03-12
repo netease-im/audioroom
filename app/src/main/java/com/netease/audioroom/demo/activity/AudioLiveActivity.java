@@ -75,7 +75,6 @@ import static com.netease.audioroom.demo.dialog.BottomMenuDialog.BOTTOMMENUS;
 public class AudioLiveActivity extends BaseAudioActivity implements LoginManager.IAudioLive, View.OnClickListener {
     boolean isMicrophone;
     BottomMenuDialog bottomMenuDialog;
-    private boolean isAudioMixing;
 
 
     public static void start(Context context, DemoRoomInfo demoRoomInfo) {
@@ -292,7 +291,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                 });
                 break;
             case QueueInfo.STATUS_FORBID:
-//                ToastHelper.showToast("麦位上没人，但是被主播屏蔽");
                 mune.add("将成员抱上麦位");
                 mune.add("解除语音屏蔽");
                 mune.add("取消");
@@ -421,24 +419,43 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
     @Override
     protected void exitRoom() {
         loadService.showCallback(LoadingCallback.class);
-        release();
-        if (roomInfo != null) {
-            ChatRoomMessage closeRoomMessage = ChatRoomMessageBuilder
-                    .createChatRoomCustomMessage(roomInfo.getRoomId(), new CloseRoomAttach());
-            chatRoomService.sendMessage(closeRoomMessage, false)
-                    .setCallback(new RequestCallbackWrapper<Void>() {
-                        @Override
-                        public void onResult(int i, Void aVoid, Throwable throwable) {
-                            ChatRoomHttpClient.getInstance().closeRoom(DemoCache.getAccountId(), roomInfo.getRoomId(), null);
-                            ToastHelper.showToast("房间已解散");
-                            RoomMemberCache.getInstance().removeCache(roomInfo.getRoomId());
-                            roomInfo = null;
-                            loadService.showSuccess();
-                            finish();
-                        }
-                    });
+        //离开聊天室
+        AVChatManager.getInstance().disableRtc();
+        AVChatManager.getInstance().leaveRoom2(roomInfo.getRoomId(), new AVChatCallback<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                //关闭应用服务器聊天室
+                ChatRoomHttpClient.getInstance().closeRoom(DemoCache.getAccountId(),
+                        roomInfo.getRoomId(), new ChatRoomHttpClient.ChatRoomHttpCallback() {
+                            @Override
+                            public void onSuccess(Object o) {
+                                loadService.showSuccess();
+                                ToastHelper.showToast("房间已解散");
+                                if (roomInfo != null) {
+                                    RoomMemberCache.getInstance().removeCache(roomInfo.getRoomId());
+                                    roomInfo = null;
+                                }
+                                finish();
+                            }
 
-        }
+                            @Override
+                            public void onFailed(int code, String errorMsg) {
+                                ToastHelper.showToast("房间解散失败" + errorMsg);
+                            }
+                        });
+
+            }
+
+            @Override
+            public void onFailed(int code) {
+                ToastHelper.showToast("解散失败code：" + code);
+            }
+
+            @Override
+            public void onException(Throwable exception) {
+                ToastHelper.showToast("解散失败code：" + exception.getMessage());
+            }
+        });
 
     }
 
@@ -516,19 +533,16 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                 ToastHelper.showToast("通过连麦请求异常 ， e = " + throwable);
             }
         });
-
-
     }
 
-    //拒绝连麦
     @Override
     public void rejectLink(QueueInfo queueInfo) {
         queueInfo.setReason(QueueInfo.Reason.cancelApplyByHost);
         queueInfo.setStatus(QueueInfo.STATUS_INIT);
+        requestMemberList.remove(queueInfo);
         chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString()).setCallback(new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
-                requestMemberList.remove(queueInfo);
                 ToastHelper.showToast("已拒绝" + queueInfo.getQueueMember().getNick() + "的申请");
                 if (requestMemberList.size() == 0) {
                     if (requestLinkDialog != null && requestLinkDialog.isVisible()) {
@@ -539,7 +553,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                     if (requestLinkDialog != null && requestLinkDialog.isVisible()) {
                         requestLinkDialog.updateDate();
                     }
-
                 }
             }
 
@@ -945,16 +958,14 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
     @Override
     public void mutedAudio(QueueInfo queueInfo) {
         if (QueueInfo.hasOccupancy(queueInfo)) {
-            ToastHelper.showToast("有人");
             queueInfo.setStatus(QueueInfo.STATUS_BE_MUTED_AUDIO);
         } else {
-            ToastHelper.showToast("没人");
             queueInfo.setStatus(QueueInfo.STATUS_FORBID);
         }
         chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString()).setCallback(new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
-                ToastHelper.showToast("");
+
             }
 
             @Override
@@ -1029,12 +1040,11 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
         mixingInfo.cycle = 3;
         mixingInfo.loop = true;
         mixingInfo.replace = false;
-        mixingInfo.volume =1f;
+        mixingInfo.volume = 1f;
         musicPathArray = new String[2];
         musicPathArray[0] = mixingInfo.path + "first_song.mp3";
         musicPathArray[1] = mixingInfo.path + "second_song.mp3";
         currentPlayIndex = 0;
-
         new Thread(() -> {
             CommonUtil.copyAssetToFile(this, "music/first_song.mp3", mixingInfo.path, "first_song.mp3");
             CommonUtil.copyAssetToFile(this, "music/second_song.mp3", mixingInfo.path, "second_song.mp3");
@@ -1043,8 +1053,13 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
 
 
     @Override
-    protected void onDestroy() {
+    public void onBackPressed() {
         exitRoom();
+        super.onBackPressed();
+    }
+
+    @Override
+    protected void onDestroy() {
         super.onDestroy();
     }
 
@@ -1076,10 +1091,5 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
         });
     }
 
-    private void setAudioMixing(boolean mixing) {
-
-        isAudioMixing = mixing;
-
-    }
 
 }

@@ -2,8 +2,6 @@ package com.netease.audioroom.demo.dialog;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v4.app.DialogFragment;
-import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -14,22 +12,24 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Toast;
 
 import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.activity.AudioLiveActivity;
 import com.netease.audioroom.demo.cache.DemoCache;
 import com.netease.audioroom.demo.http.ChatRoomHttpClient;
 import com.netease.audioroom.demo.model.DemoRoomInfo;
+import com.netease.audioroom.demo.util.NetworkUtils;
 import com.netease.audioroom.demo.util.ToastHelper;
 
 public class CreateRoomNameDialog extends BaseDialogFragment {
 
     View mConentView;
-
     EditText mEditText;
     Button mBtnCancal;
     Button mBtnCreaterRoom;
+
+    View mRootview, mLoading;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -43,6 +43,7 @@ public class CreateRoomNameDialog extends BaseDialogFragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
         getDialog().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         mConentView = inflater.inflate(R.layout.dialog_creater_roomname, container, false);
+
         return mConentView;
     }
 
@@ -57,6 +58,8 @@ public class CreateRoomNameDialog extends BaseDialogFragment {
         mEditText = mConentView.findViewById(R.id.eturl);
         mBtnCancal = mConentView.findViewById(R.id.btnCancal);
         mBtnCreaterRoom = mConentView.findViewById(R.id.btnCreaterRoom);
+        mRootview = mConentView.findViewById(R.id.root);
+        mLoading = mConentView.findViewById(R.id.loadingview);
         mBtnCreaterRoom.setEnabled(false);
 
     }
@@ -90,31 +93,55 @@ public class CreateRoomNameDialog extends BaseDialogFragment {
             }
         });
         mBtnCancal.setOnClickListener((v) -> dismiss());
-        mBtnCreaterRoom.setOnClickListener((v) -> createRoom(mEditText.getText().toString()));
+        mBtnCreaterRoom.setOnClickListener((v) -> {
+            mBtnCreaterRoom.setEnabled(false);
+            isLoading(true);
+            createRoom(mEditText.getText().toString());
+        });
     }
-
 
 
     //创建房间
     private void createRoom(String roomName) {
         ChatRoomHttpClient.getInstance().createRoom(DemoCache.getAccountId(), roomName,
                 new ChatRoomHttpClient.ChatRoomHttpCallback<DemoRoomInfo>() {
-            @Override
-            public void onSuccess(DemoRoomInfo roomInfo) {
-                if (roomInfo != null) {
-                    mEditText.setText("");
-                    dismiss();
-                    AudioLiveActivity.start(getContext(), roomInfo);
-                } else {
-                    ToastHelper.showToast("创建房间失败，返回信息为空");
-                }
-            }
+                    @Override
+                    public void onSuccess(DemoRoomInfo roomInfo) {
+                        mBtnCreaterRoom.setEnabled(true);
+                        isLoading(false);
+                        if (roomInfo != null) {
+                            AudioLiveActivity.start(getContext(), roomInfo);
+                            dismiss();
+                        } else {
+                            ToastHelper.showToast("创建房间失败，返回信息为空");
+                        }
+                    }
 
-            @Override
-            public void onFailed(int code, String errorMsg) {
-                ToastHelper.showToast("创建房间失败");
-            }
-        });
+                    @Override
+                    public void onFailed(int code, String errorMsg) {
+                        isLoading(false);
+                        mBtnCreaterRoom.setEnabled(true);
+                        if (NetworkUtils.isNetworkConnected(getContext())) {
+                            ToastHelper.showToast("创建房间失败,请检查你的网络...");
+                        } else {
+                            ToastHelper.showToast("创建房间失败" + errorMsg);
+                        }
+
+
+                    }
+                });
     }
+
+
+    private void isLoading(Boolean isloading) {
+        if (isloading) {
+            mLoading.setVisibility(View.VISIBLE);
+            mRootview.setVisibility(View.INVISIBLE);
+        } else {
+            mLoading.setVisibility(View.GONE);
+            mRootview.setVisibility(View.VISIBLE);
+        }
+    }
+
 
 }

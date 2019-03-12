@@ -39,7 +39,6 @@ public class QueueInfo implements Serializable, Parcelable {
         int cancelMuted = 8;//麦位取消屏蔽状态
     }
 
-
     /**
      * 麦位初始化状态（没人）
      */

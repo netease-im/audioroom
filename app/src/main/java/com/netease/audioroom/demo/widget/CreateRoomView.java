@@ -13,21 +13,22 @@ import com.netease.audioroom.demo.dialog.CreateRoomNameDialog;
 
 public class CreateRoomView extends AppCompatImageView implements View.OnTouchListener {
 
-
     public CreateRoomView(Context context) {
         super(context);
-        setImageResource(R.drawable.create_room_btn);
-        setOnTouchListener(this);
+        initView();
     }
 
     public CreateRoomView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        setImageResource(R.drawable.create_room_btn);
-        setOnTouchListener(this);
+        initView();
     }
 
     public CreateRoomView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        initView();
+    }
+
+    protected void initView() {
         setImageResource(R.drawable.create_room_btn);
         setOnTouchListener(this);
     }
@@ -38,8 +39,6 @@ public class CreateRoomView extends AppCompatImageView implements View.OnTouchLi
             case MotionEvent.ACTION_DOWN://按下
                 CreateRoomNameDialog dialog = new CreateRoomNameDialog();
                 dialog.show(((AppCompatActivity) getContext()).getSupportFragmentManager(), dialog.TAG);
-                break;
-            default:
                 break;
         }
         return true;

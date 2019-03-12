@@ -87,7 +87,6 @@ public abstract class BaseAdapter<T> extends RecyclerView.Adapter {
 
     @Override
     public final void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-
         onBindBaseViewHolder(holder, position);
         holder.itemView.setTag(R.id.base_adapter_model_tag, dataList.get(position));
         holder.itemView.setTag(R.id.base_adapter_position_tag, position);

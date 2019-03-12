@@ -1,6 +1,5 @@
 package com.netease.audioroom.demo.dialog;
 
-import android.app.DialogFragment;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Parcel;

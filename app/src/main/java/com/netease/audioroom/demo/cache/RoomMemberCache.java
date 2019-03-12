@@ -115,7 +115,6 @@ public class RoomMemberCache {
      * 从服务端拉取成员信息
      */
     public void fetchMembers(String roomId, long time, int limit, RequestCallback<List<ChatRoomMember>> callback) {
-
         NIMClient.getService(ChatRoomService.class).fetchRoomMembers(roomId, MemberQueryType.GUEST, time, limit)
                 .setCallback(new RequestCallback<List<ChatRoomMember>>() {
                     @Override
@@ -192,7 +191,8 @@ public class RoomMemberCache {
      * 清空某一个聊天室的所有缓存
      */
     public void removeCache(String roomId) {
-        memberCache.remove(roomId);
+        if (memberCache != null && memberCache.size() != 0)
+            memberCache.remove(roomId);
     }
 
     private RoomMemberCache() {
