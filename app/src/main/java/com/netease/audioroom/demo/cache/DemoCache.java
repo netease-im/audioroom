@@ -3,8 +3,13 @@ package com.netease.audioroom.demo.cache;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import com.netease.audioroom.demo.activity.MainActivity;
+import com.netease.audioroom.demo.http.ChatRoomHttpClient;
 import com.netease.audioroom.demo.model.AccountInfo;
 import com.netease.audioroom.demo.model.DemoRoomInfo;
+import com.netease.audioroom.demo.util.ToastHelper;
+
+import java.util.Calendar;
 
 
 public class DemoCache {
@@ -41,19 +46,26 @@ public class DemoCache {
 
     public static AccountInfo getAccountInfo() {
         if (accountInfo != null) {
-            return accountInfo;
+            //用户token过期
+            if (Calendar.getInstance().get(Calendar.SECOND) < accountInfo.availableAt) {
+                return null;
+            } else {
+                return accountInfo;
+            }
+
         }
         String jsonStr = getSharedPreferences().getString(ACCOUNT_INFO_KEY, null);
         if (jsonStr == null) {
+
             return null;
         }
         accountInfo = new AccountInfo(jsonStr);
+
         return accountInfo;
     }
 
     private static SharedPreferences getSharedPreferences() {
         return context.getSharedPreferences("audio_demo", Context.MODE_PRIVATE);
     }
-
 
 }

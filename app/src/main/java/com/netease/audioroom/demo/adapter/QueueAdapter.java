@@ -9,15 +9,17 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.netease.audioroom.demo.R;
-import com.netease.audioroom.demo.base.BaseAdapter;
-import com.netease.audioroom.demo.model.QueueMember;
+import com.netease.audioroom.demo.base.adapter.BaseAdapter;
 import com.netease.audioroom.demo.model.QueueInfo;
-import com.netease.audioroom.demo.widget.HeadImageView;
+import com.netease.audioroom.demo.model.QueueMember;
+import com.netease.audioroom.demo.widget.RippleImageView;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 public class QueueAdapter extends BaseAdapter<QueueInfo> {
 
+    private Map<String, RecyclerView.ViewHolder> multiTypeViewHolders;
 
     public QueueAdapter(ArrayList<QueueInfo> queueInfoList, Context context) {
         super(queueInfoList, context);
@@ -31,6 +33,7 @@ public class QueueAdapter extends BaseAdapter<QueueInfo> {
 
     @Override
     protected void onBindBaseViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+
         QueueInfo queueInfo = getItem(position);
         if (queueInfo == null) {
             return;
@@ -41,14 +44,13 @@ public class QueueAdapter extends BaseAdapter<QueueInfo> {
 
         switch (status) {
             case QueueInfo.STATUS_INIT:
-                viewHolder.ivAvatar.setImageResource(R.color.color_292929);
+                viewHolder.ivAvatar.getImg_bg().setImageResource(R.color.color_292929);
                 viewHolder.ivStatusHint.setVisibility(View.GONE);
                 viewHolder.iv_user_status.setVisibility(View.VISIBLE);
                 viewHolder.iv_user_status.setImageResource(R.drawable.queue_add_member);
-                viewHolder.tvNick.setText("麦位" + (queueInfo.getIndex() + 1));
                 break;
             case QueueInfo.STATUS_LOAD:
-                viewHolder.ivAvatar.setImageResource(R.color.color_292929);
+                viewHolder.ivAvatar.getImg_bg().setImageResource(R.color.color_292929);
                 viewHolder.iv_user_status.setVisibility(View.VISIBLE);
                 viewHolder.iv_user_status.setImageResource(R.drawable.threepoints);
                 if (queueInfo.getReason() != QueueInfo.Reason.applyInMute) {
@@ -58,54 +60,61 @@ public class QueueAdapter extends BaseAdapter<QueueInfo> {
                     viewHolder.ivStatusHint.setImageResource(R.drawable.audio_be_muted_status);
                 }
                 break;
+
             case QueueInfo.STATUS_NORMAL:
                 viewHolder.iv_user_status.setVisibility(View.GONE);
                 viewHolder.ivStatusHint.setVisibility(View.GONE);
                 break;
+
             case QueueInfo.STATUS_CLOSE:
                 viewHolder.iv_user_status.setVisibility(View.VISIBLE);
                 viewHolder.ivStatusHint.setVisibility(View.GONE);
                 viewHolder.iv_user_status.setImageResource(R.drawable.close);
                 break;
+
             case QueueInfo.STATUS_FORBID:
                 viewHolder.iv_user_status.setVisibility(View.VISIBLE);
                 viewHolder.ivStatusHint.setVisibility(View.GONE);
                 viewHolder.iv_user_status.setImageResource(R.drawable.queue_close);
                 break;
+
             case QueueInfo.STATUS_BE_MUTED_AUDIO:
                 viewHolder.iv_user_status.setVisibility(View.GONE);
                 viewHolder.iv_user_status.setVisibility(View.GONE);
                 viewHolder.ivStatusHint.setVisibility(View.VISIBLE);
                 viewHolder.ivStatusHint.setImageResource(R.drawable.audio_be_muted_status);
                 break;
+
             case QueueInfo.STATUS_CLOSE_SELF_AUDIO:
+            case QueueInfo.STATUS_CLOSE_SELF_AUDIO_AND_MUTED:
                 viewHolder.iv_user_status.setVisibility(View.GONE);
                 viewHolder.ivStatusHint.setVisibility(View.VISIBLE);
                 viewHolder.ivStatusHint.setImageResource(R.drawable.close_audio_status);
                 break;
+
         }
+
         if (queueMember != null && status == QueueInfo.STATUS_LOAD) {//请求麦位
             viewHolder.tvNick.setText(queueMember.getNick());
         } else if (QueueInfo.hasOccupancy(queueInfo)) {//麦上有人
             viewHolder.ivAvatar.loadAvatar(queueMember.getAvatar());
             viewHolder.tvNick.setVisibility(View.VISIBLE);
             viewHolder.tvNick.setText(queueMember.getNick());
-        } else {
-            //麦上没人
-            if (status != QueueInfo.STATUS_CLOSE) {
-                viewHolder.iv_user_status.setVisibility(View.VISIBLE);
-                viewHolder.iv_user_status.setImageResource(R.drawable.queue_add_member);
+            if (status != QueueInfo.STATUS_CLOSE_SELF_AUDIO) {
+                viewHolder.ivAvatar.startWaveAnimation();
+            } else {
+                viewHolder.ivAvatar.stopWaveAnimation();
             }
-            viewHolder.ivAvatar.setImageResource(R.color.color_292929);
+        } else {
+            viewHolder.ivAvatar.stopWaveAnimation();
             viewHolder.tvNick.setText("麦位" + (queueInfo.getIndex() + 1));
         }
 
     }
 
-
-    private class QueueViewHolder extends RecyclerView.ViewHolder {
+    public class QueueViewHolder extends RecyclerView.ViewHolder {
         ImageView ivDefault;
-        HeadImageView ivAvatar;
+        RippleImageView ivAvatar;
         ImageView ivStatusHint;
         ImageView iv_user_status;
         TextView tvNick;
@@ -117,6 +126,33 @@ public class QueueAdapter extends BaseAdapter<QueueInfo> {
             ivStatusHint = itemView.findViewById(R.id.iv_user_status_hint);
             tvNick = itemView.findViewById(R.id.tv_user_nick);
             iv_user_status = itemView.findViewById(R.id.iv_user_status);
+        }
+
+        public void updateStatus(boolean isOpen) {
+            if (isOpen) {
+                ivAvatar.startWaveAnimation();
+            } else {
+                ivAvatar.stopWaveAnimation();
+            }
+
+        }
+    }
+
+
+    private RecyclerView.ViewHolder getViewHolder(String viewHolderKey) {
+        return multiTypeViewHolders.get(viewHolderKey);
+
+
+    }
+
+    protected String getItemKey(QueueInfo item) {
+        return item.getKey();
+    }
+
+    public void updateVolume(QueueInfo queueInfo, boolean isOpen) {
+        RecyclerView.ViewHolder holder = getViewHolder(getItemKey(queueInfo));
+        if (holder instanceof QueueViewHolder) {
+            ((QueueViewHolder) holder).updateStatus(isOpen);
         }
     }
 

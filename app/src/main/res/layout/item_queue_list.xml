@@ -1,33 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
+    android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:paddingTop="10dp"
-    android:paddingBottom="10dp">
-
+    android:padding="10dp">
 
     <ImageView
         android:id="@+id/iv_default_stats"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
-        android:layout_centerHorizontal="true"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
         android:background="@drawable/queue_item_round_bg"
         android:scaleType="center"
         tools:src="@drawable/queue_add_member" />
 
 
-    <com.netease.audioroom.demo.widget.HeadImageView
+    <com.netease.audioroom.demo.widget.RippleImageView
         android:id="@+id/iv_user_avatar"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
-        android:layout_centerHorizontal="true"
-        android:src="@color/color_292929" />
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:src="@color/color_292929"
+        app:imageViewHeigth="60dp"
+        app:imageViewWidth="60dp"
+        app:show_spacing_time="700" />
 
     <ImageView
         android:id="@+id/iv_user_status"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
         android:layout_centerHorizontal="true"
         android:contentDescription="是否为关闭状态"
         android:padding="@dimen/dimen_10" />
@@ -48,6 +48,7 @@
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="67dp"
+        android:gravity="center"
         android:textColor="@color/color_ffffff"
         android:textSize="12sp"
         tools:text="麦位1" />

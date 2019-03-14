@@ -21,7 +21,6 @@ import com.netease.audioroom.demo.base.LoginManager;
 import com.netease.audioroom.demo.base.action.INetworkReconnection;
 import com.netease.audioroom.demo.cache.DemoCache;
 import com.netease.audioroom.demo.cache.RoomMemberCache;
-import com.netease.audioroom.demo.custom.CloseRoomAttach;
 import com.netease.audioroom.demo.custom.P2PNotificationHelper;
 import com.netease.audioroom.demo.dialog.BottomMenuDialog;
 import com.netease.audioroom.demo.dialog.RequestLinkDialog;
@@ -43,13 +42,10 @@ import com.netease.audioroom.demo.util.ToastHelper;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.ErrorCallback;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.LoadingCallback;
 import com.netease.nimlib.sdk.RequestCallback;
-import com.netease.nimlib.sdk.RequestCallbackWrapper;
 import com.netease.nimlib.sdk.avchat.AVChatCallback;
 import com.netease.nimlib.sdk.avchat.AVChatManager;
 import com.netease.nimlib.sdk.avchat.model.AVChatChannelInfo;
-import com.netease.nimlib.sdk.chatroom.ChatRoomMessageBuilder;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMember;
-import com.netease.nimlib.sdk.chatroom.model.ChatRoomMessage;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomQueueChangeAttachment;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomRoomMemberInAttachment;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomTempMuteAddAttachment;
@@ -75,7 +71,6 @@ import static com.netease.audioroom.demo.dialog.BottomMenuDialog.BOTTOMMENUS;
 public class AudioLiveActivity extends BaseAudioActivity implements LoginManager.IAudioLive, View.OnClickListener {
     boolean isMicrophone;
     BottomMenuDialog bottomMenuDialog;
-
 
     public static void start(Context context, DemoRoomInfo demoRoomInfo) {
         Intent intent = new Intent(context, AudioLiveActivity.class);
@@ -103,7 +98,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
     private ImageView ivPauseOrPlay;
     private ImageView ivNext;
     private RequestLinkDialog requestLinkDialog;
-    protected AudioMixingInfo mixingInfo = new AudioMixingInfo();
+    protected AudioMixingInfo mixingInfo;
 
     @Override
     protected int getContentViewID() {
@@ -114,7 +109,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         enterChatRoom(roomInfo.getRoomId());
-        enableAudienceRole(false);
         createRoom(roomInfo.getRoomId());
         checkFile();
     }
@@ -190,11 +184,27 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
             ChatRoomMember chatRoomMember = data.getParcelableExtra(MemberActivity.MEMBERACTIVITY);
             QueueMember queueMember = new QueueMember(chatRoomMember.getAccount(), chatRoomMember.getNick(), chatRoomMember.getAvatar());
             invitedLink(new QueueInfo(inviteIndex, queueMember, QueueInfo.STATUS_NORMAL, QueueInfo.Reason.inviteByHost));
+            //TODO 去重啊！！！！！！！！！！！！！！！！！！！！！！！
+//            boolean inQueue = false;//判断当前用户是不是在麦上
+//            for (int i = 0; i < queueAdapter.getItemCount(); i++) {
+//                if (queueAdapter.getItem(i) != null) {
+//                    if (queueMember.getAccount().equals(queueAdapter.getItem(i).getQueueMember().toString())) {
+//                        inQueue = true;
+//                        break;
+//                    }
+//                }
+//
+//            }
+//            if (!inQueue){
+//
+//            }
+
         }
     }
 
     @Override
     protected void setupBaseView() {
+        mixingInfo = new AudioMixingInfo();
         topTipsDialog = new TopTipsDialog();
         semicircleView = findViewById(R.id.semicircleView);
         tvMusicPlayHint = findViewById(R.id.tv_music_play_hint);
@@ -225,7 +235,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
         //当前麦位有人了
         switch (queueInfo.getStatus()) {
             case QueueInfo.STATUS_INIT:
-                ToastHelper.showToast("麦位初始化状态");
                 mune.add("将成员抱上麦位");
                 mune.add("屏蔽麦位");
                 mune.add("关闭麦位");
@@ -253,7 +262,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                 ToastHelper.showToast("正在申请");
                 break;
             case QueueInfo.STATUS_NORMAL:
-                ToastHelper.showToast("麦位上有人，且能正常发言");
                 mune.add("将TA踢下麦位");
                 mune.add("屏蔽麦位");
                 mune.add("取消");
@@ -274,7 +282,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                 });
                 break;
             case QueueInfo.STATUS_CLOSE:
-                ToastHelper.showToast("麦位关闭");
                 mune.add("打开麦位");
                 mune.add("取消");
                 bundle.putStringArrayList(BOTTOMMENUS, mune);
@@ -334,8 +341,8 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                 });
                 break;
             case QueueInfo.STATUS_CLOSE_SELF_AUDIO:
-                ToastHelper.showToast(" 麦位上有人，但是他关闭了自己的语音");
                 mune.add("将TA踢下麦位");
+                mune.add("屏蔽麦位");
                 mune.add("取消");
                 bundle.putStringArrayList(BOTTOMMENUS, mune);
                 bottomMenuDialog.setArguments(bundle);
@@ -344,12 +351,35 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                         case "将TA踢下麦位":
                             bottomButtonAction(bottomMenuDialog, queueInfo, "将TA踢下麦位");
                             break;
+                        case "屏蔽麦位":
+                            bottomButtonAction(bottomMenuDialog, queueInfo, "屏蔽麦位");
                         case "取消":
                             bottomButtonAction(bottomMenuDialog, queueInfo, "取消");
                             break;
                     }
                 });
                 break;
+            case QueueInfo.STATUS_CLOSE_SELF_AUDIO_AND_MUTED:
+                mune.add("将TA踢下麦位");
+                mune.add("解除语音屏蔽");
+                mune.add("取消");
+                bundle.putStringArrayList(BOTTOMMENUS, mune);
+                bottomMenuDialog.setArguments(bundle);
+                bottomMenuDialog.setItemClickListener((d, p) -> {
+                    switch (d.get(p)) {
+                        case "将TA踢下麦位":
+                            bottomButtonAction(bottomMenuDialog, queueInfo, "将TA踢下麦位");
+                            break;
+                        case "解除语音屏蔽":
+                            bottomButtonAction(bottomMenuDialog, queueInfo, "解除语音屏蔽");
+                            break;
+                        case "取消":
+                            bottomButtonAction(bottomMenuDialog, queueInfo, "取消");
+                            break;
+                    }
+                });
+                break;
+
         }
         bottomMenuDialog.show(getSupportFragmentManager(), bottomMenuDialog.TAG);
     }
@@ -480,8 +510,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
 
     @Override
     protected void enterRoomSuccess(EnterChatRoomResultData resultData) {
-        // 主播进房间先清除一下原来的队列元素
-        chatRoomService.dropQueue(roomInfo.getRoomId());
         AccountInfo accountInfo = DemoCache.getAccountInfo();
         ivLiverAvatar.loadAvatar(accountInfo.avatar);
         ivLiverAvatar.startWaveAnimation();
@@ -534,6 +562,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
             }
         });
     }
+
 
     @Override
     public void rejectLink(QueueInfo queueInfo) {
@@ -668,7 +697,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                                 }
                                 boolean mutex = ivSelfAudioSwitch.isSelected();
                                 ivSelfAudioSwitch.setSelected(!mutex);
-                                muteSelfAudio(!mutex);
+                                muteSelfAudio();
                                 isMicrophone = !isMicrophone;
                                 ivSelfAudioSwitch.setEnabled(true);
 
@@ -905,11 +934,21 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
     @Override
     public void openAudio(QueueInfo queueInfo) {
         //麦上没人
-        if (queueInfo.getStatus() == QueueInfo.STATUS_CLOSE || queueInfo.getStatus() == QueueInfo.STATUS_FORBID) {
-            queueInfo.setStatus(QueueInfo.STATUS_INIT);
-        } else if (queueInfo.getStatus() == QueueInfo.STATUS_BE_MUTED_AUDIO) {
-            queueInfo.setStatus(QueueInfo.STATUS_NORMAL);
-            queueInfo.setReason(QueueInfo.Reason.cancelMuted);
+        switch (queueInfo.getStatus()) {
+            case QueueInfo.STATUS_CLOSE:
+            case QueueInfo.STATUS_FORBID:
+                queueInfo.setStatus(QueueInfo.STATUS_INIT);
+                break;
+            case QueueInfo.STATUS_BE_MUTED_AUDIO:
+                queueInfo.setStatus(QueueInfo.STATUS_NORMAL);
+                queueInfo.setReason(QueueInfo.Reason.cancelMuted);
+                break;
+            case QueueInfo.STATUS_CLOSE_SELF_AUDIO_AND_MUTED:
+                queueInfo.setStatus(QueueInfo.STATUS_CLOSE_SELF_AUDIO);
+                break;
+            case QueueInfo.STATUS_CLOSE_SELF_AUDIO:
+                queueInfo.setStatus(QueueInfo.STATUS_CLOSE_SELF_AUDIO_AND_MUTED);
+                break;
         }
         chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(),
                 queueInfo.toString()).setCallback(new RequestCallback<Void>() {
@@ -939,7 +978,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                 queueInfo.toString()).setCallback(new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
-                ToastHelper.showToast("");
+                ToastHelper.showToast("\"麦位" + queueInfo.getIndex() + "\"已关闭");
             }
 
             @Override
@@ -957,15 +996,25 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
     //屏蔽某个麦位的语音
     @Override
     public void mutedAudio(QueueInfo queueInfo) {
-        if (QueueInfo.hasOccupancy(queueInfo)) {
-            queueInfo.setStatus(QueueInfo.STATUS_BE_MUTED_AUDIO);
-        } else {
-            queueInfo.setStatus(QueueInfo.STATUS_FORBID);
+        switch (queueInfo.getStatus()) {
+            case QueueInfo.STATUS_CLOSE_SELF_AUDIO:
+                queueInfo.setStatus(QueueInfo.STATUS_CLOSE_SELF_AUDIO_AND_MUTED);
+                break;
+            case QueueInfo.STATUS_CLOSE_SELF_AUDIO_AND_MUTED:
+                queueInfo.setStatus(QueueInfo.STATUS_CLOSE_SELF_AUDIO);
+                break;
+            default:
+                if (QueueInfo.hasOccupancy(queueInfo)) {
+                    queueInfo.setStatus(QueueInfo.STATUS_BE_MUTED_AUDIO);
+                } else {
+                    queueInfo.setStatus(QueueInfo.STATUS_FORBID);
+                }
+                break;
         }
+
         chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString()).setCallback(new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
-
             }
 
             @Override
@@ -1064,7 +1113,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
     }
 
 
-    //初始化聊天室扩展字段
+    //初始化聊天室扩展字段（原来主播可以重新进入直播间，为了保留状态用的，现在主播出去了回不来就用不到了，先留着）
     private void initRoomInfo() {
         ChatRoomUpdateInfo chatRoomUpdateInfo = new ChatRoomUpdateInfo();
         Map<String, Object> param = new HashMap<>();
@@ -1074,7 +1123,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
         chatRoomService.updateRoomInfo(roomInfo.getRoomId(), chatRoomUpdateInfo, true, null).setCallback(new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
-                ToastHelper.showToast("初始化成功");
+                //目前设计是主播，房间1v1
                 isMicrophone = true;
             }
 

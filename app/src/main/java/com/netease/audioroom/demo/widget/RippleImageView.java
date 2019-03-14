@@ -15,18 +15,11 @@ import android.widget.RelativeLayout;
 
 import com.netease.audioroom.demo.R;
 
-/**
- * Description :
- * Author : liujun
- * Email  : liujin2son@163.com
- * Date   : $(DATE)
- */
 public class RippleImageView extends RelativeLayout {
-
     private static final int SHOW_SPACING_TIME = 700;
     private static final int MSG_WAVE2_ANIMATION = 1;
     private static final int MSG_WAVE3_ANIMATION = 2;
-    private static final int IMAMGEVIEW_SIZE = 40;
+    private static final int IMAMGEVIEW_SIZE = 60;
     /**
      * 三张波纹图片
      */
@@ -106,8 +99,7 @@ public class RippleImageView extends RelativeLayout {
      * 开始动态布局
      */
     private void setLayout(Context context) {
-        LayoutParams params = new LayoutParams(Math.round(imageViewWidth), Math.round(imageViewHeigth));
-//        LayoutParams params = new LayoutParams(dip2px(context, imageViewWidth) / 3, dip2px(context, imageViewWidth) / 3);
+        LayoutParams params = new LayoutParams(dip2px(context, imageViewWidth) / 3, dip2px(context, imageViewHeigth) / 3);
         //添加一个规则
         params.addRule(RelativeLayout.CENTER_IN_PARENT, RelativeLayout.TRUE);
         /**添加水波纹图片*/
@@ -118,6 +110,8 @@ public class RippleImageView extends RelativeLayout {
         }
         /**添加背景图片*/
         img_bg = new HeadImageView(getContext());
+        params = new LayoutParams(Math.round(imageViewWidth), Math.round(imageViewHeigth));
+        params.addRule(RelativeLayout.CENTER_IN_PARENT, RelativeLayout.TRUE);
         addView(img_bg, params);
     }
 
@@ -128,8 +122,8 @@ public class RippleImageView extends RelativeLayout {
      */
     private AnimationSet initAnimationSet() {
         AnimationSet as = new AnimationSet(true);
-        //缩放度：变大3倍
-        ScaleAnimation sa = new ScaleAnimation(1f, 1.5f, 1f, 1.5f,
+        //缩放度
+        ScaleAnimation sa = new ScaleAnimation(1f, 1.2f, 1f, 1.2f,
                 ScaleAnimation.RELATIVE_TO_SELF, 0.5f,
                 ScaleAnimation.RELATIVE_TO_SELF, 0.5f);
         sa.setDuration(show_spacing_time * SIZE);
@@ -154,6 +148,7 @@ public class RippleImageView extends RelativeLayout {
      * 开始水波纹动画
      */
     public void startWaveAnimation() {
+        imgs[0].setVisibility(VISIBLE);
         imgs[0].startAnimation(mAnimationSet[0]);
         mHandler.sendEmptyMessageDelayed(MSG_WAVE2_ANIMATION, show_spacing_time);
         mHandler.sendEmptyMessageDelayed(MSG_WAVE3_ANIMATION, show_spacing_time * SIZE);
@@ -164,6 +159,7 @@ public class RippleImageView extends RelativeLayout {
      */
     public void stopWaveAnimation() {
         for (int i = 0; i < imgs.length; i++) {
+            imgs[i].setVisibility(INVISIBLE);
             imgs[i].clearAnimation();
         }
     }
@@ -184,5 +180,9 @@ public class RippleImageView extends RelativeLayout {
 
     public void loadAvatar(final String url) {
         img_bg.loadAvatar(url, IMAMGEVIEW_SIZE);
+    }
+
+    public HeadImageView getImg_bg() {
+        return img_bg;
     }
 }

@@ -59,6 +59,7 @@ public class ChatRoomHttpClient {
     private static final String RESULT_KEY_NICK = "nickname";
     private static final String RESULT_KEY_TOKEN = "imToken";
     private static final String RESULT_KEY_AVATAR = "icon";
+    private static final String RESULT_KEY_AVAILABLEAT = "availableAt";
 
     // request
     private static final String REQUEST_LIMIT = "limit";
@@ -151,7 +152,6 @@ public class ChatRoomHttpClient {
      * 获取帐号
      */
     public void fetchAccount(String accountId, final ChatRoomHttpCallback<AccountInfo> fetchAccountCallBack) {
-
         String url = getServer() + API_GET_USER;
         String body = null;
 
@@ -182,7 +182,8 @@ public class ChatRoomHttpClient {
                         String nick = data.optString(RESULT_KEY_NICK);
                         String token = data.optString(RESULT_KEY_TOKEN);
                         String avatar = data.optString(RESULT_KEY_AVATAR);
-                        AccountInfo accountInfo = new AccountInfo(account, nick, token, avatar);
+                        int availableAt = data.optInt(RESULT_KEY_AVAILABLEAT);
+                        AccountInfo accountInfo = new AccountInfo(account, nick, token, avatar, availableAt);
                         fetchAccountCallBack.onSuccess(accountInfo);
                         return;
                     }
@@ -320,7 +321,7 @@ public class ChatRoomHttpClient {
         String bodyString = REQUEST_SID + "=" + account + "&" +
                 RESULT_KEY_ROOM_ID + "=" + roomID + "&" +
                 REQUEST_IS_MUTE + "=" + mute + "&" +
-                "needNotify" + "=" + needNotify +"&"+
+                "needNotify" + "=" + needNotify + "&" +
                 "notifyExt" + "=" + notifyExt;
         NimHttpClient.getInstance().execute(url, headers, bodyString, new NimHttpClient.NimHttpCallback() {
             @Override

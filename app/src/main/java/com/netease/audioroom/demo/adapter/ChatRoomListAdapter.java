@@ -9,12 +9,11 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.netease.audioroom.demo.R;
-import com.netease.audioroom.demo.base.BaseAdapter;
+import com.netease.audioroom.demo.base.adapter.BaseAdapter;
 import com.netease.audioroom.demo.model.DemoRoomInfo;
 import com.netease.audioroom.demo.util.CommonUtil;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class ChatRoomListAdapter extends BaseAdapter<DemoRoomInfo> {
     ArrayList<DemoRoomInfo> dataList;

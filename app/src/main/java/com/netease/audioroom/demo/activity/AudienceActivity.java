@@ -37,6 +37,7 @@ import com.netease.audioroom.demo.util.ToastHelper;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.ErrorCallback;
 import com.netease.nimlib.sdk.NIMClient;
 import com.netease.nimlib.sdk.RequestCallback;
+import com.netease.nimlib.sdk.avchat.AVChatManager;
 import com.netease.nimlib.sdk.chatroom.ChatRoomService;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomInfo;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMember;
@@ -63,7 +64,6 @@ import static com.netease.audioroom.demo.dialog.BottomMenuDialog.BOTTOMMENUS;
 public class AudienceActivity extends BaseAudioActivity implements IAudience, View.OnClickListener {
     String creator;
     TopTipsDialog topTipsDialog;
-
 
     public static void start(Context context, DemoRoomInfo model) {
         Intent intent = new Intent(context, AudienceActivity.class);
@@ -105,7 +105,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             }
         });
         enterChatRoom(roomInfo.getRoomId());
-        enableAudienceRole(true);
+
         joinChannel();
     }
 
@@ -152,6 +152,8 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                         // 错误
                     }
                 });
+
+
     }
 
     @Override
@@ -236,6 +238,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     protected void setupBaseView() {
         ivMuteOtherText.setVisibility(View.GONE);
         hasMicrophone(false);
+        ivSelfAudioSwitch.setSelected(AVChatManager.getInstance().isLocalAudioMuted());
         ivSelfAudioSwitch.setOnClickListener(this);
         ivCancelLink.setOnClickListener(this);
         ivRoomAudioSwitch.setOnClickListener(this);
@@ -404,6 +407,13 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             case QueueInfo.STATUS_CLOSE:
                 removed(queueInfo);
                 break;
+            case QueueInfo.STATUS_CLOSE_SELF_AUDIO:
+                selfQueue = queueInfo;
+                break;
+            case QueueInfo.STATUS_CLOSE_SELF_AUDIO_AND_MUTED:
+                selfQueue = queueInfo;
+                break;
+
         }
 
     }
@@ -444,8 +454,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             }
 
         });
-
-
     }
 
     @Override
@@ -467,9 +475,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             case QueueInfo.Reason.agreeApply:
                 //主动申请上麦
                 TopTipsDialog topTipsDialog = new TopTipsDialog();
-                if (topTipsDialog != null && topTipsDialog.isVisible()) {
-                    topTipsDialog.dismiss();
-                }
                 TopTipsDialog.Style style = topTipsDialog.new Style("申请通过!",
                         R.color.color_0888ff,
                         R.drawable.right,
@@ -490,14 +495,12 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 break;
         }
         hasMicrophone(true);
-        enableAudienceRole(false);
         selfQueue = queueInfo;
     }
 
 
     @Override
     public void removed(QueueInfo queueInfo) {
-
         switch (queueInfo.getReason()) {
             case QueueInfo.Reason.kickByHost:
                 TipsDialog tipsDialog = new TipsDialog();
@@ -507,11 +510,9 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 tipsDialog.show(getSupportFragmentManager(), tipsDialog.TAG);
                 tipsDialog.setClickListener(() -> tipsDialog.dismiss());
                 hasMicrophone(false);
-                enableAudienceRole(true);
                 selfQueue = null;
                 break;
         }
-
     }
 
     @Override
@@ -534,7 +535,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                     break;
                 case "取消":
                     bottomButtonAction(bottomMenuDialog, null, "取消");
-
                     break;
             }
         });
@@ -555,8 +555,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         tipsDialog.show(getSupportFragmentManager(), tipsDialog.TAG);
         tipsDialog.setClickListener(() -> tipsDialog.dismiss());
         selfQueue = queueInfo;
-        enableAudienceRole(true);
-
     }
 
     @OnMPermissionGranted(LIVE_PERMISSION_REQUEST_CODE)
@@ -593,9 +591,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     public void onClick(View view) {
         //事件点击
         if (view == ivSelfAudioSwitch) {
-            boolean mutex = ivSelfAudioSwitch.isSelected();
-            ivSelfAudioSwitch.setSelected(!mutex);
-            muteSelfAudio(!mutex);
+            muteSelfAudio();
         } else if (view == ivCancelLink) {
             cancelLink();
         } else if (view == ivRoomAudioSwitch) {
@@ -605,6 +601,43 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         } else if (view == ivExistRoom) {
             exitRoom();
         }
+
+    }
+
+    @Override
+    protected void muteSelfAudio() {
+        super.muteSelfAudio();
+        switch (selfQueue.getStatus()) {
+            case QueueInfo.STATUS_CLOSE_SELF_AUDIO:
+                selfQueue.setStatus(QueueInfo.STATUS_NORMAL);
+                break;
+            case QueueInfo.STATUS_CLOSE_SELF_AUDIO_AND_MUTED:
+                selfQueue.setStatus(QueueInfo.STATUS_BE_MUTED_AUDIO);
+                break;
+            case QueueInfo.STATUS_BE_MUTED_AUDIO:
+                selfQueue.setStatus(QueueInfo.STATUS_CLOSE_SELF_AUDIO_AND_MUTED);
+                break;
+            default:
+                selfQueue.setStatus(QueueInfo.STATUS_CLOSE_SELF_AUDIO);
+                break;
+        }
+        chatRoomService.updateQueue(roomInfo.getRoomId(), selfQueue.getKey(), selfQueue.toString()).setCallback(new RequestCallback<Void>() {
+            @Override
+            public void onSuccess(Void param) {
+                ivSelfAudioSwitch.setSelected(AVChatManager.getInstance().isLocalAudioMuted());
+            }
+
+            @Override
+            public void onFailed(int code) {
+
+            }
+
+            @Override
+            public void onException(Throwable exception) {
+
+            }
+        });
+
 
     }
 
@@ -621,7 +654,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             tipsDialog.setClickListener(() -> {
                 tipsDialog.dismiss();
                 release();
-
             });
         }
     }

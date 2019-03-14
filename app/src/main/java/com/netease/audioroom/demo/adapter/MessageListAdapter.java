@@ -8,7 +8,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.netease.audioroom.demo.R;
-import com.netease.audioroom.demo.base.BaseAdapter;
+import com.netease.audioroom.demo.base.adapter.BaseAdapter;
 import com.netease.audioroom.demo.model.SimpleMessage;
 
 import java.util.ArrayList;

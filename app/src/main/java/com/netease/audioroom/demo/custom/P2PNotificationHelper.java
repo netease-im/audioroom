@@ -33,7 +33,6 @@ public class P2PNotificationHelper {
      */
     public static final int CANCEL_REQUEST_LINK = 3;
 
-
     /**
      * 请求连麦
      */

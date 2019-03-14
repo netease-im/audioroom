@@ -3,15 +3,15 @@ package com.netease.audioroom.demo.widget;
 
 import android.content.Context;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.AppCompatImageView;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.ImageView;
 
 import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.dialog.CreateRoomNameDialog;
 
-public class CreateRoomView extends AppCompatImageView implements View.OnTouchListener {
+public class CreateRoomView extends ImageView implements View.OnTouchListener {
 
     public CreateRoomView(Context context) {
         super(context);

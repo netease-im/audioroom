@@ -1,7 +1,5 @@
 package com.netease.audioroom.demo.dialog;
 
-import android.app.DialogFragment;
-import android.app.FragmentManager;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -19,7 +17,7 @@ import android.view.WindowManager;
 import android.widget.TextView;
 
 import com.netease.audioroom.demo.R;
-import com.netease.audioroom.demo.base.BaseAdapter;
+import com.netease.audioroom.demo.base.adapter.BaseAdapter;
 import com.netease.audioroom.demo.widget.VerticalItemDecoration;
 
 import java.util.ArrayList;

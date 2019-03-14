@@ -15,7 +15,7 @@
         android:layout_marginTop="10dp"
         app:imageViewHeigth="50dp"
         app:imageViewWidth="50dp"
-        app:show_spacing_time="800" />
+        app:show_spacing_time="700" />
 
     <ImageView
         android:id="@+id/iv_liver_audio_close_hint"

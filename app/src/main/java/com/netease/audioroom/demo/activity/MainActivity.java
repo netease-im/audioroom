@@ -11,7 +11,7 @@ import android.widget.TextView;
 import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.adapter.ChatRoomListAdapter;
 import com.netease.audioroom.demo.base.BaseActivity;
-import com.netease.audioroom.demo.base.BaseAdapter;
+import com.netease.audioroom.demo.base.adapter.BaseAdapter;
 import com.netease.audioroom.demo.base.LoginManager;
 import com.netease.audioroom.demo.base.action.INetworkReconnection;
 import com.netease.audioroom.demo.cache.DemoCache;
@@ -63,7 +63,7 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
         mPullLoadMoreRecyclerView = findViewById(R.id.pullLoadMoreRecyclerView);
         //获取mRecyclerView对象
         mRecyclerView = mPullLoadMoreRecyclerView.getRecyclerView();
-        mRecyclerView.addItemDecoration(new VerticalItemDecoration(Color.TRANSPARENT, ScreenUtil.dip2px(this, 16)));
+        mRecyclerView.addItemDecoration(new VerticalItemDecoration(Color.TRANSPARENT, ScreenUtil.dip2px(this, 8)));
         mRecyclerView.setVerticalScrollBarEnabled(true);
         mPullLoadMoreRecyclerView.setRefreshing(true);
         mPullLoadMoreRecyclerView.setFooterViewText("加载中");

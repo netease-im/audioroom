@@ -21,7 +21,7 @@ public class QueueInfo implements Serializable, Parcelable {
     // 4:麦位上没人，但是被主播屏蔽 , 5:麦位上有人，但是语音被屏蔽 ,
     // 6:麦位上有人，但是他关闭了自己的语音;
     // 7:麦位在屏蔽状态中被申请
-    //8:麦位取消屏蔽状态
+    // 8:麦位取消屏蔽状态
 
     //reason(状态改变原因) 1: 主播同意上麦 ; 2:抱麦  ; 3:被踢 ;4:主动下麦 ; 5:主动取消申请; 6:被拒绝;7：麦位在屏蔽状态中被申请
 
@@ -64,9 +64,13 @@ public class QueueInfo implements Serializable, Parcelable {
      */
     public static final int STATUS_BE_MUTED_AUDIO = 5;
     /**
-     * 麦位上有人，但是他关闭了自己的语音（有人）
+     * 麦位上有人，但是他关闭了自己的语音（有人）(没有被屏蔽)
      */
     public static final int STATUS_CLOSE_SELF_AUDIO = 6;
+    /**
+     * 麦位上有人，但是他关闭了自己的语音且主播屏蔽了他
+     */
+    public static final int STATUS_CLOSE_SELF_AUDIO_AND_MUTED = 7;
 
 
     private static final String STATUS_KEY = "status";
@@ -220,6 +224,7 @@ public class QueueInfo implements Serializable, Parcelable {
     public static boolean hasOccupancy(QueueInfo queueInfo) {
         return queueInfo != null && (queueInfo.getStatus() == QueueInfo.STATUS_NORMAL
                 || queueInfo.getStatus() == QueueInfo.STATUS_BE_MUTED_AUDIO
-                || queueInfo.getStatus() == QueueInfo.STATUS_CLOSE_SELF_AUDIO);
+                || queueInfo.getStatus() == QueueInfo.STATUS_CLOSE_SELF_AUDIO
+                || queueInfo.getStatus() == QueueInfo.STATUS_CLOSE_SELF_AUDIO_AND_MUTED);
     }
 }

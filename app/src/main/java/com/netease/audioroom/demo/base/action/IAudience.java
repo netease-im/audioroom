@@ -64,4 +64,5 @@ public interface IAudience {
      * @param queueInfo
      */
     void beMutedAudio(QueueInfo queueInfo);
+
 }
