@@ -69,7 +69,7 @@ import static com.netease.audioroom.demo.dialog.BottomMenuDialog.BOTTOMMENUS;
  * 主播页
  */
 public class AudioLiveActivity extends BaseAudioActivity implements LoginManager.IAudioLive, View.OnClickListener {
-    boolean isMicrophone;
+    //    boolean isMicrophone;
     BottomMenuDialog bottomMenuDialog;
 
     public static void start(Context context, DemoRoomInfo demoRoomInfo) {
@@ -139,7 +139,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
     @Override
     protected void onResume() {
         super.onResume();
-        initRoomInfo();
+//        initRoomInfo();
         setNetworkReconnection(new INetworkReconnection() {
             @Override
             public void onNetworkReconnection() {
@@ -671,62 +671,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                 //禁言
                 MuteMemberListActivity.start(mContext, roomInfo);
                 break;
-            case R.id.iv_close_self_audio_switch:
-                ivSelfAudioSwitch.setEnabled(false);
-                ChatRoomUpdateInfo chatRoomUpdateInfo = new ChatRoomUpdateInfo();
-                Map<String, Object> param = new HashMap<>();
-                if (!isMicrophone) {
-                    param.put(ROOM_INFO_KEY_MICROPHONE, true);
 
-
-                } else {
-                    param.put(ROOM_INFO_KEY_MICROPHONE, false);
-
-                }
-                chatRoomUpdateInfo.setExtension(param);
-                chatRoomService.updateRoomInfo(roomInfo.getRoomId(), chatRoomUpdateInfo, true, param)
-                        .setCallback(new RequestCallback() {
-                            @Override
-                            public void onSuccess(Object o) {
-                                if (!isMicrophone) {
-                                    ivLiverAvatar.startWaveAnimation();
-                                    ToastHelper.showToast("话筒已开启");
-                                } else {
-                                    ivLiverAvatar.stopWaveAnimation();
-                                    ToastHelper.showToast("话筒已关闭");
-                                }
-                                boolean mutex = ivSelfAudioSwitch.isSelected();
-                                ivSelfAudioSwitch.setSelected(!mutex);
-                                muteSelfAudio();
-                                isMicrophone = !isMicrophone;
-                                ivSelfAudioSwitch.setEnabled(true);
-
-                            }
-
-                            @Override
-                            public void onFailed(int i) {
-                                if (!isMicrophone) {
-                                    ToastHelper.showToast("话筒开启失败，请重试");
-
-                                } else {
-                                    ToastHelper.showToast("话筒关闭失败，请重试");
-                                }
-                                ivSelfAudioSwitch.setEnabled(true);
-
-                            }
-
-                            @Override
-                            public void onException(Throwable throwable) {
-                                if (!isMicrophone) {
-                                    ToastHelper.showToast("话筒开启失败，请重试");
-
-                                } else {
-                                    ToastHelper.showToast("话筒关闭失败，请重试");
-                                }
-                                ivSelfAudioSwitch.setEnabled(true);
-                            }
-                        });
-                break;
             case R.id.iv_close_room_audio_switch:
                 boolean close = ivRoomAudioSwitch.isSelected();
                 ivRoomAudioSwitch.setSelected(!close);
@@ -1100,7 +1045,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
         }).start();
     }
 
-
     @Override
     public void onBackPressed() {
         exitRoom();
@@ -1111,34 +1055,5 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
     protected void onDestroy() {
         super.onDestroy();
     }
-
-
-    //初始化聊天室扩展字段（原来主播可以重新进入直播间，为了保留状态用的，现在主播出去了回不来就用不到了，先留着）
-    private void initRoomInfo() {
-        ChatRoomUpdateInfo chatRoomUpdateInfo = new ChatRoomUpdateInfo();
-        Map<String, Object> param = new HashMap<>();
-        param.put(ROOM_INFO_KEY_MICROPHONE, true);
-        param.put(ROOM_INFO_MUTE, false);
-        chatRoomUpdateInfo.setExtension(param);
-        chatRoomService.updateRoomInfo(roomInfo.getRoomId(), chatRoomUpdateInfo, true, null).setCallback(new RequestCallback<Void>() {
-            @Override
-            public void onSuccess(Void aVoid) {
-                //目前设计是主播，房间1v1
-                isMicrophone = true;
-            }
-
-            @Override
-            public void onFailed(int i) {
-                ToastHelper.showToast("初始化失败code" + i);
-            }
-
-            @Override
-            public void onException(Throwable throwable) {
-                ToastHelper.showToast("初始化失败" + throwable.getMessage());
-                Log.e(TAG, throwable.getMessage());
-            }
-        });
-    }
-
 
 }

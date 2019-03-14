@@ -113,7 +113,6 @@ public class QueueAdapter extends BaseAdapter<QueueInfo> {
     }
 
     public class QueueViewHolder extends RecyclerView.ViewHolder {
-        ImageView ivDefault;
         RippleImageView ivAvatar;
         ImageView ivStatusHint;
         ImageView iv_user_status;
@@ -121,11 +120,10 @@ public class QueueAdapter extends BaseAdapter<QueueInfo> {
 
         public QueueViewHolder(@NonNull View itemView) {
             super(itemView);
-            ivDefault = itemView.findViewById(R.id.iv_default_stats);
             ivAvatar = itemView.findViewById(R.id.iv_user_avatar);
             ivStatusHint = itemView.findViewById(R.id.iv_user_status_hint);
             tvNick = itemView.findViewById(R.id.tv_user_nick);
-            iv_user_status = itemView.findViewById(R.id.iv_user_status);
+            iv_user_status = itemView.findViewById(R.id.iv_user_stats);
         }
 
         public void updateStatus(boolean isOpen) {

@@ -115,46 +115,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         exitRoom();
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        //获取聊天室初始状态
-        NIMClient.getService(ChatRoomService.class).fetchRoomInfo(roomInfo.getRoomId())
-                .setCallback(new RequestCallback<ChatRoomInfo>() {
-                    @Override
-                    public void onSuccess(ChatRoomInfo param) {
-                        // 成功
-                        if (param.getExtension() != null) {
-                            for (Map.Entry<String, Object> entry : param.getExtension().entrySet()) {
-                                if (entry.getKey().equals(ROOM_INFO_KEY_MICROPHONE)) {
-                                    if ((Boolean) entry.getValue()) {
-                                        ivLiverAvatar.startWaveAnimation();
-                                    } else {
-                                        ivLiverAvatar.stopWaveAnimation();
-                                    }
-                                } else if (entry.getKey().equals(ROOM_INFO_MUTE)) {
-                                    if ((Boolean) entry.getValue()) {
-                                        mute();
-                                    }
-                                }
-
-                            }
-                        }
-                    }
-
-                    @Override
-                    public void onFailed(int code) {
-                        // 失败
-                    }
-
-                    @Override
-                    public void onException(Throwable exception) {
-                        // 错误
-                    }
-                });
-
-
-    }
 
     @Override
     protected void onResume() {
@@ -258,6 +218,8 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 break;
             case QueueInfo.STATUS_NORMAL:
             case QueueInfo.STATUS_BE_MUTED_AUDIO:
+            case QueueInfo.STATUS_CLOSE_SELF_AUDIO:
+            case QueueInfo.STATUS_CLOSE_SELF_AUDIO_AND_MUTED:
                 if (TextUtils.equals(model.getQueueMember().getAccount(), DemoCache.getAccountId())) {
                     //主动下麦
                     cancelLink();
@@ -274,6 +236,8 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 tipsDialog.show(getSupportFragmentManager(), tipsDialog.TAG);
                 tipsDialog.setClickListener(() -> tipsDialog.dismiss());
                 break;
+
+
         }
 
     }

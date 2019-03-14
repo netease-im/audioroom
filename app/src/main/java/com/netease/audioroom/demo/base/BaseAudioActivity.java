@@ -81,7 +81,7 @@ import java.util.Map;
 public abstract class BaseAudioActivity extends BaseActivity implements ViewTreeObserver.OnGlobalLayoutListener {
     public static final String ROOM_INFO_KEY = "room_info_key";
     public static final String TAG = "AudioRoom";
-    public static final String ROOM_INFO_KEY_MICROPHONE = "room_info_key_microphone";
+    //    public static final String ROOM_INFO_KEY_MICROPHONE = "room_info_key_microphone";
     protected int channelProfile = AVChatChannelProfile.CHANNEL_PROFILE_DEFAULT;
 
     private static final int KEY_BOARD_MIN_SIZE = ScreenUtil.dip2px(DemoCache.getContext(), 80);
@@ -214,37 +214,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
                                 logInfo.append("key = " + key + ", value= " + queuePartClear.getContentMap().get(key)).append(" ");
                             }
                             break;
-                        case ChatRoomInfoUpdated:
-                            NIMClient.getService(ChatRoomService.class).fetchRoomInfo(roomInfo.getRoomId())
-                                    .setCallback(new RequestCallback<ChatRoomInfo>() {
-                                        @Override
-                                        public void onSuccess(ChatRoomInfo param) {
-                                            // 成功
-                                            if (param.getExtension() != null) {
-                                                for (Map.Entry<String, Object> entry : param.getExtension().entrySet()) {
-                                                    if (entry.getKey().equals(ROOM_INFO_KEY_MICROPHONE)) {
-                                                        if ((Boolean) entry.getValue()) {
-                                                            ivLiverAvatar.startWaveAnimation();
-                                                        } else {
-                                                            ivLiverAvatar.stopWaveAnimation();
-                                                        }
-                                                        break;
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                        @Override
-                                        public void onFailed(int code) {
-                                            // 失败
-                                        }
-
-                                        @Override
-                                        public void onException(Throwable exception) {
-                                            // 错误
-                                        }
-                                    });
-
                     }
                 } else {
                     messageInComing(message);
@@ -568,13 +537,11 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
 
             @Override
             public void onFailed(int code) {
-//                ToastHelper.showToast("解散失败code：" + code);
                 finish();
             }
 
             @Override
             public void onException(Throwable exception) {
-//                ToastHelper.showToast("解散失败code：" + exception.getMessage());
                 finish();
             }
         });
@@ -717,8 +684,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
         parameters.setInteger(AVChatParameters.KEY_DEVICE_DEFAULT_ROTATION, 0);
 
         parameters.setBoolean(AVChatParameters.KEY_AUDIO_FRAME_FILTER, true);
-
-
         parameters.setString(AVChatParameters.KEY_AUDIO_EFFECT_AUTOMATIC_GAIN_CONTROL,
                 AVChatAudioEffectMode.PLATFORM_BUILTIN);
         parameters.setInteger(AVChatParameters.KEY_SESSION_MULTI_MODE_USER_ROLE, AVChatUserRole.NORMAL);
