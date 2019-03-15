@@ -52,10 +52,6 @@ public interface IAudience {
     void cancelLink();
 
 
-    /**
-     * 被主播禁言
-     */
-    void beMutedText();
 
 
     /**

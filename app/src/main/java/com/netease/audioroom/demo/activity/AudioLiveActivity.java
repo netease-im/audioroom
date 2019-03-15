@@ -44,13 +44,14 @@ import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.LoadingCallb
 import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.avchat.AVChatCallback;
 import com.netease.nimlib.sdk.avchat.AVChatManager;
+import com.netease.nimlib.sdk.avchat.constant.AVChatUserRole;
 import com.netease.nimlib.sdk.avchat.model.AVChatChannelInfo;
+import com.netease.nimlib.sdk.avchat.model.AVChatParameters;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMember;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomQueueChangeAttachment;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomRoomMemberInAttachment;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomTempMuteAddAttachment;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomTempMuteRemoveAttachment;
-import com.netease.nimlib.sdk.chatroom.model.ChatRoomUpdateInfo;
 import com.netease.nimlib.sdk.chatroom.model.EnterChatRoomResultData;
 import com.netease.nimlib.sdk.msg.constant.ChatRoomQueueChangeType;
 import com.netease.nimlib.sdk.msg.model.CustomNotification;
@@ -61,7 +62,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static com.netease.audioroom.demo.dialog.BottomMenuDialog.BOTTOMMENUS;
 
@@ -109,27 +109,30 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         enterChatRoom(roomInfo.getRoomId());
-        createRoom(roomInfo.getRoomId());
+        createAudioRoom(roomInfo.getRoomId());
         checkFile();
     }
 
-    private void createRoom(String roomId) {
+    private void createAudioRoom(String roomId) {
         AVChatManager.getInstance().createRoom(roomId, "", new AVChatCallback<AVChatChannelInfo>() {
             @Override
             public void onSuccess(AVChatChannelInfo avChatChannelInfo) {
-                ToastHelper.showToast("创建房间成功");
+                ToastHelper.showToast("创建音频房间成功");
+                Log.e(TAG, "创建音频房间成功 ， room id = " + roomId);
                 //加入房间
-                joinChannel();
+                joinAudioRoom();
             }
 
             @Override
             public void onFailed(int code) {
-                ToastHelper.showToast("创建房间失败" + code);
+                ToastHelper.showToast("创建音频房间失败， code = " + code);
+                Log.e(TAG, "创建音频房间失败， code = " + code + " , room id = " + roomId);
             }
 
             @Override
             public void onException(Throwable exception) {
-                ToastHelper.showToast("创建房间失败" + exception.getMessage());
+                ToastHelper.showToast("创建音频房间失败 , e = " + exception.getMessage());
+                Log.e(TAG, "创建音频房间失败 , e = " + exception.getMessage());
             }
         });
 
@@ -139,7 +142,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
     @Override
     protected void onResume() {
         super.onResume();
-//        initRoomInfo();
         setNetworkReconnection(new INetworkReconnection() {
             @Override
             public void onNetworkReconnection() {
@@ -1049,6 +1051,13 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
     public void onBackPressed() {
         exitRoom();
         super.onBackPressed();
+    }
+
+    @Override
+    protected AVChatParameters getRtcParameters() {
+        AVChatParameters parameters = new AVChatParameters();
+        parameters.setInteger(AVChatParameters.KEY_SESSION_MULTI_MODE_USER_ROLE, AVChatUserRole.NORMAL);
+        return parameters;
     }
 
     @Override

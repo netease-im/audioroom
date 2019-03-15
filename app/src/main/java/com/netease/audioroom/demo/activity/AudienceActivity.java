@@ -38,6 +38,8 @@ import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.ErrorCallbac
 import com.netease.nimlib.sdk.NIMClient;
 import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.avchat.AVChatManager;
+import com.netease.nimlib.sdk.avchat.constant.AVChatUserRole;
+import com.netease.nimlib.sdk.avchat.model.AVChatParameters;
 import com.netease.nimlib.sdk.chatroom.ChatRoomService;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomInfo;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMember;
@@ -53,7 +55,6 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import static com.netease.audioroom.demo.dialog.BottomMenuDialog.BOTTOMMENUS;
 
@@ -106,13 +107,21 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         });
         enterChatRoom(roomInfo.getRoomId());
 
-        joinChannel();
+        joinAudioRoom();
     }
 
     @Override
     public void onBackPressed() {
-        super.onBackPressed();
         exitRoom();
+        super.onBackPressed();
+
+    }
+
+    @Override
+    protected AVChatParameters getRtcParameters() {
+        AVChatParameters parameters = new AVChatParameters();
+        parameters.setInteger(AVChatParameters.KEY_SESSION_MULTI_MODE_USER_ROLE, AVChatUserRole.AUDIENCE);
+        return parameters;
     }
 
 
@@ -197,7 +206,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     @Override
     protected void setupBaseView() {
         ivMuteOtherText.setVisibility(View.GONE);
-        hasMicrophone(false);
+        updateAudioSwitchVisible(false);
         ivSelfAudioSwitch.setSelected(AVChatManager.getInstance().isLocalAudioMuted());
         ivSelfAudioSwitch.setOnClickListener(this);
         ivCancelLink.setOnClickListener(this);
@@ -272,7 +281,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     protected void initQueue(List<Entry<String, String>> entries) {
         super.initQueue(entries);
         if (selfQueue != null) {
-            hasMicrophone(true);
+            updateAudioSwitchVisible(true);
         }
     }
 
@@ -458,7 +467,8 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 tipsDialog2.setClickListener(() -> tipsDialog2.dismiss());
                 break;
         }
-        hasMicrophone(true);
+        updateAudioSwitchVisible(true);
+        updateRole(false);
         selfQueue = queueInfo;
     }
 
@@ -473,7 +483,8 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 tipsDialog.setArguments(bundle);
                 tipsDialog.show(getSupportFragmentManager(), tipsDialog.TAG);
                 tipsDialog.setClickListener(() -> tipsDialog.dismiss());
-                hasMicrophone(false);
+                updateAudioSwitchVisible(false);
+                updateRole(true);
                 selfQueue = null;
                 break;
         }
@@ -504,10 +515,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         });
     }
 
-    @Override
-    public void beMutedText() {
-
-    }
 
     @Override
     public void beMutedAudio(QueueInfo queueInfo) {
@@ -519,6 +526,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         tipsDialog.show(getSupportFragmentManager(), tipsDialog.TAG);
         tipsDialog.setClickListener(() -> tipsDialog.dismiss());
         selfQueue = queueInfo;
+        //todo 之后呢？不是要关闭自己的音频嘛？
     }
 
     @OnMPermissionGranted(LIVE_PERMISSION_REQUEST_CODE)
@@ -623,8 +631,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     }
 
     @Override
-    protected void mute() {
-        super.mute();
+    protected void beMutedText() {
         edtInput.setHint("您已被禁言");
         edtInput.setFocusable(false);
         edtInput.setFocusableInTouchMode(false);
@@ -656,7 +663,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                             @Override
                             public void onSuccess(Void aVoid) {
                                 ToastHelper.showToast("您已下麦");
-                                hasMicrophone(false);
+                                updateAudioSwitchVisible(false);
                                 selfQueue = null;
                             }
 
@@ -680,9 +687,9 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     }
 
 
-    //是否是上麦者
-    private void hasMicrophone(boolean hasMicrophone) {
-        if (hasMicrophone) {
+
+    private void updateAudioSwitchVisible(boolean visible) {
+        if (visible) {
             ivCancelLink.setVisibility(View.VISIBLE);
             ivSelfAudioSwitch.setVisibility(View.VISIBLE);
         } else {
@@ -691,5 +698,11 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         }
     }
 
+
+    private void updateRole(boolean isAudience) {
+        AVChatParameters parameters = new AVChatParameters();
+        parameters.setInteger(AVChatParameters.KEY_SESSION_MULTI_MODE_USER_ROLE, isAudience ? AVChatUserRole.AUDIENCE : AVChatUserRole.NORMAL);
+        AVChatManager.getInstance().setParameters(parameters);
+    }
 
 }
