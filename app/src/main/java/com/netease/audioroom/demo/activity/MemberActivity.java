@@ -16,6 +16,7 @@ import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.adapter.MemberListAdapter;
 import com.netease.audioroom.demo.base.BaseActivity;
 import com.netease.audioroom.demo.cache.RoomMemberCache;
+import com.netease.audioroom.demo.model.QueueMember;
 import com.netease.audioroom.demo.util.ScreenUtil;
 import com.netease.audioroom.demo.util.ToastHelper;
 import com.netease.audioroom.demo.widget.VerticalItemDecoration;
@@ -38,6 +39,7 @@ import java.util.Locale;
 public class MemberActivity extends BaseActivity {
     public static Integer REQUESTCODE = 0x1001;
     public static String MEMBERACTIVITY = "memberactivity";
+    public static String MEMBERACTIVITYREPEATLIST = "memberRepeatlist";
 
     RecyclerView recyclerView;
 
@@ -45,9 +47,20 @@ public class MemberActivity extends BaseActivity {
 
     MemberListAdapter adapter;
 
+    ArrayList<QueueMember> mQueueMembers;//去除重复项
+
+
     public static void start(Activity activity, String roomId) {
         Intent intent = new Intent(activity, MemberActivity.class);
         intent.putExtra(MEMBERACTIVITY, roomId);
+        activity.startActivityForResult(intent, REQUESTCODE);
+    }
+
+    //去除重复
+    public static void startRepeat(Activity activity, String roomId, ArrayList<QueueMember> queueMembers) {
+        Intent intent = new Intent(activity, MemberActivity.class);
+        intent.putExtra(MEMBERACTIVITY, roomId);
+        intent.putExtra(MEMBERACTIVITYREPEATLIST, queueMembers);
         activity.startActivityForResult(intent, REQUESTCODE);
     }
 
@@ -61,6 +74,7 @@ public class MemberActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         if (getIntent() != null) {
             roomId = getIntent().getStringExtra(MEMBERACTIVITY);
+            mQueueMembers = (ArrayList<QueueMember>) getIntent().getSerializableExtra(MEMBERACTIVITYREPEATLIST);
             if (!TextUtils.isEmpty(roomId)) {
                 getlist();
             } else {
@@ -102,25 +116,38 @@ public class MemberActivity extends BaseActivity {
                     });
                 } else {
                     loadService.showSuccess();
-                    Collections.sort(chatRoomMembers, new Comparator<ChatRoomMember>() {
-                        @Override
-                        public int compare(ChatRoomMember o1, ChatRoomMember o2) {
-                            Collator collator = Collator.getInstance(Locale.CHINA);
-                            return collator.compare(o1.getNick(), o2.getNick());
+                    ArrayList<QueueMember> queueMembers = new ArrayList<>();
+                    for (ChatRoomMember chatRoomMember : chatRoomMembers) {
+                        QueueMember queueMember = new QueueMember(chatRoomMember.getAccount(), chatRoomMember.getNick(), chatRoomMember.getAvatar());
+                        if (!mQueueMembers.contains(queueMember)) {
+                            queueMembers.add(queueMember);
                         }
-                    });
+                    }
+                    if (queueMembers.size() != 0) {
+                        adapter = new MemberListAdapter(queueMembers, mContext);
+                        recyclerView.setLayoutManager(new LinearLayoutManager(mContext));
+                        recyclerView.setAdapter(adapter);
+                        adapter.setItemClickListener((m, p) -> {
+                            //数据是使用Intent返回
+                            ChatRoomMember roomMember = chatRoomMembers.get(p);
+                            Intent intent = new Intent();
+                            intent.putExtra(MEMBERACTIVITY, (Parcelable) roomMember);
+                            setResult(RESULT_OK, intent);
+                            finish();
+                        });
+                    } else {
+                        loadService.showCallback(EmptyChatRoomListCallback.class);
+                        loadService.setCallBack(EmptyChatRoomListCallback.class, (context, view) -> {
+                            ((TextView) (view.findViewById(R.id.toolsbar).findViewById(R.id.title))).setText("选择成员");
+                            view.findViewById(R.id.toolsbar).findViewById(R.id.icon).setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    finish();
+                                }
+                            });
+                        });
+                    }
 
-                    adapter = new MemberListAdapter((ArrayList<ChatRoomMember>) chatRoomMembers, mContext);
-                    recyclerView.setLayoutManager(new LinearLayoutManager(mContext));
-                    recyclerView.setAdapter(adapter);
-                    adapter.setItemClickListener((m, p) -> {
-                        //数据是使用Intent返回
-                        ChatRoomMember roomMember = chatRoomMembers.get(p);
-                        Intent intent = new Intent();
-                        intent.putExtra(MEMBERACTIVITY, (Parcelable) roomMember);
-                        setResult(RESULT_OK, intent);
-                        finish();
-                    });
                 }
 
             }

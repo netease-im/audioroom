@@ -80,5 +80,20 @@ public class QueueMember implements Serializable {
         return toJson().toString();
     }
 
-    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        QueueMember queueMember = (QueueMember) o;
+        return account.equals(queueMember.account);
+
+    }
+
+    @Override
+    public int hashCode() {
+        return account.hashCode();
+    }
+
+
 }

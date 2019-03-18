@@ -42,6 +42,7 @@ import com.netease.nimlib.sdk.avchat.AVChatManager;
 import com.netease.nimlib.sdk.avchat.constant.AVChatUserRole;
 import com.netease.nimlib.sdk.avchat.model.AVChatChannelInfo;
 import com.netease.nimlib.sdk.avchat.model.AVChatParameters;
+import com.netease.nimlib.sdk.chatroom.model.ChatRoomInfo;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMember;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomQueueChangeAttachment;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomRoomMemberInAttachment;
@@ -1017,7 +1018,27 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                 break;
             case "将成员抱上麦位":
                 inviteIndex = queueInfo.getIndex();
-                MemberActivity.start(AudioLiveActivity.this, roomInfo.getRoomId());
+                chatRoomService.fetchQueue(roomInfo.getRoomId()).setCallback(new RequestCallback<List<Entry<String, String>>>() {
+                    @Override
+                    public void onSuccess(List<Entry<String, String>> param) {
+                        ArrayList<QueueMember> queueMembers = new ArrayList<>();
+                        for (QueueInfo q : getQueueList(param)) {
+                            queueMembers.add(q.getQueueMember());
+                        }
+                        MemberActivity.startRepeat(AudioLiveActivity.this, roomInfo.getRoomId(), queueMembers);
+                    }
+
+                    @Override
+                    public void onFailed(int code) {
+
+                    }
+
+                    @Override
+                    public void onException(Throwable exception) {
+
+                    }
+                });
+
                 break;
             case "将TA踢下麦位":
                 removeLink(queueInfo);

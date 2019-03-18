@@ -10,15 +10,16 @@ import android.widget.TextView;
 
 import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.base.adapter.BaseAdapter;
+import com.netease.audioroom.demo.model.QueueMember;
 import com.netease.audioroom.demo.util.CommonUtil;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMember;
 
 import java.util.ArrayList;
 
-public class MemberListAdapter extends BaseAdapter<ChatRoomMember> {
+public class MemberListAdapter extends BaseAdapter<QueueMember> {
 
 
-    public MemberListAdapter(ArrayList<ChatRoomMember> dataList, Context context) {
+    public MemberListAdapter(ArrayList<QueueMember> dataList, Context context) {
         super(dataList, context);
     }
 
@@ -30,7 +31,7 @@ public class MemberListAdapter extends BaseAdapter<ChatRoomMember> {
     @Override
     protected void onBindBaseViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         ChatRoomHolder roomHolder = (ChatRoomHolder) holder;
-        ChatRoomMember demoRoomInfo = getItem(position);
+        QueueMember demoRoomInfo = getItem(position);
         if (demoRoomInfo == null) {
             return;
         }
