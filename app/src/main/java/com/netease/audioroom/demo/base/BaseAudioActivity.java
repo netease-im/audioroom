@@ -648,15 +648,18 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
             @Override
             public void onSuccess(List<Entry<String, String>> param) {
                 for (QueueInfo queueInfo : getQueueList(param)) {
+                    //主播
+                    if (speakers.containsKey(creater)) {
+                        if (findVolumeStep(speakers.get(creater)) == 0) {
+                            circle.setVisibility(View.INVISIBLE);
+                        } else {
+                            circle.setVisibility(View.VISIBLE);
+                        }
+                    }
+                    //观众
                     if (queueInfo != null && queueInfo.getQueueMember() != null) {
                         if (speakers.containsKey(queueInfo.getQueueMember().getAccount())) {
                             updateStatus(findVolumeStep(speakers.get(queueInfo.getQueueMember().getAccount())), queueInfo.getIndex());
-                        } else if (speakers.containsKey(creater)) {
-                            if (findVolumeStep(speakers.get(creater)) == 0) {
-                                circle.setVisibility(View.INVISIBLE);
-                            } else {
-                                circle.setVisibility(View.VISIBLE);
-                            }
                         }
 
                     }
