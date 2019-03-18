@@ -5,24 +5,19 @@ import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.TextView;
 
 import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.base.adapter.BaseAdapter;
 import com.netease.audioroom.demo.model.QueueInfo;
 import com.netease.audioroom.demo.model.QueueMember;
-import com.netease.audioroom.demo.widget.RippleImageView;
 
 import java.util.ArrayList;
-import java.util.Map;
 
 public class QueueAdapter extends BaseAdapter<QueueInfo> {
 
-    private Map<String, RecyclerView.ViewHolder> multiTypeViewHolders;
-
     public QueueAdapter(ArrayList<QueueInfo> queueInfoList, Context context) {
         super(queueInfoList, context);
+
     }
 
 
@@ -33,7 +28,6 @@ public class QueueAdapter extends BaseAdapter<QueueInfo> {
 
     @Override
     protected void onBindBaseViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-
         QueueInfo queueInfo = getItem(position);
         if (queueInfo == null) {
             return;
@@ -44,13 +38,11 @@ public class QueueAdapter extends BaseAdapter<QueueInfo> {
 
         switch (status) {
             case QueueInfo.STATUS_INIT:
-                viewHolder.ivAvatar.getImg_bg().setImageResource(R.color.color_292929);
                 viewHolder.ivStatusHint.setVisibility(View.GONE);
                 viewHolder.iv_user_status.setVisibility(View.VISIBLE);
                 viewHolder.iv_user_status.setImageResource(R.drawable.queue_add_member);
                 break;
             case QueueInfo.STATUS_LOAD:
-                viewHolder.ivAvatar.getImg_bg().setImageResource(R.color.color_292929);
                 viewHolder.iv_user_status.setVisibility(View.VISIBLE);
                 viewHolder.iv_user_status.setImageResource(R.drawable.threepoints);
                 if (queueInfo.getReason() != QueueInfo.Reason.applyInMute) {
@@ -100,58 +92,11 @@ public class QueueAdapter extends BaseAdapter<QueueInfo> {
             viewHolder.ivAvatar.loadAvatar(queueMember.getAvatar());
             viewHolder.tvNick.setVisibility(View.VISIBLE);
             viewHolder.tvNick.setText(queueMember.getNick());
-            if (status != QueueInfo.STATUS_CLOSE_SELF_AUDIO) {
-                viewHolder.ivAvatar.startWaveAnimation();
-            } else {
-                viewHolder.ivAvatar.stopWaveAnimation();
-            }
         } else {
-            viewHolder.ivAvatar.stopWaveAnimation();
             viewHolder.tvNick.setText("麦位" + (queueInfo.getIndex() + 1));
         }
 
     }
 
-    public class QueueViewHolder extends RecyclerView.ViewHolder {
-        RippleImageView ivAvatar;
-        ImageView ivStatusHint;
-        ImageView iv_user_status;
-        TextView tvNick;
-
-        public QueueViewHolder(@NonNull View itemView) {
-            super(itemView);
-            ivAvatar = itemView.findViewById(R.id.iv_user_avatar);
-            ivStatusHint = itemView.findViewById(R.id.iv_user_status_hint);
-            tvNick = itemView.findViewById(R.id.tv_user_nick);
-            iv_user_status = itemView.findViewById(R.id.iv_user_stats);
-        }
-
-        public void updateStatus(boolean isOpen) {
-            if (isOpen) {
-                ivAvatar.startWaveAnimation();
-            } else {
-                ivAvatar.stopWaveAnimation();
-            }
-
-        }
-    }
-
-
-    private RecyclerView.ViewHolder getViewHolder(String viewHolderKey) {
-        return multiTypeViewHolders.get(viewHolderKey);
-
-
-    }
-
-    protected String getItemKey(QueueInfo item) {
-        return item.getKey();
-    }
-
-    public void updateVolume(QueueInfo queueInfo, boolean isOpen) {
-        RecyclerView.ViewHolder holder = getViewHolder(getItemKey(queueInfo));
-        if (holder instanceof QueueViewHolder) {
-            ((QueueViewHolder) holder).updateStatus(isOpen);
-        }
-    }
 
 }

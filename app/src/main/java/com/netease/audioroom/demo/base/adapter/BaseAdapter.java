@@ -33,7 +33,6 @@ public abstract class BaseAdapter<T> extends RecyclerView.Adapter {
     private View.OnClickListener clickListenerInner = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-
             onClickInner(view);
         }
     };
@@ -79,8 +78,8 @@ public abstract class BaseAdapter<T> extends RecyclerView.Adapter {
     @NonNull
     @Override
     public final RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-
         RecyclerView.ViewHolder viewHolder = onCreateBaseViewHolder(parent, viewType);
+
         viewHolder.itemView.setOnClickListener(clickListenerInner);
         viewHolder.itemView.setOnLongClickListener(longClickListenerInner);
         return viewHolder;
@@ -200,6 +199,10 @@ public abstract class BaseAdapter<T> extends RecyclerView.Adapter {
 
     public View getHeaderView() {
         return mHeaderView;
+    }
+
+    public ArrayList<T> getDataList() {
+        return dataList;
     }
 
 }

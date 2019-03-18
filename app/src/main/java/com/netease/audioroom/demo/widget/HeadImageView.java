@@ -38,7 +38,7 @@ public class HeadImageView extends CircleImageView {
         doLoadImage(url, DEFAULT_AVATAR_RES_ID, DEFAULT_AVATAR_THUMB_SIZE);
     }
 
-    public void loadAvatar(final String url,int size) {
+    public void loadAvatar(final String url, int size) {
         doLoadImage(url, DEFAULT_AVATAR_RES_ID, size);
     }
 

@@ -26,11 +26,7 @@ import com.netease.audioroom.demo.model.AccountInfo;
 import com.netease.audioroom.demo.model.DemoRoomInfo;
 import com.netease.audioroom.demo.model.QueueInfo;
 import com.netease.audioroom.demo.model.QueueMember;
-import com.netease.audioroom.demo.permission.MPermission;
-import com.netease.audioroom.demo.permission.MPermissionUtil;
-import com.netease.audioroom.demo.permission.annotation.OnMPermissionDenied;
-import com.netease.audioroom.demo.permission.annotation.OnMPermissionGranted;
-import com.netease.audioroom.demo.permission.annotation.OnMPermissionNeverAskAgain;
+import com.netease.audioroom.demo.model.SimpleMessage;
 import com.netease.audioroom.demo.util.CommonUtil;
 import com.netease.audioroom.demo.util.JsonUtil;
 import com.netease.audioroom.demo.util.ToastHelper;
@@ -40,6 +36,7 @@ import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.avchat.AVChatManager;
 import com.netease.nimlib.sdk.avchat.constant.AVChatUserRole;
 import com.netease.nimlib.sdk.avchat.model.AVChatParameters;
+import com.netease.nimlib.sdk.chatroom.ChatRoomMessageBuilder;
 import com.netease.nimlib.sdk.chatroom.ChatRoomService;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomInfo;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMember;
@@ -66,6 +63,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     String creator;
     TopTipsDialog topTipsDialog;
 
+
     public static void start(Context context, DemoRoomInfo model) {
         Intent intent = new Intent(context, AudienceActivity.class);
         intent.putExtra(BaseAudioActivity.ROOM_INFO_KEY, model);
@@ -90,11 +88,13 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             public void onSuccess(ChatRoomInfo param) {
                 // 成功
                 creator = param.getCreator();
+                if (param.isMute()) {
+                    beMutedText();
+                }
             }
 
             @Override
             public void onFailed(int code) {
-                // 失败
                 creator = "获取当前聊天室信息失败";
                 ToastHelper.showToast("获取当前聊天室信息失败code" + code);
             }
@@ -106,7 +106,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             }
         });
         enterChatRoom(roomInfo.getRoomId());
-
         joinAudioRoom();
     }
 
@@ -202,7 +201,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 });
     }
 
-
     @Override
     protected void setupBaseView() {
         ivMuteOtherText.setVisibility(View.GONE);
@@ -292,6 +290,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     public void requestLink(QueueInfo model) {
         if (selfQueue != null) {
             ToastHelper.showToast("您已在麦上");
+
             return;
         }
         P2PNotificationHelper.requestLink(model, DemoCache.getAccountInfo(), roomInfo.getCreator(), new RequestCallback<Void>() {
@@ -441,7 +440,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                                 "现在可以进行语音互动啦\n" +
                                 "如需下麦，可点击自己的头像或下麦按钮");
                 tipsDialog.setArguments(bundle);
-
                 tipsDialog.show(getSupportFragmentManager(), tipsDialog.TAG);
                 tipsDialog.setClickListener(() -> tipsDialog.dismiss());
                 break;
@@ -465,11 +463,18 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 tipsDialog2.setArguments(bundle);
                 tipsDialog2.show(getSupportFragmentManager(), tipsDialog2.TAG);
                 tipsDialog2.setClickListener(() -> tipsDialog2.dismiss());
+                AVChatManager.getInstance().muteLocalAudio(false);
                 break;
         }
         updateAudioSwitchVisible(true);
         updateRole(false);
         selfQueue = queueInfo;
+        String cancelTips = DemoCache.getAccountInfo().nick + "进入了麦位" + selfQueue.getIndex();
+        selfQueue = null;
+        ChatRoomMessage chatRoomMessage = ChatRoomMessageBuilder.createChatRoomTextMessage(roomInfo.getRoomId(), cancelTips);
+        chatRoomService.sendMessage(chatRoomMessage, false);
+        msgAdapter.appendItem(new SimpleMessage(DemoCache.getAccountInfo().nick, cancelTips, SimpleMessage.TYPE_NORMAL_MESSAGE));
+
     }
 
 
@@ -526,38 +531,9 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         tipsDialog.show(getSupportFragmentManager(), tipsDialog.TAG);
         tipsDialog.setClickListener(() -> tipsDialog.dismiss());
         selfQueue = queueInfo;
-        //todo 之后呢？不是要关闭自己的音频嘛？
+        AVChatManager.getInstance().muteLocalAudio(true);
     }
 
-    @OnMPermissionGranted(LIVE_PERMISSION_REQUEST_CODE)
-    protected void onLivePermissionGranted() {
-        isPermissionGrant = true;
-        ToastHelper.showToast("授权成功");
-
-    }
-
-    @OnMPermissionDenied(LIVE_PERMISSION_REQUEST_CODE)
-    protected void onLivePermissionDenied() {
-        List<String> deniedPermissions = MPermission.getDeniedPermissions(this, LIVE_PERMISSIONS);
-        String tip = "您拒绝了权限" + MPermissionUtil.toString(deniedPermissions) + "，无法开启直播";
-        ToastHelper.showToast(tip);
-    }
-
-
-    @OnMPermissionNeverAskAgain(LIVE_PERMISSION_REQUEST_CODE)
-    protected void onLivePermissionDeniedAsNeverAskAgain() {
-        List<String> deniedPermissions = MPermission.getDeniedPermissionsWithoutNeverAskAgain(this, LIVE_PERMISSIONS);
-        List<String> neverAskAgainPermission = MPermission.getNeverAskAgainPermissions(this, LIVE_PERMISSIONS);
-        StringBuilder builder = new StringBuilder();
-        builder.append("无法开启直播，请到系统设置页面开启权限");
-        builder.append(MPermissionUtil.toString(neverAskAgainPermission));
-        if (deniedPermissions != null && !deniedPermissions.isEmpty()) {
-            builder.append(",下次询问请授予权限");
-            builder.append(MPermissionUtil.toString(deniedPermissions));
-        }
-
-        ToastHelper.showToastLong(builder.toString());
-    }
 
     @Override
     public void onClick(View view) {
@@ -596,7 +572,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         chatRoomService.updateQueue(roomInfo.getRoomId(), selfQueue.getKey(), selfQueue.toString()).setCallback(new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void param) {
-                ivSelfAudioSwitch.setSelected(AVChatManager.getInstance().isLocalAudioMuted());
+                ivSelfAudioSwitch.setSelected(!AVChatManager.getInstance().isMicrophoneMute());
             }
 
             @Override
@@ -664,7 +640,12 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                             public void onSuccess(Void aVoid) {
                                 ToastHelper.showToast("您已下麦");
                                 updateAudioSwitchVisible(false);
+                                updateRole(true);
+                                String cancelTips = DemoCache.getAccountInfo().nick + "退出了麦位" + selfQueue.getIndex();
                                 selfQueue = null;
+                                ChatRoomMessage chatRoomMessage = ChatRoomMessageBuilder.createChatRoomTextMessage(roomInfo.getRoomId(), cancelTips);
+                                chatRoomService.sendMessage(chatRoomMessage, false);
+                                msgAdapter.appendItem(new SimpleMessage(DemoCache.getAccountInfo().nick, cancelTips, SimpleMessage.TYPE_NORMAL_MESSAGE));
                             }
 
                             @Override
@@ -685,7 +666,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             dialog.dismiss();
         }
     }
-
 
 
     private void updateAudioSwitchVisible(boolean visible) {

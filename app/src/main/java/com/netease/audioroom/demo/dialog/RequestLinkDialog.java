@@ -1,5 +1,7 @@
 package com.netease.audioroom.demo.dialog;
 
+import android.content.Context;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
@@ -8,6 +10,7 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.TextView;
@@ -86,6 +89,32 @@ public class RequestLinkDialog extends BaseDialogFragment {
                 (new VerticalItemDecoration(getResources().getColor(R.color.color_000000), 1));
         title = view.findViewById(R.id.title);
         dissmiss = view.findViewById(R.id.dissmiss);
+
+        requesterRecyclerView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                //设置recyclerView高度
+                ViewGroup.LayoutParams layoutParams = requesterRecyclerView.getLayoutParams();
+                if (Build.VERSION.SDK_INT >= 16) {
+                    requesterRecyclerView.getViewTreeObserver()
+                            .removeOnGlobalLayoutListener(this);
+                } else {
+                    requesterRecyclerView.getViewTreeObserver()
+                            .removeGlobalOnLayoutListener(this);
+                }
+
+                WindowManager wm = (WindowManager) getActivity().getSystemService(Context.WINDOW_SERVICE);
+                int height = wm.getDefaultDisplay().getWidth() / 5;
+                if (requesterRecyclerView.getHeight() < height && requesterRecyclerView.getHeight() > wm.getDefaultDisplay().getWidth() / 5) {
+                    layoutParams.height = requesterRecyclerView.getHeight();
+                } else {
+                    layoutParams.height = height;
+                }
+                requesterRecyclerView.setLayoutParams(layoutParams);
+
+            }
+        });
+
         buidHeadView();
     }
 
@@ -116,6 +145,7 @@ public class RequestLinkDialog extends BaseDialogFragment {
             }
         });
     }
+
 
     public void setRequestAction(IRequestAction requestAction) {
         this.requestAction = requestAction;

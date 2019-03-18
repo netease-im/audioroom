@@ -19,9 +19,11 @@ import com.netease.audioroom.demo.model.DemoRoomInfo;
 import com.netease.audioroom.demo.util.ToastHelper;
 import com.netease.audioroom.demo.widget.VerticalItemDecoration;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.ErrorCallback;
+import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.LoadingCallback;
 import com.netease.nimlib.sdk.NIMClient;
 import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.chatroom.ChatRoomService;
+import com.netease.nimlib.sdk.chatroom.model.ChatRoomInfo;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMember;
 import com.netease.nimlib.sdk.chatroom.model.MemberOption;
 
@@ -78,6 +80,35 @@ public class MuteMemberListActivity extends BaseActivity {
         recyclerView.addOnScrollListener(onScrollListener);
         icon = findViewById(R.id.toolsbar).findViewById(R.id.icon);
         title = findViewById(R.id.toolsbar).findViewById(R.id.title);
+        NIMClient.getService(ChatRoomService.class).fetchRoomInfo(roomInfo.getRoomId()).setCallback(new RequestCallback<ChatRoomInfo>() {
+            @Override
+            public void onSuccess(ChatRoomInfo param) {
+                loadService.showSuccess();
+                if (param.isMute()) {
+                    isAllMute = true;
+                    muteAllMember.setText("取消全部禁言");
+                } else {
+                    isAllMute = false;
+                    muteAllMember.setText("全部禁言");
+                }
+
+
+            }
+
+            @Override
+            public void onFailed(int code) {
+                loadService.showSuccess();
+                ToastHelper.showToast("禁言失败code" + code);
+            }
+
+            @Override
+            public void onException(Throwable exception) {
+                loadService.showSuccess();
+                ToastHelper.showToast("禁言失败exception" + exception.getMessage());
+
+            }
+        });
+        initListener();
 
     }
 
@@ -163,6 +194,18 @@ public class MuteMemberListActivity extends BaseActivity {
                 loadService.showCallback(ErrorCallback.class);
             }
         });
+    }
+
+    private void initListener() {
+        icon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
+
+
+        muteAllMember.setOnClickListener((v) -> muteAllMember(isAllMute));
     }
 
     RecyclerView.OnScrollListener onScrollListener = new RecyclerView.OnScrollListener() {

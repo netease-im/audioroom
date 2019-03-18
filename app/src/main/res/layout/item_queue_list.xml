@@ -7,8 +7,15 @@
     android:layout_gravity="center"
     android:padding="10dp">
 
+    <ImageView
+        android:id="@+id/circle"
+        android:layout_width="55dp"
+        android:layout_height="55dp"
+        android:layout_centerInParent="true"
+        android:background="@mipmap/point_empty"
+        android:visibility="invisible" />
 
-    <com.netease.audioroom.demo.widget.RippleImageView
+    <com.netease.audioroom.demo.widget.HeadImageView
         android:id="@+id/iv_user_avatar"
         android:layout_width="60dp"
         android:layout_height="60dp"
@@ -34,10 +41,10 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/iv_user_avatar"
         android:layout_centerHorizontal="true"
+        android:layout_marginTop="@dimen/dimen_10"
         android:ellipsize="end"
         android:gravity="center"
         android:maxLines="1"
-        android:layout_marginTop="@dimen/dimen_10"
         android:textColor="@color/color_ffffff"
         android:textSize="10sp"
         tools:text="麦位1" />

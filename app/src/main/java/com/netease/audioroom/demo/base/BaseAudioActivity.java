@@ -31,7 +31,7 @@ import com.netease.audioroom.demo.util.CommonUtil;
 import com.netease.audioroom.demo.util.Network;
 import com.netease.audioroom.demo.util.ScreenUtil;
 import com.netease.audioroom.demo.util.ToastHelper;
-import com.netease.audioroom.demo.widget.RippleImageView;
+import com.netease.audioroom.demo.widget.HeadImageView;
 import com.netease.audioroom.demo.widget.VerticalItemDecoration;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.ErrorCallback;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.NetErrCallback;
@@ -48,6 +48,7 @@ import com.netease.nimlib.sdk.avchat.model.AVChatParameters;
 import com.netease.nimlib.sdk.chatroom.ChatRoomMessageBuilder;
 import com.netease.nimlib.sdk.chatroom.ChatRoomService;
 import com.netease.nimlib.sdk.chatroom.ChatRoomServiceObserver;
+import com.netease.nimlib.sdk.chatroom.model.ChatRoomInfo;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomKickOutEvent;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMessage;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomNotificationAttachment;
@@ -82,10 +83,11 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
     private static final int KEY_BOARD_MIN_SIZE = ScreenUtil.dip2px(DemoCache.getContext(), 80);
 
     //主播基础信息
-    protected RippleImageView ivLiverAvatar;
+    protected HeadImageView ivLiverAvatar;
     protected ImageView ivLiverAudioCloseHint;
     protected TextView tvLiverNick;
     protected TextView tvRoomName;
+    private ImageView circle;
 
     // 各种控制开关
     protected ImageView ivMuteOtherText;
@@ -93,7 +95,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
     protected ImageView ivRoomAudioSwitch;
     protected ImageView ivCancelLink;
     protected ImageView ivExistRoom;
-
     protected EditText edtInput;
     protected TextView sendButton;
 
@@ -115,14 +116,16 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
 
     // 聊天室服务
     protected ChatRoomService chatRoomService;
-    private AVChatStateObserver stateObserver;
+
 
     //音视频接口
     protected long audioUid;
 
     private int rootViewVisibleHeight;
     private View rootView;
-    ArrayList<QueueInfo> queueInfoList;
+
+    protected String creater;
+
 
     private BaseAdapter.ItemClickListener<QueueInfo> itemClickListener = new BaseAdapter.ItemClickListener<QueueInfo>() {
         @Override
@@ -144,6 +147,16 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
             receiveNotification(customNotification);
         }
     };
+
+    //声音检测
+    private AVChatStateObserver stateObserver = new SimpleAVChatStateObserver() {
+        @Override
+        public void onReportSpeaker(Map<String, Integer> speakers, int mixedEnergy) {
+            super.onReportSpeaker(speakers, mixedEnergy);
+            onAudioVolume(speakers);
+        }
+    };
+
     //聊天室消息观察者
     private Observer<List<ChatRoomMessage>> messageObserver = new Observer<List<ChatRoomMessage>>() {
         @Override
@@ -219,6 +232,7 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
             }
         }
     };
+
     //被踢出通知
     Observer<ChatRoomKickOutEvent> kickOutObserver = new Observer<ChatRoomKickOutEvent>() {
         @Override
@@ -235,7 +249,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
         }
     };
 
-
     @Override
     protected void initViews() {
         findBaseView();
@@ -245,11 +258,30 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
             finish();
         }
         chatRoomService = NIMClient.getService(ChatRoomService.class);
+        chatRoomService.fetchRoomInfo(roomInfo.getRoomId()).setCallback(new RequestCallback<ChatRoomInfo>() {
+            @Override
+            public void onSuccess(ChatRoomInfo param) {
+                creater = param.getCreator();
+
+            }
+
+            @Override
+            public void onFailed(int code) {
+
+            }
+
+            @Override
+            public void onException(Throwable exception) {
+
+            }
+        });
         audioUid = System.nanoTime();
         setupBaseViewInner();
         setupBaseView();
         rootView = getWindow().getDecorView();
         rootView.getViewTreeObserver().addOnGlobalLayoutListener(BaseAudioActivity.this);
+        requestLivePermission();
+
     }
 
     @Override
@@ -308,9 +340,7 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
         if (rootView != null) {
             rootView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
         }
-        if (stateObserver != null) {
-            AVChatManager.getInstance().observeAVChatState(stateObserver, false);
-        }
+        registerObserver(false);
         super.onDestroy();
     }
 
@@ -331,7 +361,7 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
         ivRoomAudioSwitch = baseAudioView.findViewById(R.id.iv_close_room_audio_switch);
         ivCancelLink = baseAudioView.findViewById(R.id.iv_cancel_link);
         ivExistRoom = baseAudioView.findViewById(R.id.iv_exist_room);
-
+        circle = baseAudioView.findViewById(R.id.circle);
 
         rcyQueueRecyclerView = baseAudioView.findViewById(R.id.rcy_queue_list);
         rcyChatMsgList = baseAudioView.findViewById(R.id.rcy_chat_message_list);
@@ -363,7 +393,7 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
     }
 
     protected void initQueue(List<Entry<String, String>> entries) {
-        queueInfoList = new ArrayList<>();
+        ArrayList<QueueInfo> queueInfoList = new ArrayList<>();
         for (int i = 0; i < QUEUE_SIZE; i++) {
             QueueInfo queue = new QueueInfo();
             queue.setIndex(i);
@@ -408,7 +438,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
         if (message.getMsgType() != MsgTypeEnum.text) {
             return;
         }
-
         msgAdapter.appendItem(new SimpleMessage(message.getChatRoomMessageExtension().getSenderNick(),
                 message.getContent(),
                 SimpleMessage.TYPE_NORMAL_MESSAGE));
@@ -473,6 +502,7 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
         NIMClient.getService(MsgServiceObserve.class).observeCustomNotification(customNotification, register);
         NIMClient.getService(ChatRoomServiceObserver.class).observeReceiveMessage(messageObserver, register);
         NIMClient.getService(ChatRoomServiceObserver.class).observeKickOutEvent(kickOutObserver, register);
+        AVChatManager.getInstance().observeAVChatState(stateObserver, register);
     }
 
 
@@ -480,7 +510,7 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
      * 关闭自己的语音
      */
     protected void muteSelfAudio() {
-        AVChatManager.getInstance().muteLocalAudio(!AVChatManager.getInstance().isLocalAudioMuted());
+        AVChatManager.getInstance().setMicrophoneMute(!AVChatManager.getInstance().isMicrophoneMute());
     }
 
     /**
@@ -583,6 +613,7 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
         AVChatManager.getInstance().enableRtc();
         AVChatManager.getInstance().setChannelProfile(AVChatChannelProfile.CHANNEL_PROFILE_HIGH_QUALITY_MUSIC);
         AVChatManager.getInstance().setParameters(getRtcParameters());
+        AVChatManager.getInstance().setParameter(AVChatParameters.KEY_AUDIO_REPORT_SPEAKER, true);
         AVChatManager.getInstance().joinRoom2(roomInfo.getRoomId(), AVChatType.AUDIO, new AVChatCallback<AVChatData>() {
             @Override
             public void onSuccess(AVChatData avChatData) {
@@ -600,21 +631,7 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
             }
         });
 
-        // state observer
-        if (stateObserver != null) {
-            AVChatManager.getInstance().observeAVChatState(stateObserver, false);
-        }
-        stateObserver = new SimpleAVChatStateObserver() {
 
-            @Override
-            public void onReportSpeaker(Map<String, Integer> speakers, int mixedEnergy) {
-                if (queueInfoList != null) {
-                    onAudioVolume(speakers);
-                }
-
-            }
-        };
-        AVChatManager.getInstance().observeAVChatState(stateObserver, true);
     }
 
     private void updateRoonInfo() {
@@ -627,16 +644,83 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
     protected abstract AVChatParameters getRtcParameters();
 
     private void onAudioVolume(Map<String, Integer> speakers) {
-        for (QueueInfo item : queueInfoList) {
-            if (speakers.containsKey(item.getKey())) {
-                if (speakers.get(item.getQueueMember().getAccount()) == 0) {
-                    queueAdapter.updateVolume(item, false);
-                } else {
-                    queueAdapter.updateVolume(item, true);
+        chatRoomService.fetchQueue(roomInfo.getRoomId()).setCallback(new RequestCallback<List<Entry<String, String>>>() {
+            @Override
+            public void onSuccess(List<Entry<String, String>> param) {
+                for (QueueInfo queueInfo : getQueueList(param)) {
+                    if (queueInfo != null && queueInfo.getQueueMember() != null) {
+                        if (speakers.containsKey(queueInfo.getQueueMember().getAccount())) {
+                            updateStatus(findVolumeStep(speakers.get(queueInfo.getQueueMember().getAccount())), queueInfo.getIndex());
+                        } else if (speakers.containsKey(creater)) {
+                            if (findVolumeStep(speakers.get(creater)) == 0) {
+                                circle.setVisibility(View.INVISIBLE);
+                            } else {
+                                circle.setVisibility(View.VISIBLE);
+                            }
+                        }
+
+                    }
                 }
 
             }
+
+            @Override
+            public void onFailed(int code) {
+
+            }
+
+            @Override
+            public void onException(Throwable exception) {
+
+            }
+        });
+
+    }
+
+    protected ArrayList<QueueInfo> getQueueList(List<Entry<String, String>> entries) {
+        ArrayList<QueueInfo> queueInfoList = new ArrayList<>();
+        for (int i = 0; i < QUEUE_SIZE; i++) {
+            QueueInfo queue = new QueueInfo();
+            queue.setIndex(i);
+            queueInfoList.add(queue);
         }
+        if (entries == null) {
+            return queueInfoList;
+        }
+        for (Entry<String, String> entry : entries) {
+            if (TextUtils.isEmpty(entry.key) || !entry.key.startsWith(QueueInfo.QUEUE_KEY_PREFIX)) {
+                continue;
+            }
+            if (TextUtils.isEmpty(entry.value)) {
+                continue;
+            }
+            QueueInfo queueInfo = new QueueInfo(entry.value);
+            queueInfoList.set(queueInfo.getIndex(), queueInfo);
+        }
+        return queueInfoList;
+    }
+
+    private void updateStatus(int volume, int itemIndex) {
+        ImageView circle = rcyQueueRecyclerView.getLayoutManager().findViewByPosition(itemIndex).findViewById(R.id.circle);
+        if (volume == 0) {
+            circle.setVisibility(View.INVISIBLE);
+        } else {
+            circle.setVisibility(View.VISIBLE);
+        }
+
+    }
+
+    private int findVolumeStep(int volume) {
+        int volumeStep = 0;
+        volume /= 40;
+        while (volume > 0) {
+            volumeStep++;
+            volume /= 2;
+        }
+        if (volumeStep > 8) {
+            volumeStep = 8;
+        }
+        return volumeStep;
     }
 
 

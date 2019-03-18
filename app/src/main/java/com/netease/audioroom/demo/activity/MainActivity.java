@@ -158,7 +158,7 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
         if (Network.getInstance().isConnected())
             fetchChatRoomList();
         else
-            loadService.showCallback(NetErrCallback.class);
+            netErrCallback();
     }
 
 
@@ -167,7 +167,7 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
         if (Network.getInstance().isConnected())
             fetchChatRoomList();
         else
-            loadService.showCallback(NetErrCallback.class);
+            netErrCallback();
     }
 
     @Override

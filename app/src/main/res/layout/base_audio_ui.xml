@@ -7,15 +7,28 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <com.netease.audioroom.demo.widget.RippleImageView
+    <ImageView
+        android:id="@+id/circle"
+        android:layout_width="55dp"
+        android:layout_height="55dp"
+        android:layout_marginLeft="7dp"
+        android:layout_marginTop="7dp"
+        android:background="@mipmap/point_empty"
+        android:visibility="invisible" />
+
+    <com.netease.audioroom.demo.widget.HeadImageView
         android:id="@+id/iv_liver_avatar"
-        android:layout_width="70dp"
-        android:layout_height="70dp"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_alignStart="@+id/circle"
+        android:layout_alignTop="@+id/circle"
+        android:layout_alignEnd="@+id/circle"
+        android:layout_alignBottom="@+id/circle"
+        android:layout_marginStart="3dp"
         android:layout_marginLeft="10dp"
-        android:layout_marginTop="10dp"
-        app:imageViewHeigth="50dp"
-        app:imageViewWidth="50dp"
-        app:show_spacing_time="700" />
+        android:layout_marginTop="3dp"
+        android:layout_marginEnd="3dp"
+        android:layout_marginBottom="3dp" />
 
     <ImageView
         android:id="@+id/iv_liver_audio_close_hint"

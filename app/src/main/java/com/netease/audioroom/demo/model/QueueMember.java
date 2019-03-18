@@ -80,5 +80,5 @@ public class QueueMember implements Serializable {
         return toJson().toString();
     }
 
-
+    
 }

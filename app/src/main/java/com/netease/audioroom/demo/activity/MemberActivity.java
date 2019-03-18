@@ -37,7 +37,6 @@ import java.util.Locale;
 
 public class MemberActivity extends BaseActivity {
     public static Integer REQUESTCODE = 0x1001;
-
     public static String MEMBERACTIVITY = "memberactivity";
 
     RecyclerView recyclerView;
@@ -92,6 +91,15 @@ public class MemberActivity extends BaseActivity {
             public void onSuccess(List<ChatRoomMember> chatRoomMembers) {
                 if (chatRoomMembers.size() == 0) {
                     loadService.showCallback(EmptyChatRoomListCallback.class);
+                    loadService.setCallBack(EmptyChatRoomListCallback.class, (context, view) -> {
+                        ((TextView) (view.findViewById(R.id.toolsbar).findViewById(R.id.title))).setText("选择成员");
+                        view.findViewById(R.id.toolsbar).findViewById(R.id.icon).setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                finish();
+                            }
+                        });
+                    });
                 } else {
                     loadService.showSuccess();
                     Collections.sort(chatRoomMembers, new Comparator<ChatRoomMember>() {
