@@ -59,7 +59,6 @@ public class RequestLinkDialog extends BaseDialogFragment {
         } else {
             dismiss();
         }
-
         view = inflater.inflate(R.layout.dialog_requestlink, container, false);
         // 设置宽度为屏宽、靠近屏幕底部。
         final Window window = getDialog().getWindow();

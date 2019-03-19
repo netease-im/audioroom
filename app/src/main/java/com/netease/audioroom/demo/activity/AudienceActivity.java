@@ -470,13 +470,10 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         updateRole(false);
         selfQueue = queueInfo;
         String cancelTips = DemoCache.getAccountInfo().nick + "进入了麦位" + selfQueue.getIndex();
-        selfQueue = null;
         ChatRoomMessage chatRoomMessage = ChatRoomMessageBuilder.createChatRoomTextMessage(roomInfo.getRoomId(), cancelTips);
         chatRoomService.sendMessage(chatRoomMessage, false);
         msgAdapter.appendItem(new SimpleMessage(DemoCache.getAccountInfo().nick, cancelTips, SimpleMessage.TYPE_NORMAL_MESSAGE));
-
     }
-
 
     @Override
     public void removed(QueueInfo queueInfo) {
@@ -641,7 +638,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                                 ToastHelper.showToast("您已下麦");
                                 updateAudioSwitchVisible(false);
                                 updateRole(true);
-                                String cancelTips = DemoCache.getAccountInfo().nick + "退出了麦位" + selfQueue.getIndex();
+                                String cancelTips = DemoCache.getAccountInfo().nick + "退出了麦位" + selfQueue.getIndex() + 1;
                                 selfQueue = null;
                                 ChatRoomMessage chatRoomMessage = ChatRoomMessageBuilder.createChatRoomTextMessage(roomInfo.getRoomId(), cancelTips);
                                 chatRoomService.sendMessage(chatRoomMessage, false);

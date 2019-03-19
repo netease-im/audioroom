@@ -858,7 +858,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
             @Override
             public void onSuccess(Void aVoid) {
                 ToastHelper.showToast("已将“" + Tempname + "”踢下麦位");
-
             }
 
             @Override

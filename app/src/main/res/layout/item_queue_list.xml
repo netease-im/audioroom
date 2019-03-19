@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
@@ -17,12 +16,9 @@
 
     <com.netease.audioroom.demo.widget.HeadImageView
         android:id="@+id/iv_user_avatar"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
-        android:layout_centerInParent="true"
-        app:imageViewHeigth="50dp"
-        app:imageViewWidth="50dp"
-        app:show_spacing_time="700" />
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_centerInParent="true" />
 
     <ImageView
         android:id="@+id/iv_user_stats"
