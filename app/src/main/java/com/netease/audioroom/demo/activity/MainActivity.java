@@ -42,7 +42,7 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
     RecyclerView mRecyclerView;
     ArrayList<DemoRoomInfo> mRoomList;
 
-    private int limitPage = 50;
+    private int limitPage =50;
     private int addPage = 20;
 
 

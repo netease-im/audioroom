@@ -121,13 +121,10 @@ public class CreateRoomNameDialog extends BaseDialogFragment {
                     public void onFailed(int code, String errorMsg) {
                         isLoading(false);
                         mBtnCreaterRoom.setEnabled(true);
-                        if (NetworkUtils.isNetworkConnected(getContext())) {
-                            ToastHelper.showToast("创建房间失败,请检查你的网络...");
-                        } else {
-                            ToastHelper.showToast("创建房间失败" + errorMsg);
+                        if (TextUtils.isEmpty(errorMsg)) {
+                            errorMsg = "参数错误";
                         }
-
-
+                        ToastHelper.showToast("创建失败:" + (!NetworkUtils.isNetworkConnected(getContext()) ? "网络错误" : errorMsg));
                     }
                 });
     }

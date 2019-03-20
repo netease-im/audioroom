@@ -42,6 +42,7 @@ import com.netease.nimlib.sdk.chatroom.model.ChatRoomInfo;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMember;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMessage;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomQueueChangeAttachment;
+import com.netease.nimlib.sdk.chatroom.model.EnterChatRoomData;
 import com.netease.nimlib.sdk.chatroom.model.EnterChatRoomResultData;
 import com.netease.nimlib.sdk.msg.attachment.MsgAttachment;
 import com.netease.nimlib.sdk.msg.constant.ChatRoomQueueChangeType;
@@ -113,6 +114,36 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     public void onBackPressed() {
         exitRoom();
         super.onBackPressed();
+
+    }
+
+    @Override
+    public void enterChatRoom(String roomId) {
+        AccountInfo accountInfo = DemoCache.getAccountInfo();
+        EnterChatRoomData roomData = new EnterChatRoomData(roomId);
+        roomData.setAvatar(accountInfo.avatar);
+        roomData.setNick(accountInfo.nick);
+        chatRoomService.enterChatRoomEx(roomData, 1).setCallback(new RequestCallback<EnterChatRoomResultData>() {
+            @Override
+            public void onSuccess(EnterChatRoomResultData resultData) {
+                loadService.showSuccess();
+                enterRoomSuccess(resultData);
+            }
+
+            @Override
+            public void onFailed(int i) {
+                loadService.showCallback(ErrorCallback.class);
+                ToastHelper.showToast("进入聊天室失败 ， code = " + i);
+                exitRoom();
+            }
+
+            @Override
+            public void onException(Throwable throwable) {
+                loadService.showCallback(ErrorCallback.class);
+                ToastHelper.showToast("进入聊天室异常 ，  e = " + throwable);
+                finish();
+            }
+        });
 
     }
 
@@ -235,13 +266,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 }
                 break;
             case QueueInfo.STATUS_CLOSE:
-                //麦位被禁止
-                TipsDialog tipsDialog = new TipsDialog();
-                Bundle bundle = new Bundle();
-                bundle.putString(tipsDialog.TAG, "该麦位被主播“屏蔽语音”\n现在您已无法进行语音互动");
-                tipsDialog.setArguments(bundle);
-                tipsDialog.show(getSupportFragmentManager(), tipsDialog.TAG);
-                tipsDialog.setClickListener(() -> tipsDialog.dismiss());
+                ToastHelper.showToast("该麦位已被关闭");
                 break;
 
 

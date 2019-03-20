@@ -21,7 +21,6 @@ import com.netease.audioroom.demo.base.adapter.BaseAdapter;
 import com.netease.audioroom.demo.cache.DemoCache;
 import com.netease.audioroom.demo.cache.RoomMemberCache;
 import com.netease.audioroom.demo.dialog.TipsDialog;
-import com.netease.audioroom.demo.model.AccountInfo;
 import com.netease.audioroom.demo.model.DemoRoomInfo;
 import com.netease.audioroom.demo.model.QueueInfo;
 import com.netease.audioroom.demo.model.QueueMember;
@@ -33,7 +32,6 @@ import com.netease.audioroom.demo.util.ScreenUtil;
 import com.netease.audioroom.demo.util.ToastHelper;
 import com.netease.audioroom.demo.widget.HeadImageView;
 import com.netease.audioroom.demo.widget.VerticalItemDecoration;
-import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.ErrorCallback;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.NetErrCallback;
 import com.netease.nimlib.sdk.NIMClient;
 import com.netease.nimlib.sdk.Observer;
@@ -41,6 +39,7 @@ import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.avchat.AVChatCallback;
 import com.netease.nimlib.sdk.avchat.AVChatManager;
 import com.netease.nimlib.sdk.avchat.AVChatStateObserver;
+import com.netease.nimlib.sdk.avchat.constant.AVChatAudioMixingEvent;
 import com.netease.nimlib.sdk.avchat.constant.AVChatChannelProfile;
 import com.netease.nimlib.sdk.avchat.constant.AVChatType;
 import com.netease.nimlib.sdk.avchat.model.AVChatData;
@@ -57,7 +56,6 @@ import com.netease.nimlib.sdk.chatroom.model.ChatRoomQueueChangeAttachment;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomRoomMemberInAttachment;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomTempMuteAddAttachment;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomTempMuteRemoveAttachment;
-import com.netease.nimlib.sdk.chatroom.model.EnterChatRoomData;
 import com.netease.nimlib.sdk.chatroom.model.EnterChatRoomResultData;
 import com.netease.nimlib.sdk.msg.MsgServiceObserve;
 import com.netease.nimlib.sdk.msg.constant.ChatRoomQueueChangeType;
@@ -78,6 +76,8 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
 
     private static final int QUEUE_SIZE = 8;
     public static final String ROOM_INFO_KEY = "room_info_key";
+    public static final String ROOM_MICROPHONE_OPEN = "anchorMute";
+
     public static final String TAG = "AudioRoom";
 
     private static final int KEY_BOARD_MIN_SIZE = ScreenUtil.dip2px(DemoCache.getContext(), 80);
@@ -155,6 +155,19 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
             super.onReportSpeaker(speakers, mixedEnergy);
             onAudioVolume(speakers);
         }
+
+        @Override
+        public void onAudioMixingEvent(int event) {
+            super.onAudioMixingEvent(event);
+            switch (event) {
+                case AVChatAudioMixingEvent.MIXING_FINISHED:
+                    playNextMusic();
+                    break;
+                case AVChatAudioMixingEvent.MIXING_ERROR:
+                    playMusicErr();
+                    break;
+            }
+        }
     };
 
     //聊天室消息观察者
@@ -221,6 +234,43 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
                             for (String key : queuePartClear.getContentMap().keySet()) {
                                 logInfo.append("key = " + key + ", value= " + queuePartClear.getContentMap().get(key)).append(" ");
                             }
+                            break;
+                        case ChatRoomInfoUpdated:
+                            NIMClient.getService(ChatRoomService.class).fetchRoomInfo(roomInfo.getRoomId())
+                                    .setCallback(new RequestCallback<ChatRoomInfo>() {
+                                        @Override
+                                        public void onSuccess(ChatRoomInfo param) {
+                                            // 成功
+                                            if (param.getExtension() != null) {
+                                                for (Map.Entry<String, Object> entry : param.getExtension().entrySet()) {
+                                                    if (entry.getKey().equals(ROOM_MICROPHONE_OPEN)) {
+                                                        int status = (int) entry.getValue();
+                                                        switch (status) {
+                                                            case 0:
+                                                                ivLiverAudioCloseHint.setVisibility(View.VISIBLE);
+
+                                                                break;
+                                                            case 1:
+                                                                ivLiverAudioCloseHint.setVisibility(View.INVISIBLE);
+                                                                break;
+                                                        }
+
+                                                        break;
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        @Override
+                                        public void onFailed(int code) {
+                                            // 失败
+                                        }
+
+                                        @Override
+                                        public void onException(Throwable exception) {
+                                            // 错误
+                                        }
+                                    });
                             break;
                     }
                 } else {
@@ -445,34 +495,7 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
     }
 
 
-    public void enterChatRoom(String roomId) {
-        AccountInfo accountInfo = DemoCache.getAccountInfo();
-        EnterChatRoomData roomData = new EnterChatRoomData(roomId);
-        roomData.setAvatar(accountInfo.avatar);
-        roomData.setNick(accountInfo.nick);
-        chatRoomService.enterChatRoomEx(roomData, 2).setCallback(new RequestCallback<EnterChatRoomResultData>() {
-            @Override
-            public void onSuccess(EnterChatRoomResultData resultData) {
-                loadService.showSuccess();
-                enterRoomSuccess(resultData);
-            }
-
-            @Override
-            public void onFailed(int i) {
-                loadService.showCallback(ErrorCallback.class);
-                ToastHelper.showToast("进入聊天室失败 ， code = " + i);
-                finish();
-            }
-
-            @Override
-            public void onException(Throwable throwable) {
-                loadService.showCallback(ErrorCallback.class);
-                ToastHelper.showToast("进入聊天室异常 ，  e = " + throwable);
-                finish();
-            }
-        });
-
-    }
+    public abstract void enterChatRoom(String roomId);
 
     protected void enterRoomSuccess(EnterChatRoomResultData resultData) {
         chatRoomService.fetchQueue(roomInfo.getRoomId()).setCallback(new RequestCallback<List<Entry<String, String>>>() {
@@ -636,7 +659,7 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
 
     private void updateRoonInfo() {
         String name = roomInfo.getName();
-        name = "房间：" + (TextUtils.isEmpty(name) ? roomInfo.getRoomId() : name) + "（" + roomInfo.getOnlineUserCount() + "人）";
+        name = "房间：" + (TextUtils.isEmpty(name) ? roomInfo.getRoomId() : name) + "（" + roomInfo.getOnlineUserCount() + 1 + "人）";
         tvRoomName.setText(name);
     }
 
@@ -701,6 +724,18 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
             queueInfoList.set(queueInfo.getIndex(), queueInfo);
         }
         return queueInfoList;
+    }
+
+    protected void playMusicErr() {
+        Log.e(TAG, "父类方法+playMusicErr");
+    }
+
+    protected void playOrPauseMusic() {
+        Log.e(TAG, "父类方法+playOrPauseMusic");
+    }
+
+    protected void playNextMusic() {
+        Log.e(TAG, "父类方法+playNextMusic");
     }
 
     private void updateStatus(int volume, int itemIndex) {

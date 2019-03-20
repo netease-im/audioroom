@@ -119,7 +119,7 @@ public class MemberActivity extends BaseActivity {
                     ArrayList<QueueMember> queueMembers = new ArrayList<>();
                     for (ChatRoomMember chatRoomMember : chatRoomMembers) {
                         QueueMember queueMember = new QueueMember(chatRoomMember.getAccount(), chatRoomMember.getNick(), chatRoomMember.getAvatar());
-                        if (!mQueueMembers.contains(queueMember)) {
+                        if (mQueueMembers == null || !mQueueMembers.contains(queueMember)) {
                             queueMembers.add(queueMember);
                         }
                     }
