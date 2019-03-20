@@ -645,12 +645,14 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
 
             @Override
             public void onFailed(int code) {
-                ToastHelper.showToast("加入音频房间失败， code = " + code);
+                //ToastHelper.showToast("加入音频房间失败， code = " + code);
+                finish();
             }
 
             @Override
             public void onException(Throwable exception) {
-                ToastHelper.showToast("加入音频房间失败 , e =" + exception.getMessage());
+                // ToastHelper.showToast("加入音频房间失败 , e =" + exception.getMessage());
+                finish();
             }
         });
 
@@ -658,9 +660,25 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
     }
 
     private void updateRoonInfo() {
-        String name = roomInfo.getName();
-        name = "房间：" + (TextUtils.isEmpty(name) ? roomInfo.getRoomId() : name) + "（" + roomInfo.getOnlineUserCount() + 1 + "人）";
-        tvRoomName.setText(name);
+        chatRoomService.fetchRoomInfo(roomInfo.getRoomId()).setCallback(new RequestCallback<ChatRoomInfo>() {
+            @Override
+            public void onSuccess(ChatRoomInfo param) {
+                String name = param.getName();
+                name = "房间：" + (TextUtils.isEmpty(name) ? roomInfo.getRoomId() : name) + "（" + param.getOnlineUserCount() + "人）";
+                tvRoomName.setText(name);
+            }
+
+            @Override
+            public void onFailed(int code) {
+
+            }
+
+            @Override
+            public void onException(Throwable exception) {
+
+            }
+        });
+
     }
 
 

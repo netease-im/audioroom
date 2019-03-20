@@ -56,14 +56,12 @@ import java.util.List;
 
 import static com.netease.audioroom.demo.dialog.BottomMenuDialog.BOTTOMMENUS;
 
-
 /***
  * 观众页
  */
 public class AudienceActivity extends BaseAudioActivity implements IAudience, View.OnClickListener {
     String creator;
     TopTipsDialog topTipsDialog;
-
 
     public static void start(Context context, DemoRoomInfo model) {
         Intent intent = new Intent(context, AudienceActivity.class);
@@ -297,6 +295,8 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
 
     @Override
     protected void exitRoom() {
+        //自动下麦
+        cancelLink();
         release();
     }
 
@@ -312,17 +312,18 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
      * 请求连麦
      */
     @Override
-    public void requestLink(QueueInfo model) {
+    public void requestLink(QueueInfo queueInfo) {
         if (selfQueue != null) {
             ToastHelper.showToast("您已在麦上");
-
             return;
         }
-        P2PNotificationHelper.requestLink(model, DemoCache.getAccountInfo(), roomInfo.getCreator(), new RequestCallback<Void>() {
+
+        P2PNotificationHelper.requestLink(queueInfo, DemoCache.getAccountInfo(), roomInfo.getCreator(), new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
                 Bundle bundle = new Bundle();
                 topTipsDialog = new TopTipsDialog();
+                selfQueue = queueInfo;
                 TopTipsDialog.Style style = topTipsDialog.new Style(
                         "已申请上麦，等待通过...  <font color=\"#0888ff\">取消</color>",
                         0,
@@ -344,17 +345,17 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                     bottomMenuDialog.setItemClickListener((d, p) -> {
                         switch (d.get(p)) {
                             case "<font color=\"#ff4f4f\">确认取消申请上麦</color>":
-                                bottomButtonAction(bottomMenuDialog, model, "确认取消申请上麦");
+                                bottomButtonAction(bottomMenuDialog, queueInfo, "确认取消申请上麦");
                                 break;
                             case "取消":
-                                bottomButtonAction(bottomMenuDialog, model, "取消");
+                                bottomButtonAction(bottomMenuDialog, queueInfo, "取消");
                                 topTipsDialog.show(getSupportFragmentManager(), topTipsDialog.TAG);
                                 break;
                         }
 
-
                     });
                 });
+
             }
 
             @Override
@@ -382,10 +383,18 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         QueueInfo queueInfo = new QueueInfo(value);
         QueueMember member = queueInfo.getQueueMember();
         //与自己无关
-        if (member == null || !TextUtils.equals(member.getAccount(), DemoCache.getAccountId())) {
-            return;
-        }
         int status = queueInfo.getStatus();
+        if (member == null || !TextUtils.equals(member.getAccount(), DemoCache.getAccountId())) {
+            if (status == QueueInfo.STATUS_NORMAL) {
+                if (selfQueue != null && queueInfo.getIndex() == selfQueue.getIndex()) {
+                    linkBeRejected();
+                }
+            } else {
+                return;
+            }
+
+        }
+
 
         switch (status) {
             case QueueInfo.STATUS_NORMAL:
@@ -421,20 +430,19 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         P2PNotificationHelper.cancelLinkRequest(queueInfo, DemoCache.getAccountId(), roomInfo.getCreator(), new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
-
+                ToastHelper.showToast("已取消申请上麦");
             }
 
             @Override
             public void onFailed(int i) {
+                ToastHelper.showToast("操作失败");
             }
 
             @Override
             public void onException(Throwable throwable) {
-
+                ToastHelper.showToast("操作失败");
             }
         });
-
-
     }
 
     @Override
@@ -446,10 +454,9 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         tipsDialog.show(getSupportFragmentManager(), "TipsDialog");
         tipsDialog.setClickListener(() -> {
             tipsDialog.dismiss();
-            if (topTipsDialog != null && topTipsDialog.isVisible()) {
+            if (topTipsDialog != null) {
                 topTipsDialog.dismiss();
             }
-
         });
     }
 
@@ -466,10 +473,15 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                                 "如需下麦，可点击自己的头像或下麦按钮");
                 tipsDialog.setArguments(bundle);
                 tipsDialog.show(getSupportFragmentManager(), tipsDialog.TAG);
-                tipsDialog.setClickListener(() -> tipsDialog.dismiss());
+                tipsDialog.setClickListener(() -> {
+                    if (topTipsDialog != null) {
+                        topTipsDialog.dismiss();
+                    }
+                    tipsDialog.dismiss();
+                });
                 break;
+            //主播同意上麦
             case QueueInfo.Reason.agreeApply:
-                //主动申请上麦
                 TopTipsDialog topTipsDialog = new TopTipsDialog();
                 TopTipsDialog.Style style = topTipsDialog.new Style("申请通过!",
                         R.color.color_0888ff,
@@ -495,9 +507,8 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         updateRole(false);
         selfQueue = queueInfo;
         String cancelTips = DemoCache.getAccountInfo().nick + "进入了麦位" + selfQueue.getIndex();
-        ChatRoomMessage chatRoomMessage = ChatRoomMessageBuilder.createChatRoomTextMessage(roomInfo.getRoomId(), cancelTips);
-        chatRoomService.sendMessage(chatRoomMessage, false);
-        msgAdapter.appendItem(new SimpleMessage(DemoCache.getAccountInfo().nick, cancelTips, SimpleMessage.TYPE_NORMAL_MESSAGE));
+        SimpleMessage simpleMessage = new SimpleMessage("", cancelTips, SimpleMessage.TYPE_MEMBER_CHANGE);
+        msgAdapter.appendItem(simpleMessage);
     }
 
     @Override

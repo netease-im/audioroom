@@ -20,16 +20,13 @@ import com.netease.audioroom.demo.widget.VerticalItemDecoration;
 import java.util.ArrayList;
 
 public class RequestLinkDialog extends BaseDialogFragment {
-
-
     RecyclerView requesterRecyclerView;
     RequestlinkAdapter adapter;
-
     ArrayList<QueueInfo> queueMemberList;
     View view;
 
     TextView title;
-    TextView dissmiss;
+    TextView tvDissmiss;
 
     public interface IRequestAction {
         void refuse(QueueInfo queueInfo);
@@ -84,7 +81,7 @@ public class RequestLinkDialog extends BaseDialogFragment {
         requesterRecyclerView.addItemDecoration
                 (new VerticalItemDecoration(getResources().getColor(R.color.color_000000), 1));
         title = view.findViewById(R.id.title);
-        dissmiss = view.findViewById(R.id.dissmiss);
+        tvDissmiss = view.findViewById(R.id.dissmiss);
 
         buidHeadView();
     }
@@ -97,10 +94,9 @@ public class RequestLinkDialog extends BaseDialogFragment {
             @Override
             public void onMeasure(RecyclerView.Recycler recycler, RecyclerView.State state, int widthSpec, int heightSpec) {
                 int count = state.getItemCount();
-
                 if (count > 0) {
-                    if (count > 3) {
-                        count = 3;
+                    if (count > 4) {
+                        count = 4;
                     }
                     int realHeight = 0;
                     int realWidth = 0;
@@ -120,8 +116,6 @@ public class RequestLinkDialog extends BaseDialogFragment {
                 }
             }
         });
-
-
     }
 
     public void initListener() {
@@ -136,21 +130,17 @@ public class RequestLinkDialog extends BaseDialogFragment {
                 requestAction.agree(queueInfo);
             }
         });
-
-        dissmiss.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dismiss();
-            }
-        });
+        tvDissmiss.setOnClickListener((v) -> dismiss());
     }
-
 
     public void setRequestAction(IRequestAction requestAction) {
         this.requestAction = requestAction;
     }
 
     public void updateDate() {
-        adapter.notifyDataSetChanged();
+        if (isVisible()){
+            adapter.notifyDataSetChanged();
+        }
+
     }
 }

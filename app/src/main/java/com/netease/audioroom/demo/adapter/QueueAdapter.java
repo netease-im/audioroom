@@ -41,6 +41,8 @@ public class QueueAdapter extends BaseAdapter<QueueInfo> {
                 viewHolder.ivStatusHint.setVisibility(View.GONE);
                 viewHolder.iv_user_status.setVisibility(View.VISIBLE);
                 viewHolder.iv_user_status.setImageResource(R.drawable.queue_add_member);
+                viewHolder.circle.setVisibility(View.INVISIBLE);
+
                 break;
             case QueueInfo.STATUS_LOAD:
                 viewHolder.iv_user_status.setVisibility(View.VISIBLE);
@@ -51,6 +53,8 @@ public class QueueAdapter extends BaseAdapter<QueueInfo> {
                     viewHolder.ivStatusHint.setVisibility(View.VISIBLE);
                     viewHolder.ivStatusHint.setImageResource(R.drawable.audio_be_muted_status);
                 }
+                viewHolder.tvNick.setText(queueMember.getAccount());
+                viewHolder.circle.setVisibility(View.INVISIBLE);
                 break;
 
             case QueueInfo.STATUS_NORMAL:
@@ -62,12 +66,14 @@ public class QueueAdapter extends BaseAdapter<QueueInfo> {
                 viewHolder.iv_user_status.setVisibility(View.VISIBLE);
                 viewHolder.ivStatusHint.setVisibility(View.GONE);
                 viewHolder.iv_user_status.setImageResource(R.drawable.close);
+                viewHolder.circle.setVisibility(View.INVISIBLE);
                 break;
 
             case QueueInfo.STATUS_FORBID:
                 viewHolder.iv_user_status.setVisibility(View.VISIBLE);
                 viewHolder.ivStatusHint.setVisibility(View.GONE);
                 viewHolder.iv_user_status.setImageResource(R.drawable.queue_close);
+                viewHolder.circle.setVisibility(View.INVISIBLE);
                 break;
 
             case QueueInfo.STATUS_BE_MUTED_AUDIO:

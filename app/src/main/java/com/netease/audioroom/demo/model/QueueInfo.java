@@ -227,4 +227,21 @@ public class QueueInfo implements Serializable, Parcelable {
                 || queueInfo.getStatus() == QueueInfo.STATUS_CLOSE_SELF_AUDIO
                 || queueInfo.getStatus() == QueueInfo.STATUS_CLOSE_SELF_AUDIO_AND_MUTED);
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        QueueInfo queueMember = (QueueInfo) o;
+        return index == (queueMember.index);
+
+    }
+
+    @Override
+    public int hashCode() {
+        return index;
+    }
+
+
 }

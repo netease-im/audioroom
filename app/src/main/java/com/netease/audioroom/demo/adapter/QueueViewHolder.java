@@ -10,17 +10,20 @@ import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.widget.HeadImageView;
 
 public class QueueViewHolder extends RecyclerView.ViewHolder {
-    public HeadImageView ivAvatar;
-    public ImageView ivStatusHint;
-    public ImageView iv_user_status;
-    public TextView tvNick;
+    HeadImageView ivAvatar;
+    ImageView ivStatusHint;
+    ImageView iv_user_status;
+    TextView tvNick;
+    ImageView circle;
 
-    public QueueViewHolder(@NonNull View itemView) {
+
+    QueueViewHolder(@NonNull View itemView) {
         super(itemView);
         ivAvatar = itemView.findViewById(R.id.iv_user_avatar);
         ivStatusHint = itemView.findViewById(R.id.iv_user_status_hint);
         tvNick = itemView.findViewById(R.id.tv_user_nick);
         iv_user_status = itemView.findViewById(R.id.iv_user_stats);
+        circle = itemView.findViewById(R.id.circle);
     }
 
 

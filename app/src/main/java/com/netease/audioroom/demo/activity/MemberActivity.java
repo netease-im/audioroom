@@ -16,6 +16,7 @@ import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.adapter.MemberListAdapter;
 import com.netease.audioroom.demo.base.BaseActivity;
 import com.netease.audioroom.demo.cache.RoomMemberCache;
+import com.netease.audioroom.demo.model.QueueInfo;
 import com.netease.audioroom.demo.model.QueueMember;
 import com.netease.audioroom.demo.util.ScreenUtil;
 import com.netease.audioroom.demo.util.ToastHelper;
@@ -25,12 +26,8 @@ import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.ErrorCallbac
 import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMember;
 
-import java.text.Collator;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * 选择成员
@@ -47,7 +44,7 @@ public class MemberActivity extends BaseActivity {
 
     MemberListAdapter adapter;
 
-    ArrayList<QueueMember> mQueueMembers;//去除重复项
+    ArrayList<QueueInfo> mQueueInfoList;//去除重复项
 
 
     public static void start(Activity activity, String roomId) {
@@ -57,12 +54,13 @@ public class MemberActivity extends BaseActivity {
     }
 
     //去除重复
-    public static void startRepeat(Activity activity, String roomId, ArrayList<QueueMember> queueMembers) {
+    public static void startRepeat(Activity activity, String roomId, ArrayList<QueueInfo> queueInfoArrayList) {
         Intent intent = new Intent(activity, MemberActivity.class);
         intent.putExtra(MEMBERACTIVITY, roomId);
-        intent.putExtra(MEMBERACTIVITYREPEATLIST, queueMembers);
+        intent.putExtra(MEMBERACTIVITYREPEATLIST, queueInfoArrayList);
         activity.startActivityForResult(intent, REQUESTCODE);
     }
+
 
     @Override
     protected int getContentViewID() {
@@ -74,7 +72,7 @@ public class MemberActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         if (getIntent() != null) {
             roomId = getIntent().getStringExtra(MEMBERACTIVITY);
-            mQueueMembers = (ArrayList<QueueMember>) getIntent().getSerializableExtra(MEMBERACTIVITYREPEATLIST);
+            mQueueInfoList = (ArrayList<QueueInfo>) getIntent().getSerializableExtra(MEMBERACTIVITYREPEATLIST);
             if (!TextUtils.isEmpty(roomId)) {
                 getlist();
             } else {
@@ -98,7 +96,6 @@ public class MemberActivity extends BaseActivity {
         recyclerView.setAdapter(adapter);
     }
 
-
     private void getlist() {
         RoomMemberCache.getInstance().fetchMembers(roomId, 0, 10, new RequestCallback<List<ChatRoomMember>>() {
             @Override
@@ -116,14 +113,14 @@ public class MemberActivity extends BaseActivity {
                     });
                 } else {
                     loadService.showSuccess();
-                    ArrayList<QueueMember> queueMembers = new ArrayList<>();
-                    for (ChatRoomMember chatRoomMember : chatRoomMembers) {
-                        QueueMember queueMember = new QueueMember(chatRoomMember.getAccount(), chatRoomMember.getNick(), chatRoomMember.getAvatar());
-                        if (mQueueMembers == null || !mQueueMembers.contains(queueMember)) {
-                            queueMembers.add(queueMember);
-                        }
+                    ArrayList<QueueMember> queueMembers;
+                    if (mQueueInfoList != null) {
+                        queueMembers = repeateLoad(chatRoomMembers);
+                    } else {
+                        queueMembers = repeatMuteList(chatRoomMembers);
                     }
-                    if (queueMembers.size() != 0) {
+
+                    if (queueMembers != null && queueMembers.size() != 0) {
                         adapter = new MemberListAdapter(queueMembers, mContext);
                         recyclerView.setLayoutManager(new LinearLayoutManager(mContext));
                         recyclerView.setAdapter(adapter);
@@ -160,9 +157,50 @@ public class MemberActivity extends BaseActivity {
             @Override
             public void onException(Throwable throwable) {
                 loadService.showCallback(ErrorCallback.class);
-
             }
         });
 
+
+        //去除已经禁言的用户
+
     }
+
+    //去除麦位上除申请的用户
+    private ArrayList<QueueMember> repeateLoad(List<ChatRoomMember> chatRoomMembers) {
+        ArrayList<QueueMember> queueMembers = new ArrayList<>();
+        ArrayList<QueueMember> mQueueMembers = new ArrayList<>();
+        if (mQueueInfoList != null) {
+            for (QueueInfo queueInfo : mQueueInfoList) {
+                mQueueMembers.add(queueInfo.getQueueMember());
+            }
+        }
+
+        for (ChatRoomMember chatRoomMember : chatRoomMembers) {
+            QueueMember queueMember = new QueueMember(chatRoomMember.getAccount(), chatRoomMember.getNick(), chatRoomMember.getAvatar());
+            if (!mQueueMembers.contains(queueMember)) {
+                queueMembers.add(queueMember);
+                continue;
+            }
+            for (QueueInfo queueInfo : mQueueInfoList) {
+                if (queueInfo.getQueueMember() != null && queueInfo.getQueueMember().equals(queueMember) && queueInfo.getStatus() == QueueInfo.STATUS_LOAD) {
+                    queueMembers.add(queueMember);
+                }
+            }
+        }
+        return queueMembers;
+    }
+
+    private ArrayList<QueueMember> repeatMuteList(List<ChatRoomMember> chatRoomMembers) {
+        ArrayList<QueueMember> queueMembers = new ArrayList<>();
+        for (ChatRoomMember chatRoomMember : chatRoomMembers) {
+            if (!chatRoomMember.isMuted() && !chatRoomMember.isTempMuted()) {
+                queueMembers.add(new QueueMember(chatRoomMember.getAccount(), chatRoomMember.getNick(), chatRoomMember.getAvatar()));
+            }
+        }
+
+
+        return queueMembers;
+
+    }
+
 }
