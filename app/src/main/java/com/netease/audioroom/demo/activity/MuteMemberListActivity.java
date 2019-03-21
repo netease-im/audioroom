@@ -211,7 +211,7 @@ public class MuteMemberListActivity extends BaseActivity {
         });
 
 
-        muteAllMember.setOnClickListener((v) -> muteAllMember(isAllMute));
+        muteAllMember.setOnClickListener((v) -> muteAllMember(!isAllMute));
     }
 
     RecyclerView.OnScrollListener onScrollListener = new RecyclerView.OnScrollListener() {
@@ -246,7 +246,7 @@ public class MuteMemberListActivity extends BaseActivity {
                             muteAllMember.setText("全部禁言");
                             ToastHelper.showToast("取消全部禁麦");
                         }
-                        isAllMute = !mute;
+                        isAllMute = mute;
                     }
 
                     @Override
