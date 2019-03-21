@@ -262,7 +262,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
                                                                 ivLiverAudioCloseHint.setVisibility(View.INVISIBLE);
                                                                 break;
                                                         }
-
                                                         break;
                                                     }
                                                 }
@@ -713,7 +712,11 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
                     //观众
                     if (queueInfo != null && queueInfo.getQueueMember() != null) {
                         if (speakers.containsKey(queueInfo.getQueueMember().getAccount())) {
-                            updateStatus(findVolumeStep(speakers.get(queueInfo.getQueueMember().getAccount())), queueInfo.getIndex());
+                            if (!QueueInfo.hasOccupancy(queueInfo)) {
+                                updateStatus(0, queueInfo.getIndex());
+                            } else {
+                                updateStatus(findVolumeStep(speakers.get(queueInfo.getQueueMember().getAccount())), queueInfo.getIndex());
+                            }
                         }
 
                     }
@@ -779,8 +782,8 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
         } else {
             circle.setVisibility(View.VISIBLE);
         }
-
     }
+
 
     private int findVolumeStep(int volume) {
         int volumeStep = 0;
