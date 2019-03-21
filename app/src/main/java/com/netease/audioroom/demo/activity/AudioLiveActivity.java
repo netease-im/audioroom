@@ -39,7 +39,6 @@ import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.LoadingCallb
 import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.avchat.AVChatCallback;
 import com.netease.nimlib.sdk.avchat.AVChatManager;
-import com.netease.nimlib.sdk.avchat.constant.AVChatAudioMixingEvent;
 import com.netease.nimlib.sdk.avchat.constant.AVChatUserRole;
 import com.netease.nimlib.sdk.avchat.model.AVChatChannelInfo;
 import com.netease.nimlib.sdk.avchat.model.AVChatParameters;
@@ -110,6 +109,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
         enterChatRoom(roomInfo.getRoomId());
         createAudioRoom(roomInfo.getRoomId());
         checkFile();
+
     }
 
     @Override
@@ -124,6 +124,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
             public void onSuccess(EnterChatRoomResultData resultData) {
                 loadService.showSuccess();
                 enterRoomSuccess(resultData);
+                updateRoomInfo(true);
 
             }
 
@@ -236,7 +237,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                                 ArrayList<QueueInfo> allQueueInfoArrayList = getQueueList(param);
                                 for (QueueInfo q : allQueueInfoArrayList) {
                                     if (q.getQueueMember() != null && q.getQueueMember().getAccount().equals(queueMember.getAccount())) {//存在于列表中
-                                        if (QueueInfo.hasOccupancy(q) || q.getStatus() != QueueInfo.STATUS_LOAD) {
+                                        if (QueueInfo.hasOccupancy(q) || q.getStatus() == QueueInfo.STATUS_LOAD) {
                                             ToastHelper.showToast("操作失败:当前用户已在麦位上");
                                             isInQueue = true;
                                             break;
@@ -245,7 +246,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                                 }
                                 if (!isInQueue) {
                                     invitedLink(new QueueInfo(inviteIndex, queueMember, QueueInfo.STATUS_NORMAL, QueueInfo.Reason.inviteByHost));
-
                                 }
                             }
 
@@ -812,8 +812,11 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                 muteSelfAudio();
                 if (AVChatManager.getInstance().isMicrophoneMute()) {
                     ToastHelper.showToast("话筒已关闭");
+                    updateRoomInfo(false);
+
                 } else {
                     ToastHelper.showToast("话筒已打开");
+                    updateRoomInfo(true);
                 }
                 ivSelfAudioSwitch.setSelected(AVChatManager.getInstance().isMicrophoneMute());
                 break;
@@ -1170,12 +1173,18 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
     }
 
     //初始化聊天室扩展字段（用于主播聊天室）默认打开
-    private void initRoomInfo() {
+    private void updateRoomInfo(boolean isOpenMicrophone) {
         ChatRoomUpdateInfo chatRoomUpdateInfo = new ChatRoomUpdateInfo();
         Map<String, Object> param = new HashMap<>();
-        param.put(ROOM_MICROPHONE_OPEN, 1);
+        if (isOpenMicrophone) {
+            param.put(ROOM_MICROPHONE_OPEN, 1);
+        } else {
+            param.put(ROOM_MICROPHONE_OPEN, 0);
+        }
+
         chatRoomUpdateInfo.setExtension(param);
         chatRoomService.updateRoomInfo(roomInfo.getRoomId(), chatRoomUpdateInfo, true, null);
     }
+
 
 }

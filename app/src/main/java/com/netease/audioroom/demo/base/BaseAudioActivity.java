@@ -257,7 +257,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
                                                         switch (status) {
                                                             case 0:
                                                                 ivLiverAudioCloseHint.setVisibility(View.VISIBLE);
-
                                                                 break;
                                                             case 1:
                                                                 ivLiverAudioCloseHint.setVisibility(View.INVISIBLE);
