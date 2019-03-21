@@ -71,6 +71,7 @@ import static com.netease.audioroom.demo.dialog.BottomMenuDialog.BOTTOMMENUS;
  */
 public class AudioLiveActivity extends BaseAudioActivity implements LoginManager.IAudioLive, View.OnClickListener {
     BottomMenuDialog bottomMenuDialog;
+    EnterChatRoomResultData resultData;
 
     public static void start(Context context, DemoRoomInfo demoRoomInfo) {
         Intent intent = new Intent(context, AudioLiveActivity.class);
@@ -113,15 +114,17 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
 
     @Override
     public void enterChatRoom(String roomId) {
+        //加入聊天室
         AccountInfo accountInfo = DemoCache.getAccountInfo();
         EnterChatRoomData roomData = new EnterChatRoomData(roomId);
         roomData.setAvatar(accountInfo.avatar);
         roomData.setNick(accountInfo.nick);
-        chatRoomService.enterChatRoomEx(roomData, 1).setCallback(new RequestCallback<EnterChatRoomResultData>() {
+        chatRoomService.enterChatRoom(roomData).setCallback(new RequestCallback<EnterChatRoomResultData>() {
             @Override
             public void onSuccess(EnterChatRoomResultData resultData) {
                 loadService.showSuccess();
                 enterRoomSuccess(resultData);
+
             }
 
             @Override
@@ -144,7 +147,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
             public void onSuccess(AVChatChannelInfo avChatChannelInfo) {
                 ToastHelper.showToast("创建音频房间成功");
                 Log.e(TAG, "创建音频房间成功 ， room id = " + roomId);
-                //加入房间
                 joinAudioRoom();
             }
 
@@ -169,7 +171,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
         setNetworkReconnection(new INetworkReconnection() {
             @Override
             public void onNetworkReconnection() {
-                if (topTipsDialog.isVisible()) {
+                if (topTipsDialog != null) {
                     topTipsDialog.dismiss();
                 }
                 LoginManager loginManager = LoginManager.getInstance();
@@ -177,7 +179,13 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                 loginManager.setCallback(new LoginManager.Callback() {
                     @Override
                     public void onSuccess(AccountInfo accountInfo) {
-                        enterChatRoom(roomInfo.getRoomId());
+                        if (resultData != null) {
+                            enterChatRoom(roomInfo.getRoomId());
+                            joinAudioRoom();
+                        } else {
+                            enterRoomSuccess(resultData);
+                        }
+
                     }
 
                     @Override
@@ -211,8 +219,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
         if (resultCode == RESULT_OK) {
             //抱麦
             loadService.showCallback(LoadingCallback.class);
-            ChatRoomMember chatRoomMember = data.getParcelableExtra(MemberActivity.MEMBERACTIVITY);
-            QueueMember queueMember = new QueueMember(chatRoomMember.getAccount(), chatRoomMember.getNick(), chatRoomMember.getAvatar());
+            QueueMember queueMember = (QueueMember) data.getSerializableExtra(MemberActivity.MEMBERACTIVITY);
             //判断当前用户是否离开
             RoomMemberCache.getInstance().fetchMembers(roomInfo.getRoomId(), 0, 100000, new RequestCallback<List<ChatRoomMember>>() {
                 @Override
@@ -228,8 +235,8 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                                 boolean isInQueue = false;
                                 ArrayList<QueueInfo> allQueueInfoArrayList = getQueueList(param);
                                 for (QueueInfo q : allQueueInfoArrayList) {
-                                    if (q.getQueueMember() != null && q.getQueueMember().equals(queueMember)) {//存在于列表中
-                                        if (q.getStatus() != QueueInfo.STATUS_LOAD) {
+                                    if (q.getQueueMember() != null && q.getQueueMember().getAccount().equals(queueMember.getAccount())) {//存在于列表中
+                                        if (QueueInfo.hasOccupancy(q) || q.getStatus() != QueueInfo.STATUS_LOAD) {
                                             ToastHelper.showToast("操作失败:当前用户已在麦位上");
                                             isInQueue = true;
                                             break;
@@ -510,7 +517,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                 if (queueInfo != null) {
                     queueInfo.setStatus(QueueInfo.STATUS_INIT);
                     queueInfo.setReason(QueueInfo.Reason.kickedBySelf);
-                    queueInfo.setQueueMember(null);
                     chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString());
                 }
                 break;
@@ -609,7 +615,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
             queueInfo.setStatus(QueueInfo.STATUS_INIT);
         }
         queueInfo.setReason(QueueInfo.Reason.cancelApplyBySelf);
-        queueInfo.setQueueMember(null);
         chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(),
                 queueInfo.toString()).setCallback(new RequestCallback<Void>() {
             @Override
@@ -650,7 +655,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
         queueInfo.setReason(QueueInfo.Reason.cancelApplyByHost);
         queueInfo.setStatus(QueueInfo.STATUS_INIT);
         QueueInfo tempQueueInfo = queueInfo;
-        queueInfo.setQueueMember(null);
         requestMemberList.remove(queueInfo);
         chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString()).setCallback(new RequestCallback<Void>() {
             @Override
@@ -668,6 +672,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                     if (requestLinkDialog.isVisible()) {
                         requestLinkDialog.updateDate();
                     }
+                    semicircleView.setText(requestMemberList.size());
                 }
             }
 
@@ -691,7 +696,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
             rejectLink(queueInfo);
         } else {
             if (queueInfo.getReason() == QueueInfo.Reason.applyInMute) {
-                queueInfo.setStatus(QueueInfo.STATUS_FORBID);
+                queueInfo.setStatus(QueueInfo.STATUS_BE_MUTED_AUDIO);
             } else {
                 queueInfo.setStatus(QueueInfo.STATUS_NORMAL);
             }
@@ -708,7 +713,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                             queueInfoIterator.remove();
                         }
                     }
-//                    requestMemberList = (ArrayList<QueueInfo>) copyIterator(queueInfoIterator);
+//
                     if (requestMemberList.size() != 0) {
                         requestLinkDialog.updateDate();
                         semicircleView.setText(requestMemberList.size());
@@ -752,9 +757,9 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                 ivRoomAudioSwitch.setSelected(!close);
                 muteRoomAudio(!close);
                 if (close) {
-                    ToastHelper.showToast("已关闭“聊天室声音”");
-                } else {
                     ToastHelper.showToast("已打开“聊天室声音”");
+                } else {
+                    ToastHelper.showToast("已关闭“聊天室声音”");
                 }
                 break;
             case R.id.iv_exist_room:
@@ -794,8 +799,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                     public void agree(QueueInfo queueInfo) {
                         //同意上麦
                         acceptLink(queueInfo);
-
-
                     }
                 });
                 break;
@@ -805,16 +808,14 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
             case R.id.iv_next:
                 playNextMusic();
                 break;
-
             case R.id.iv_close_self_audio_switch:
                 muteSelfAudio();
                 if (AVChatManager.getInstance().isMicrophoneMute()) {
-                    ToastHelper.showToast("话筒已打开");
-                } else {
                     ToastHelper.showToast("话筒已关闭");
+                } else {
+                    ToastHelper.showToast("话筒已打开");
                 }
                 ivSelfAudioSwitch.setSelected(AVChatManager.getInstance().isMicrophoneMute());
-
                 break;
         }
 

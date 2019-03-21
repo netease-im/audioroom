@@ -16,6 +16,7 @@ import com.netease.audioroom.demo.cache.DemoCache;
 import com.netease.audioroom.demo.cache.RoomMemberCache;
 import com.netease.audioroom.demo.http.ChatRoomHttpClient;
 import com.netease.audioroom.demo.model.DemoRoomInfo;
+import com.netease.audioroom.demo.model.QueueMember;
 import com.netease.audioroom.demo.util.ToastHelper;
 import com.netease.audioroom.demo.widget.VerticalItemDecoration;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.ErrorCallback;
@@ -116,7 +117,12 @@ public class MuteMemberListActivity extends BaseActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK) {
-            muteList.add(data.getParcelableExtra(MemberActivity.MEMBERACTIVITY));
+            QueueMember queueMember = (QueueMember) data.getSerializableExtra(MemberActivity.MEMBERACTIVITY);
+            ChatRoomMember chatRoomMember = new ChatRoomMember();
+            chatRoomMember.setAccount(queueMember.getAccount());
+            chatRoomMember.setNick(queueMember.getNick());
+            chatRoomMember.setAvatar(queueMember.getAvatar());
+            muteList.add(chatRoomMember);
             //禁言
             if (muteList.size() == 0) {
                 recyclerView.setVisibility(View.GONE);
@@ -233,10 +239,9 @@ public class MuteMemberListActivity extends BaseActivity {
                 new ChatRoomHttpClient.ChatRoomHttpCallback() {
                     @Override
                     public void onSuccess(Object o) {
-                        if (isAllMute) {
+                        if (!isAllMute) {
                             muteAllMember.setText("取消全部禁麦");
                             ToastHelper.showToast("已全部禁麦");
-
                         } else {
                             muteAllMember.setText("全部禁言");
                             ToastHelper.showToast("取消全部禁麦");

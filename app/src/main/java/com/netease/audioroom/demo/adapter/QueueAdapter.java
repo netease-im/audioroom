@@ -41,7 +41,7 @@ public class QueueAdapter extends BaseAdapter<QueueInfo> {
                 viewHolder.ivStatusHint.setVisibility(View.GONE);
                 viewHolder.iv_user_status.setVisibility(View.VISIBLE);
                 viewHolder.iv_user_status.setImageResource(R.drawable.queue_add_member);
-                viewHolder.circle.setVisibility(View.INVISIBLE);
+                viewHolder.circle.setVisibility(View.GONE);
                 break;
             case QueueInfo.STATUS_LOAD:
                 viewHolder.iv_user_status.setVisibility(View.VISIBLE);
@@ -53,42 +53,40 @@ public class QueueAdapter extends BaseAdapter<QueueInfo> {
                     viewHolder.ivStatusHint.setImageResource(R.drawable.audio_be_muted_status);
                 }
                 viewHolder.tvNick.setText(queueMember.getAccount());
-                viewHolder.circle.setVisibility(View.INVISIBLE);
+                viewHolder.circle.setVisibility(View.GONE);
                 break;
 
             case QueueInfo.STATUS_NORMAL:
                 viewHolder.iv_user_status.setVisibility(View.GONE);
                 viewHolder.ivStatusHint.setVisibility(View.GONE);
+                viewHolder.circle.setVisibility(View.VISIBLE);
                 break;
-
             case QueueInfo.STATUS_CLOSE:
                 viewHolder.iv_user_status.setVisibility(View.VISIBLE);
                 viewHolder.ivStatusHint.setVisibility(View.GONE);
                 viewHolder.iv_user_status.setImageResource(R.drawable.close);
-                viewHolder.circle.setVisibility(View.INVISIBLE);
+                viewHolder.circle.setVisibility(View.GONE);
                 break;
-
             case QueueInfo.STATUS_FORBID:
                 viewHolder.iv_user_status.setVisibility(View.VISIBLE);
                 viewHolder.ivStatusHint.setVisibility(View.GONE);
                 viewHolder.iv_user_status.setImageResource(R.drawable.queue_close);
-                viewHolder.circle.setVisibility(View.INVISIBLE);
+                viewHolder.circle.setVisibility(View.GONE);
                 break;
-
             case QueueInfo.STATUS_BE_MUTED_AUDIO:
                 viewHolder.iv_user_status.setVisibility(View.GONE);
                 viewHolder.iv_user_status.setVisibility(View.GONE);
                 viewHolder.ivStatusHint.setVisibility(View.VISIBLE);
                 viewHolder.ivStatusHint.setImageResource(R.drawable.audio_be_muted_status);
+                viewHolder.circle.setVisibility(View.GONE);
                 break;
-
             case QueueInfo.STATUS_CLOSE_SELF_AUDIO:
             case QueueInfo.STATUS_CLOSE_SELF_AUDIO_AND_MUTED:
                 viewHolder.iv_user_status.setVisibility(View.GONE);
                 viewHolder.ivStatusHint.setVisibility(View.VISIBLE);
                 viewHolder.ivStatusHint.setImageResource(R.drawable.close_audio_status);
+                viewHolder.circle.setVisibility(View.GONE);
                 break;
-
         }
 
         if (queueMember != null && status == QueueInfo.STATUS_LOAD) {//请求麦位
@@ -99,6 +97,7 @@ public class QueueAdapter extends BaseAdapter<QueueInfo> {
             viewHolder.tvNick.setText(queueMember.getNick());
         } else {
             viewHolder.tvNick.setText("麦位" + (queueInfo.getIndex() + 1));
+            viewHolder.circle.setVisibility(View.GONE);
         }
 
     }

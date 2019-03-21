@@ -42,6 +42,7 @@ public class LoginManager implements ILoginAction {
             return;
         }
         LoginInfo loginInfo = new LoginInfo(accountInfo.account, accountInfo.token);
+        //服务器
         NIMClient.getService(AuthService.class).login(loginInfo).setCallback(new RequestCallback() {
             @Override
             public void onSuccess(Object o) {

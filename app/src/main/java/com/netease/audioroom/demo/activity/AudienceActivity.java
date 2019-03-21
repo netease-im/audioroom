@@ -296,8 +296,36 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     @Override
     protected void exitRoom() {
         //自动下麦
-        cancelLink();
-        release();
+        if (selfQueue != null) {
+            P2PNotificationHelper.cancelLink(selfQueue.getIndex(),
+                    DemoCache.getAccountInfo().account,
+                    roomInfo.getCreator(),
+                    new RequestCallback<Void>() {
+                        @Override
+                        public void onSuccess(Void aVoid) {
+                            int position = selfQueue.getIndex() + 1;
+                            String cancelTips = DemoCache.getAccountInfo().nick + "退出了麦位" + position;
+                            SimpleMessage simpleMessage = new SimpleMessage("", cancelTips, SimpleMessage.TYPE_MEMBER_CHANGE);
+                            msgAdapter.appendItem(simpleMessage);
+                            release();
+                            selfQueue = null;
+                        }
+
+                        @Override
+                        public void onFailed(int i) {
+                            ToastHelper.showToast("操作失败");
+                        }
+
+                        @Override
+                        public void onException(Throwable throwable) {
+                            ToastHelper.showToast("操作失败");
+                        }
+                    });
+        } else {
+            release();
+        }
+
+
     }
 
     @Override
@@ -317,7 +345,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             ToastHelper.showToast("您已在麦上");
             return;
         }
-
         P2PNotificationHelper.requestLink(queueInfo, DemoCache.getAccountInfo(), roomInfo.getCreator(), new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
@@ -370,7 +397,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         });
     }
 
-
     @Override
     protected void onQueueChange(ChatRoomQueueChangeAttachment queueChange) {
         super.onQueueChange(queueChange);
@@ -389,9 +415,9 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 if (selfQueue != null && queueInfo.getIndex() == selfQueue.getIndex()) {
                     linkBeRejected();
                 }
-            } else {
-                return;
             }
+            return;
+
         }
         switch (status) {
             case QueueInfo.STATUS_NORMAL:
@@ -428,6 +454,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             @Override
             public void onSuccess(Void aVoid) {
                 ToastHelper.showToast("已取消申请上麦");
+                selfQueue = null;
             }
 
             @Override
@@ -442,6 +469,35 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         });
     }
 
+    private void leaveQueue() {
+        P2PNotificationHelper.cancelLink(selfQueue.getIndex(),
+                DemoCache.getAccountInfo().account,
+                roomInfo.getCreator(),
+                new RequestCallback<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        ToastHelper.showToast("您已下麦");
+                        updateAudioSwitchVisible(false);
+                        updateRole(true);
+                        int position = selfQueue.getIndex() + 1;
+                        String cancelTips = DemoCache.getAccountInfo().nick + "退出了麦位" + position;
+                        SimpleMessage simpleMessage = new SimpleMessage("", cancelTips, SimpleMessage.TYPE_MEMBER_CHANGE);
+                        msgAdapter.appendItem(simpleMessage);
+                        selfQueue = null;
+                    }
+
+                    @Override
+                    public void onFailed(int i) {
+                        ToastHelper.showToast("操作失败");
+                    }
+
+                    @Override
+                    public void onException(Throwable throwable) {
+                        ToastHelper.showToast("操作失败");
+                    }
+                });
+
+    }
 
     @Override
     public void linkBeRejected() {
@@ -454,6 +510,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             tipsDialog.dismiss();
             if (topTipsDialog != null) {
                 topTipsDialog.dismiss();
+                selfQueue = null;
             }
         });
     }
@@ -551,6 +608,9 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
 
     @Override
     public void beMutedAudio(QueueInfo queueInfo) {
+        if (topTipsDialog != null) {
+            topTipsDialog.dismiss();
+        }
         TipsDialog tipsDialog = new TipsDialog();
         Bundle bundle = new Bundle();
         bundle.putString(tipsDialog.TAG,
@@ -560,6 +620,8 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         tipsDialog.setClickListener(() -> tipsDialog.dismiss());
         selfQueue = queueInfo;
         AVChatManager.getInstance().muteLocalAudio(true);
+        updateRole(true);
+
     }
 
 
@@ -636,6 +698,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
 
     @Override
     protected void beMutedText() {
+
         edtInput.setHint("您已被禁言");
         edtInput.setFocusable(false);
         edtInput.setFocusableInTouchMode(false);
@@ -660,31 +723,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 cancelLinkRequest(queueInfo);
                 break;
             case "下麦":
-                P2PNotificationHelper.cancelLink(selfQueue.getIndex(),
-                        DemoCache.getAccountInfo().account,
-                        roomInfo.getCreator(),
-                        new RequestCallback<Void>() {
-                            @Override
-                            public void onSuccess(Void aVoid) {
-                                ToastHelper.showToast("您已下麦");
-                                updateAudioSwitchVisible(false);
-                                updateRole(true);
-                                String cancelTips = DemoCache.getAccountInfo().nick + "退出了麦位" + selfQueue.getIndex() + 1;
-                                selfQueue = null;
-                                ChatRoomMessage chatRoomMessage = ChatRoomMessageBuilder.createChatRoomTextMessage(roomInfo.getRoomId(), cancelTips);
-                                chatRoomService.sendMessage(chatRoomMessage, false);
-                                msgAdapter.appendItem(new SimpleMessage(DemoCache.getAccountInfo().nick, cancelTips, SimpleMessage.TYPE_NORMAL_MESSAGE));
-                            }
-
-                            @Override
-                            public void onFailed(int i) {
-                            }
-
-                            @Override
-                            public void onException(Throwable throwable) {
-
-                            }
-                        });
+                leaveQueue();
                 break;
             case "取消":
                 dialog.dismiss();

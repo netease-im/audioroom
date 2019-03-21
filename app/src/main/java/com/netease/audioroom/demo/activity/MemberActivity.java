@@ -26,6 +26,7 @@ import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.ErrorCallbac
 import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMember;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -126,9 +127,9 @@ public class MemberActivity extends BaseActivity {
                         recyclerView.setAdapter(adapter);
                         adapter.setItemClickListener((m, p) -> {
                             //数据是使用Intent返回
-                            ChatRoomMember roomMember = chatRoomMembers.get(p);
+                            QueueMember roomMember = m;
                             Intent intent = new Intent();
-                            intent.putExtra(MEMBERACTIVITY, (Parcelable) roomMember);
+                            intent.putExtra(MEMBERACTIVITY,  roomMember);
                             setResult(RESULT_OK, intent);
                             finish();
                         });
@@ -178,11 +179,10 @@ public class MemberActivity extends BaseActivity {
             }
             for (QueueInfo queueInfo : mQueueInfoList) {
                 if (queueInfo.getQueueMember() != null
-                        && queueInfo.getQueueMember().equals(queueMember)
-                        && (queueInfo.getStatus() == QueueInfo.STATUS_LOAD ||
-                        (queueInfo.getStatus() == QueueInfo.STATUS_INIT
-                                && queueInfo.getReason() == QueueInfo.Reason.kickByHost))) {
-                    queueMembers.add(queueMember);
+                        && queueInfo.getQueueMember().equals(queueMember)) {
+                    if (!(QueueInfo.hasOccupancy(queueInfo)) || queueInfo.getStatus() == QueueInfo.STATUS_LOAD) {
+                        queueMembers.add(queueMember);
+                    }
                 }
             }
         }
@@ -196,7 +196,6 @@ public class MemberActivity extends BaseActivity {
                 queueMembers.add(new QueueMember(chatRoomMember.getAccount(), chatRoomMember.getNick(), chatRoomMember.getAvatar()));
             }
         }
-
 
         return queueMembers;
 

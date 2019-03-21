@@ -174,7 +174,7 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
     private Observer<List<ChatRoomMessage>> messageObserver = new Observer<List<ChatRoomMessage>>() {
         @Override
         public void onEvent(List<ChatRoomMessage> chatRoomMessages) {
-            if (chatRoomMessages == null || chatRoomMessages.isEmpty()) {
+            if (chatRoomMessages == null || chatRoomMessages.isEmpty() || roomInfo == null) {
                 return;
             }
             StringBuffer logInfo = new StringBuffer();
@@ -209,7 +209,10 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
                             logInfo.append("成员被禁言：nick list =  ").append(addMuteMember.getTargetNicks()).
                                     append(" , account list = ").append(addMuteMember.getTargets());
                             memberMuteAdd(addMuteMember);
-                            beMutedText();
+                            if (DemoCache.getAccountId().equals(addMuteMember.getOperator())) {
+                                beMutedText();
+                            }
+
                             break;
                         //成员被解除禁言
                         case ChatRoomMemberTempMuteRemove:
@@ -234,6 +237,12 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
                             for (String key : queuePartClear.getContentMap().keySet()) {
                                 logInfo.append("key = " + key + ", value= " + queuePartClear.getContentMap().get(key)).append(" ");
                             }
+                            break;
+                        case ChatRoomRoomMuted:
+                            beMutedText();
+                            break;
+                        case ChatRoomRoomDeMuted:
+                            cancelMute();
                             break;
                         case ChatRoomInfoUpdated:
                             NIMClient.getService(ChatRoomService.class).fetchRoomInfo(roomInfo.getRoomId())
@@ -263,12 +272,10 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
 
                                         @Override
                                         public void onFailed(int code) {
-                                            // 失败
                                         }
 
                                         @Override
                                         public void onException(Throwable exception) {
-                                            // 错误
                                         }
                                     });
                             break;
@@ -464,7 +471,12 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
             queueInfoList.set(queueInfo.getIndex(), queueInfo);
             QueueMember member = queueInfo.getQueueMember();
             if (member != null && TextUtils.equals(member.getAccount(), DemoCache.getAccountId())) {
-                selfQueue = queueInfo;
+                if (QueueInfo.hasOccupancy(queueInfo)) {
+                    selfQueue = queueInfo;
+                } else {
+                    selfQueue = null;
+                }
+
             }
         }
         queueAdapter.setItems(queueInfoList);
@@ -647,12 +659,14 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
             public void onFailed(int code) {
                 //ToastHelper.showToast("加入音频房间失败， code = " + code);
                 finish();
+                Log.e(TAG, "joinAudioRoom + onFailed");
             }
 
             @Override
             public void onException(Throwable exception) {
                 // ToastHelper.showToast("加入音频房间失败 , e =" + exception.getMessage());
                 finish();
+                Log.e(TAG, "joinAudioRoom + onException");
             }
         });
 
@@ -757,6 +771,9 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
     }
 
     private void updateStatus(int volume, int itemIndex) {
+        if (rcyQueueRecyclerView == null) {
+            return;
+        }
         ImageView circle = rcyQueueRecyclerView.getLayoutManager().findViewByPosition(itemIndex).findViewById(R.id.circle);
         if (volume == 0) {
             circle.setVisibility(View.INVISIBLE);
