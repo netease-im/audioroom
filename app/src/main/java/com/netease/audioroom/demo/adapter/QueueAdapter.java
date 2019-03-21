@@ -42,7 +42,6 @@ public class QueueAdapter extends BaseAdapter<QueueInfo> {
                 viewHolder.iv_user_status.setVisibility(View.VISIBLE);
                 viewHolder.iv_user_status.setImageResource(R.drawable.queue_add_member);
                 viewHolder.circle.setVisibility(View.INVISIBLE);
-
                 break;
             case QueueInfo.STATUS_LOAD:
                 viewHolder.iv_user_status.setVisibility(View.VISIBLE);

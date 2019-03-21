@@ -392,10 +392,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             } else {
                 return;
             }
-
         }
-
-
         switch (status) {
             case QueueInfo.STATUS_NORMAL:
                 queueLinkNormal(queueInfo);
@@ -445,6 +442,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         });
     }
 
+
     @Override
     public void linkBeRejected() {
         TipsDialog tipsDialog = new TipsDialog();
@@ -474,10 +472,10 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 tipsDialog.setArguments(bundle);
                 tipsDialog.show(getSupportFragmentManager(), tipsDialog.TAG);
                 tipsDialog.setClickListener(() -> {
+                    tipsDialog.dismiss();
                     if (topTipsDialog != null) {
                         topTipsDialog.dismiss();
                     }
-                    tipsDialog.dismiss();
                 });
                 break;
             //主播同意上麦
@@ -506,26 +504,23 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         updateAudioSwitchVisible(true);
         updateRole(false);
         selfQueue = queueInfo;
-        String cancelTips = DemoCache.getAccountInfo().nick + "进入了麦位" + selfQueue.getIndex();
+        int position = selfQueue.getIndex() + 1;
+        String cancelTips = DemoCache.getAccountInfo().nick + "进入了麦位" + position;
         SimpleMessage simpleMessage = new SimpleMessage("", cancelTips, SimpleMessage.TYPE_MEMBER_CHANGE);
         msgAdapter.appendItem(simpleMessage);
     }
 
     @Override
     public void removed(QueueInfo queueInfo) {
-        switch (queueInfo.getReason()) {
-            case QueueInfo.Reason.kickByHost:
-                TipsDialog tipsDialog = new TipsDialog();
-                Bundle bundle = new Bundle();
-                bundle.putString(tipsDialog.TAG, "您已被主播请下麦位");
-                tipsDialog.setArguments(bundle);
-                tipsDialog.show(getSupportFragmentManager(), tipsDialog.TAG);
-                tipsDialog.setClickListener(() -> tipsDialog.dismiss());
-                updateAudioSwitchVisible(false);
-                updateRole(true);
-                selfQueue = null;
-                break;
-        }
+        TipsDialog tipsDialog = new TipsDialog();
+        Bundle bundle = new Bundle();
+        bundle.putString(tipsDialog.TAG, "您已被主播请下麦位");
+        tipsDialog.setArguments(bundle);
+        tipsDialog.show(getSupportFragmentManager(), tipsDialog.TAG);
+        tipsDialog.setClickListener(() -> tipsDialog.dismiss());
+        updateAudioSwitchVisible(false);
+        updateRole(true);
+        selfQueue = null;
     }
 
     @Override

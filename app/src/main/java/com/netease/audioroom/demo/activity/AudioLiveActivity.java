@@ -163,7 +163,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
 
     }
 
-
     @Override
     protected void onResume() {
         super.onResume();
@@ -215,52 +214,62 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
             ChatRoomMember chatRoomMember = data.getParcelableExtra(MemberActivity.MEMBERACTIVITY);
             QueueMember queueMember = new QueueMember(chatRoomMember.getAccount(), chatRoomMember.getNick(), chatRoomMember.getAvatar());
             //判断当前用户是否离开
-            chatRoomService.fetchQueue(roomInfo.getRoomId()).setCallback(new RequestCallback<List<Entry<String, String>>>() {
+            RoomMemberCache.getInstance().fetchMembers(roomInfo.getRoomId(), 0, 100000, new RequestCallback<List<ChatRoomMember>>() {
                 @Override
-                public void onSuccess(List<Entry<String, String>> param) {
-                    ArrayList<QueueMember> queueMemberArrayList = new ArrayList<>();
-                    ArrayList<QueueInfo> queueInfoArrayList = getQueueList(param);
-                    for (QueueInfo queueInfo : queueInfoArrayList) {
-                        queueMemberArrayList.add(queueInfo.getQueueMember());
+                public void onSuccess(List<ChatRoomMember> param) {
+                    ArrayList<QueueMember> allQueueMemberArrayList = new ArrayList<>();
+                    for (ChatRoomMember chatRoomMember : param) {
+                        allQueueMemberArrayList.add(new QueueMember(chatRoomMember.getAccount(), chatRoomMember.getNick(), chatRoomMember.getAvatar()));
                     }
-                    boolean isQueue = false;
-                    for (QueueMember q : queueMemberArrayList) {
-                        if (q != null && q.getAccount().equals(queueMember.getAccount())) {
-                            isQueue = true;
-                            break;
-                        }
-                    }
-                    if (isQueue) {
-                        invitedLink(new QueueInfo(inviteIndex, queueMember, QueueInfo.STATUS_NORMAL, QueueInfo.Reason.inviteByHost));
-                    } else {
-                        for (QueueInfo q : queueInfoArrayList) {
-                            if (q.getQueueMember() != null && q.getQueueMember().equals(queueMember)) {
-                                if (q.getStatus() != QueueInfo.STATUS_LOAD) {
-                                    ToastHelper.showToast("操作失败:当前用户已在麦位上");
-                                } else {
-                                    rejectLink(q);
+                    if (allQueueMemberArrayList.contains(queueMember)) {//用户没有离开房间
+                        chatRoomService.fetchQueue(roomInfo.getRoomId()).setCallback(new RequestCallback<List<Entry<String, String>>>() {
+                            @Override
+                            public void onSuccess(List<Entry<String, String>> param) {
+                                boolean isInQueue = false;
+                                ArrayList<QueueInfo> allQueueInfoArrayList = getQueueList(param);
+                                for (QueueInfo q : allQueueInfoArrayList) {
+                                    if (q.getQueueMember() != null && q.getQueueMember().equals(queueMember)) {//存在于列表中
+                                        if (q.getStatus() != QueueInfo.STATUS_LOAD) {
+                                            ToastHelper.showToast("操作失败:当前用户已在麦位上");
+                                            isInQueue = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (!isInQueue) {
                                     invitedLink(new QueueInfo(inviteIndex, queueMember, QueueInfo.STATUS_NORMAL, QueueInfo.Reason.inviteByHost));
+
                                 }
                             }
 
-                        }
+                            @Override
+                            public void onFailed(int code) {
+
+                            }
+
+                            @Override
+                            public void onException(Throwable exception) {
+
+                            }
+                        });
+
+                    } else {
+                        ToastHelper.showToast("操作失败:用户离开房间");
 
                     }
+
                 }
 
                 @Override
                 public void onFailed(int code) {
-                    ToastHelper.showToast("操作失败");
 
                 }
 
                 @Override
                 public void onException(Throwable exception) {
-                    ToastHelper.showToast("操作失败");
 
                 }
             });
-
         }
     }
 
@@ -892,6 +901,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
     public void invitedLink(QueueInfo queueInfo) {
         queueInfo.setStatus(QueueInfo.STATUS_NORMAL);
         queueInfo.setReason(QueueInfo.Reason.inviteByHost);
+
         chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString()).setCallback(new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
@@ -917,7 +927,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
         queueInfo.setStatus(QueueInfo.STATUS_INIT);
         queueInfo.setReason(QueueInfo.Reason.kickByHost);
         String Tempname = queueInfo.getQueueMember().getNick();
-        queueInfo.setQueueMember(null);
         chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(),
                 queueInfo.toString()).setCallback(new RequestCallback<Void>() {
             @Override

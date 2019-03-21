@@ -97,7 +97,7 @@ public class MemberActivity extends BaseActivity {
     }
 
     private void getlist() {
-        RoomMemberCache.getInstance().fetchMembers(roomId, 0, 10, new RequestCallback<List<ChatRoomMember>>() {
+        RoomMemberCache.getInstance().fetchMembers(roomId, 0, 100, new RequestCallback<List<ChatRoomMember>>() {
             @Override
             public void onSuccess(List<ChatRoomMember> chatRoomMembers) {
                 if (chatRoomMembers.size() == 0) {
@@ -159,10 +159,6 @@ public class MemberActivity extends BaseActivity {
                 loadService.showCallback(ErrorCallback.class);
             }
         });
-
-
-        //去除已经禁言的用户
-
     }
 
     //去除麦位上除申请的用户
@@ -174,7 +170,6 @@ public class MemberActivity extends BaseActivity {
                 mQueueMembers.add(queueInfo.getQueueMember());
             }
         }
-
         for (ChatRoomMember chatRoomMember : chatRoomMembers) {
             QueueMember queueMember = new QueueMember(chatRoomMember.getAccount(), chatRoomMember.getNick(), chatRoomMember.getAvatar());
             if (!mQueueMembers.contains(queueMember)) {
@@ -182,7 +177,11 @@ public class MemberActivity extends BaseActivity {
                 continue;
             }
             for (QueueInfo queueInfo : mQueueInfoList) {
-                if (queueInfo.getQueueMember() != null && queueInfo.getQueueMember().equals(queueMember) && queueInfo.getStatus() == QueueInfo.STATUS_LOAD) {
+                if (queueInfo.getQueueMember() != null
+                        && queueInfo.getQueueMember().equals(queueMember)
+                        && (queueInfo.getStatus() == QueueInfo.STATUS_LOAD ||
+                        (queueInfo.getStatus() == QueueInfo.STATUS_INIT
+                                && queueInfo.getReason() == QueueInfo.Reason.kickByHost))) {
                     queueMembers.add(queueMember);
                 }
             }
