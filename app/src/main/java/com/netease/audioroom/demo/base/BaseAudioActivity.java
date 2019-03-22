@@ -194,34 +194,40 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
                             memberIn(memberIn);
                             updateRoonInfo();
                             break;
+
                         // 成员退出聊天室
                         case ChatRoomMemberExit:
                             ChatRoomQueueChangeAttachment memberExit = (ChatRoomQueueChangeAttachment) message.getAttachment();
                             logInfo.append("成员退出聊天室：nick = ").append(memberExit.getOperatorNick()).
                                     append(",  account = ").append(memberExit.getOperator());
                             memberExit(memberExit);
-
                             updateRoonInfo();
                             break;
                         //成员被禁言
                         case ChatRoomMemberTempMuteAdd:
                             ChatRoomTempMuteAddAttachment addMuteMember = (ChatRoomTempMuteAddAttachment) message.getAttachment();
                             logInfo.append("成员被禁言：nick list =  ").append(addMuteMember.getTargetNicks()).
-                                    append(" , account list = ").append(addMuteMember.getTargets());
-                            memberMuteAdd(addMuteMember);
-                            if (DemoCache.getAccountId().equals(addMuteMember.getOperator())) {
+                                    append(" , account list = ")
+                                    .append(addMuteMember.getTargets())
+                                    .append(", 本地account = ")
+                                    .append(DemoCache.getAccountInfo().account);
+                            if (DemoCache.getAccountInfo() != null && DemoCache.getAccountInfo().account
+                                    .equals(addMuteMember.getTargets().get(0))) {
+                                memberMuteAdd(addMuteMember);
                                 beMutedText();
                             }
-
                             break;
                         //成员被解除禁言
                         case ChatRoomMemberTempMuteRemove:
                             ChatRoomTempMuteRemoveAttachment muteRemove = (ChatRoomTempMuteRemoveAttachment) message.getAttachment();
                             logInfo.append("成员被解除禁言：nick list =  ").append(muteRemove.getTargetNicks()).
                                     append(" , account list = ").append(muteRemove.getTargets());
-                            cancelMute();
-                            memberMuteRemove(muteRemove);
+                            if (DemoCache.getAccountInfo() != null && DemoCache.getAccountInfo().nick.equals(muteRemove.getTargetNicks().get(0))) {
+                                cancelMute();
+                                memberMuteRemove(muteRemove);
+                            }
                             break;
+
                         //队列变更
                         case ChatRoomQueueChange:
                             ChatRoomQueueChangeAttachment queueChange = (ChatRoomQueueChangeAttachment) message.getAttachment();
@@ -230,6 +236,7 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
                                     .append(", value = ").append(queueChange.getContent());
                             onQueueChange(queueChange);
                             break;
+
                         //队列批量变更，好像没用了
                         case ChatRoomQueueBatchChange:
                             ChatRoomPartClearAttachment queuePartClear = (ChatRoomPartClearAttachment) message.getAttachment();
@@ -238,12 +245,15 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
                                 logInfo.append("key = " + key + ", value= " + queuePartClear.getContentMap().get(key)).append(" ");
                             }
                             break;
+
                         case ChatRoomRoomMuted:
                             beMutedText();
                             break;
+
                         case ChatRoomRoomDeMuted:
                             cancelMute();
                             break;
+
                         case ChatRoomInfoUpdated:
                             NIMClient.getService(ChatRoomService.class).fetchRoomInfo(roomInfo.getRoomId())
                                     .setCallback(new RequestCallback<ChatRoomInfo>() {
@@ -493,14 +503,21 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
         edtInput.setText("");
     }
 
-
     protected void messageInComing(ChatRoomMessage message) {
         if (message.getMsgType() != MsgTypeEnum.text) {
             return;
         }
-        msgAdapter.appendItem(new SimpleMessage(message.getChatRoomMessageExtension().getSenderNick(),
-                message.getContent(),
-                SimpleMessage.TYPE_NORMAL_MESSAGE));
+        if (message.getRemoteExtension() != null && message.getRemoteExtension().get("type").equals(1)) {
+            SimpleMessage simpleMessage = new SimpleMessage("", "“"
+                    + message.getChatRoomMessageExtension().getSenderNick() + "”" + message.getContent(),
+                    SimpleMessage.TYPE_MEMBER_CHANGE);
+            msgAdapter.appendItem(simpleMessage);
+
+        } else {
+            msgAdapter.appendItem(new SimpleMessage(message.getChatRoomMessageExtension().getSenderNick(),
+                    message.getContent(),
+                    SimpleMessage.TYPE_NORMAL_MESSAGE));
+        }
         scrollToBottom();
     }
 
@@ -584,7 +601,7 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
 
     }
 
-    private void scrollToBottom() {
+    protected void scrollToBottom() {
         msgLayoutManager.scrollToPosition(msgAdapter.getItemCount() - 1);
     }
 
@@ -671,7 +688,7 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
 
     }
 
-    private void updateRoonInfo() {
+    protected void updateRoonInfo() {
         chatRoomService.fetchRoomInfo(roomInfo.getRoomId()).setCallback(new RequestCallback<ChatRoomInfo>() {
             @Override
             public void onSuccess(ChatRoomInfo param) {
@@ -703,7 +720,7 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
                 for (QueueInfo queueInfo : getQueueList(param)) {
                     //主播
                     if (speakers.containsKey(creater)) {
-                        if (findVolumeStep(speakers.get(creater)) == 0) {
+                        if (findVolumeStep(speakers.get(creater)) == 0 || ivRoomAudioSwitch.isSelected()) {
                             circle.setVisibility(View.INVISIBLE);
                         } else {
                             circle.setVisibility(View.VISIBLE);
@@ -712,7 +729,7 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
                     //观众
                     if (queueInfo != null && queueInfo.getQueueMember() != null) {
                         if (speakers.containsKey(queueInfo.getQueueMember().getAccount())) {
-                            if (!QueueInfo.hasOccupancy(queueInfo)) {
+                            if (!QueueInfo.hasOccupancy(queueInfo) || ivRoomAudioSwitch.isSelected()) {
                                 updateStatus(0, queueInfo.getIndex());
                             } else {
                                 updateStatus(findVolumeStep(speakers.get(queueInfo.getQueueMember().getAccount())), queueInfo.getIndex());

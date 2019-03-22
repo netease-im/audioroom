@@ -121,7 +121,7 @@ public class MuteMemberListActivity extends BaseActivity {
             chatRoomMember.setAccount(queueMember.getAccount());
             chatRoomMember.setNick(queueMember.getNick());
             chatRoomMember.setAvatar(queueMember.getAvatar());
-            muteList.add(chatRoomMember);
+            muteList.add(0,chatRoomMember);
             //禁言
             if (muteList.size() == 0) {
                 recyclerView.setVisibility(View.GONE);
@@ -129,17 +129,17 @@ public class MuteMemberListActivity extends BaseActivity {
             } else {
                 empty_view.setVisibility(View.GONE);
                 recyclerView.setVisibility(View.VISIBLE);
-                MemberOption option = new MemberOption(roomInfo.getRoomId(), muteList.get(0).getAccount());
+                MemberOption option = new MemberOption(roomInfo.getRoomId(), chatRoomMember.getAccount());
                 //临时禁言30天
                 NIMClient.getService(ChatRoomService.class).markChatRoomTempMute(true, muteTime, option)
                         .setCallback(new RequestCallback<Void>() {
                             @Override
                             public void onSuccess(Void param) {
-                                ToastHelper.showToast("禁言成功" + "\t 解禁成员" + option.getAccount());
+                                ToastHelper.showToast(option.getAccount() + "已被禁言");
                                 // 成功
                                 ArrayList<String> accountList = new ArrayList<>();
                                 for (String account : accountList) {
-                                    accountList.add(account);
+                                    accountList.add(0, account);
                                 }
                                 adapter = new MuteMemberListAdapter(mContext, muteList);
                                 recyclerView.setAdapter(adapter);
@@ -262,7 +262,7 @@ public class MuteMemberListActivity extends BaseActivity {
                 .setCallback(new RequestCallback<Void>() {
                     @Override
                     public void onSuccess(Void param) {
-                        ToastHelper.showToast("解禁成功" + "\t 解禁成员" + member.getAccount());
+                        ToastHelper.showToast(option.getAccount() + "已被解除禁言");
                         muteList.remove(p);
                         if (muteList.size() == 0) {
                             adapter.notifyDataSetChanged();

@@ -229,7 +229,14 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                     for (ChatRoomMember chatRoomMember : param) {
                         allQueueMemberArrayList.add(new QueueMember(chatRoomMember.getAccount(), chatRoomMember.getNick(), chatRoomMember.getAvatar()));
                     }
-                    if (allQueueMemberArrayList.contains(queueMember)) {//用户没有离开房间
+                    boolean isContains = false;
+                    for (QueueMember member : allQueueMemberArrayList) {
+                        if (member != null && member.getAccount() != null && member.getAccount().equals(queueMember.getAccount())) {
+                            isContains = true;
+                            break;
+                        }
+                    }
+                    if (isContains) {//用户没有离开房间
                         chatRoomService.fetchQueue(roomInfo.getRoomId()).setCallback(new RequestCallback<List<Entry<String, String>>>() {
                             @Override
                             public void onSuccess(List<Entry<String, String>> param) {
@@ -888,8 +895,57 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
     }
 
     protected void memberExit(ChatRoomQueueChangeAttachment memberExit) {
+        /*更新申请列表*/
+        if (requestMemberList != null && requestMemberList.size() > 0) {
+            Iterator<QueueInfo> queueInfoIterator = requestMemberList.iterator();
+            while (queueInfoIterator.hasNext()) {
+                QueueInfo q = queueInfoIterator.next();
+                if (q.getQueueMember() != null && q.getQueueMember().getAccount().equals(memberExit.getOperator())) {
+                    queueInfoIterator.remove();
+                }
+            }
+            if (requestMemberList.size() == 0) {
+                if (requestLinkDialog != null)
+                    requestLinkDialog.dismiss();
+                semicircleView.setVisibility(View.GONE);
+            } else {
+                if (requestLinkDialog != null)
+                    requestLinkDialog.updateDate();
+                semicircleView.setText(requestMemberList.size());
+            }
+        }
+
+        /*更新队列*/
+        chatRoomService.fetchQueue(roomInfo.getRoomId()).setCallback(new RequestCallback<List<Entry<String, String>>>() {
+            @Override
+            public void onSuccess(List<Entry<String, String>> param) {
+                ArrayList<QueueInfo> queueInfoArrayList = getQueueList(param);
+                for (QueueInfo queueInfo : queueInfoArrayList) {
+                    if (queueInfo.getQueueMember() != null
+                            && queueInfo.getQueueMember().getAccount().equals(memberExit.getOperator())
+                            && (QueueInfo.hasOccupancy(queueInfo) || queueInfo.getStatus() == QueueInfo.STATUS_LOAD)) {
+                        if (queueInfo.getStatus() == QueueInfo.STATUS_LOAD) {
+                            rejectLink(queueInfo);
+                        } else {
+                            removeLink(queueInfo);
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onFailed(int code) {
+
+            }
+
+            @Override
+            public void onException(Throwable exception) {
+
+            }
+        });
         super.memberExit(memberExit);
         RoomMemberCache.getInstance().removeMember(roomInfo.getRoomId(), memberExit.getOperator());
+
     }
 
     protected void memberIn(ChatRoomRoomMemberInAttachment memberIn) {
@@ -900,12 +956,12 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
         RoomMemberCache.getInstance().fetchMember(roomInfo.getRoomId(), memberIn.getOperator(), null);
     }
 
+
     //邀请上麦
     @Override
     public void invitedLink(QueueInfo queueInfo) {
         queueInfo.setStatus(QueueInfo.STATUS_NORMAL);
         queueInfo.setReason(QueueInfo.Reason.inviteByHost);
-
         chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString()).setCallback(new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
@@ -922,7 +978,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                 ToastHelper.showToast("通过连麦请求异常 ， e = " + throwable);
             }
         });
-
     }
 
     //踢人下麦
@@ -1098,7 +1153,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                 chatRoomService.fetchQueue(roomInfo.getRoomId()).setCallback(new RequestCallback<List<Entry<String, String>>>() {
                     @Override
                     public void onSuccess(List<Entry<String, String>> param) {
-
                         MemberActivity.startRepeat(AudioLiveActivity.this, roomInfo.getRoomId(), getQueueList(param));
                     }
 

@@ -42,7 +42,7 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
     RecyclerView mRecyclerView;
     ArrayList<DemoRoomInfo> mRoomList;
 
-    private int limitPage =50;
+    private int limitPage = 50;
     private int addPage = 20;
 
 
@@ -227,9 +227,13 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
             view.setOnClickListener((v) -> {
                 loadService.showCallback(LoadingCallback.class);
                 if (Network.getInstance().isConnected()) {
-                    new Handler().postDelayed(() -> onNetWork(), 10 * 000); // 延时10秒
+                    new Handler().postDelayed(() -> onNetWork(), 10 * 1000); // 延时10秒
                 } else {
-                    new Handler().postDelayed(() -> loadService.showCallback(NetErrCallback.class), 10000);
+                    new Handler().postDelayed(() -> {
+                        loadService.showCallback(NetErrCallback.class);
+                        loadService.setCallBack(NetErrCallback.class, (c, view1) -> netErrCallback()
+                        );
+                    }, 10 * 1000);
                 }
             });
         });

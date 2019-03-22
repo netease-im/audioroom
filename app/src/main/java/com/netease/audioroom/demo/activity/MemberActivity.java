@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -26,7 +25,6 @@ import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.ErrorCallbac
 import com.netease.nimlib.sdk.RequestCallback;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMember;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -120,16 +118,15 @@ public class MemberActivity extends BaseActivity {
                     } else {
                         queueMembers = repeatMuteList(chatRoomMembers);
                     }
-
                     if (queueMembers != null && queueMembers.size() != 0) {
                         adapter = new MemberListAdapter(queueMembers, mContext);
                         recyclerView.setLayoutManager(new LinearLayoutManager(mContext));
                         recyclerView.setAdapter(adapter);
                         adapter.setItemClickListener((m, p) -> {
                             //数据是使用Intent返回
-                            QueueMember roomMember = m;
+                            QueueMember roomMember = queueMembers.get(p);
                             Intent intent = new Intent();
-                            intent.putExtra(MEMBERACTIVITY,  roomMember);
+                            intent.putExtra(MEMBERACTIVITY, roomMember);
                             setResult(RESULT_OK, intent);
                             finish();
                         });
@@ -145,9 +142,7 @@ public class MemberActivity extends BaseActivity {
                             });
                         });
                     }
-
                 }
-
             }
 
             @Override
@@ -196,9 +191,7 @@ public class MemberActivity extends BaseActivity {
                 queueMembers.add(new QueueMember(chatRoomMember.getAccount(), chatRoomMember.getNick(), chatRoomMember.getAvatar()));
             }
         }
-
         return queueMembers;
-
     }
 
 }

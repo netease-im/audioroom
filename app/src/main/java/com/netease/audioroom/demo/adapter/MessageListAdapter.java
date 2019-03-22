@@ -33,7 +33,6 @@ public class MessageListAdapter extends BaseAdapter<SimpleMessage> {
         if (message == null) {
             return;
         }
-
         if (message.type == SimpleMessage.TYPE_NORMAL_MESSAGE) {
             msgHolder.tvNick.setText(message.nick + "：");
             msgHolder.tvContent.setText(message.content);
@@ -46,7 +45,6 @@ public class MessageListAdapter extends BaseAdapter<SimpleMessage> {
 
 
     private static class MsgHolder extends RecyclerView.ViewHolder {
-
         TextView tvNick;
         TextView tvContent;
 

@@ -49,8 +49,8 @@
         android:id="@+id/iv_user_status_hint"
         android:layout_width="15dp"
         android:layout_height="15dp"
+        android:layout_below="@+id/iv_user_avatar"
         android:layout_alignRight="@+id/iv_user_avatar"
-        android:layout_alignBottom="@+id/iv_user_avatar"
         tools:visibility="visible" />
 
 

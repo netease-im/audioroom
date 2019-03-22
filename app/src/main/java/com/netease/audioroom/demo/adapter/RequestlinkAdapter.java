@@ -3,6 +3,7 @@ package com.netease.audioroom.demo.adapter;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -47,18 +48,16 @@ public class RequestlinkAdapter extends BaseAdapter<QueueInfo> {
         }
         QueueViewHolder viewHolder = (QueueViewHolder) holder;
         QueueMember member = queueInfo.getQueueMember();
+
         if (member != null) {
+            int index = queueInfo.getIndex() + 1;
             CommonUtil.loadImage(context, member.getAvatar(), viewHolder.ivAvatar, R.drawable.nim_avatar_default, 0);
-        }
-        int index = queueInfo.getIndex() + 1;
-        if (member != null) {
             viewHolder.tvContent.setText(member.getNick() + "\t申请麦位(" + index + ")");
             viewHolder.ivRefuse.setOnClickListener((v) -> requestAction.refuse(queueInfo));
             viewHolder.ivAfree.setOnClickListener((v) -> requestAction.agree(queueInfo));
-        }else {
-
+        } else {
+            Log.e("偶现看不到申请者情形", member.toString());
         }
-
 
 
     }

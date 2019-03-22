@@ -37,6 +37,7 @@ public class QueueInfo implements Serializable, Parcelable {
         int cancelApplyByHost = 6;//被拒绝
         int applyInMute = 7;//麦位在屏蔽状态中被申请
         int cancelMuted = 8;//麦位取消屏蔽状态
+
     }
 
     /**

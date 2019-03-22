@@ -93,6 +93,7 @@
         <ImageView
             android:id="@+id/iv_close_room_audio_switch"
             style="@style/Base_Audio_UI_Switch"
+            android:layout_width="wrap_content"
             android:src="@drawable/room_audio_switch" />
 
         <!--连麦者主动下麦-->

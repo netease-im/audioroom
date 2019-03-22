@@ -52,7 +52,9 @@ import com.netease.nimlib.sdk.util.Entry;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.netease.audioroom.demo.dialog.BottomMenuDialog.BOTTOMMENUS;
 
@@ -304,11 +306,13 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                         @Override
                         public void onSuccess(Void aVoid) {
                             int position = selfQueue.getIndex() + 1;
-                            String cancelTips = DemoCache.getAccountInfo().nick + "退出了麦位" + position;
-                            SimpleMessage simpleMessage = new SimpleMessage("", cancelTips, SimpleMessage.TYPE_MEMBER_CHANGE);
-                            msgAdapter.appendItem(simpleMessage);
-                            release();
+                            ChatRoomMessage message = ChatRoomMessageBuilder.createChatRoomTextMessage(roomInfo.getRoomId(), "退出了麦位" + position);
+                            Map<String, Object> ex = new HashMap<>();
+                            ex.put("type", 1);
+                            message.setRemoteExtension(ex);
+                            chatRoomService.sendMessage(message, false);
                             selfQueue = null;
+                            release();
                         }
 
                         @Override
@@ -376,7 +380,8 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                                 break;
                             case "取消":
                                 bottomButtonAction(bottomMenuDialog, queueInfo, "取消");
-                                topTipsDialog.show(getSupportFragmentManager(), topTipsDialog.TAG);
+                                if (selfQueue != null && selfQueue.getStatus() == QueueInfo.STATUS_LOAD)
+                                    topTipsDialog.show(getSupportFragmentManager(), topTipsDialog.TAG);
                                 break;
                         }
 
@@ -469,7 +474,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         });
     }
 
-    private void leaveQueue() {
+    private void leaveQueueBySelf() {
         P2PNotificationHelper.cancelLink(selfQueue.getIndex(),
                 DemoCache.getAccountInfo().account,
                 roomInfo.getCreator(),
@@ -477,13 +482,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                     @Override
                     public void onSuccess(Void aVoid) {
                         ToastHelper.showToast("您已下麦");
-                        updateAudioSwitchVisible(false);
-                        updateRole(true);
-                        int position = selfQueue.getIndex() + 1;
-                        String cancelTips = DemoCache.getAccountInfo().nick + "退出了麦位" + position;
-                        SimpleMessage simpleMessage = new SimpleMessage("", cancelTips, SimpleMessage.TYPE_MEMBER_CHANGE);
-                        msgAdapter.appendItem(simpleMessage);
-                        selfQueue = null;
+                        updateUiByleaveQueue();
                     }
 
                     @Override
@@ -557,14 +556,10 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 tipsDialog2.setClickListener(() -> tipsDialog2.dismiss());
                 AVChatManager.getInstance().muteLocalAudio(false);
                 break;
+            default:
+                break;
         }
-        updateAudioSwitchVisible(true);
-        updateRole(false);
-        selfQueue = queueInfo;
-        int position = selfQueue.getIndex() + 1;
-        String cancelTips = DemoCache.getAccountInfo().nick + "进入了麦位" + position;
-        SimpleMessage simpleMessage = new SimpleMessage("", cancelTips, SimpleMessage.TYPE_MEMBER_CHANGE);
-        msgAdapter.appendItem(simpleMessage);
+        updateUiByInQueue(queueInfo);
     }
 
     @Override
@@ -575,9 +570,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         tipsDialog.setArguments(bundle);
         tipsDialog.show(getSupportFragmentManager(), tipsDialog.TAG);
         tipsDialog.setClickListener(() -> tipsDialog.dismiss());
-        updateAudioSwitchVisible(false);
-        updateRole(true);
-        selfQueue = null;
+        updateUiByleaveQueue();
     }
 
     @Override
@@ -648,6 +641,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         switch (selfQueue.getStatus()) {
             case QueueInfo.STATUS_CLOSE_SELF_AUDIO:
                 selfQueue.setStatus(QueueInfo.STATUS_NORMAL);
+                selfQueue.setReason(QueueInfo.Reason.init);
                 break;
             case QueueInfo.STATUS_CLOSE_SELF_AUDIO_AND_MUTED:
                 selfQueue.setStatus(QueueInfo.STATUS_BE_MUTED_AUDIO);
@@ -662,7 +656,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         chatRoomService.updateQueue(roomInfo.getRoomId(), selfQueue.getKey(), selfQueue.toString()).setCallback(new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void param) {
-                ivSelfAudioSwitch.setSelected(!AVChatManager.getInstance().isMicrophoneMute());
+                ivSelfAudioSwitch.setSelected(AVChatManager.getInstance().isMicrophoneMute());
             }
 
             @Override
@@ -698,7 +692,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
 
     @Override
     protected void beMutedText() {
-
         edtInput.setHint("您已被禁言");
         edtInput.setFocusable(false);
         edtInput.setFocusableInTouchMode(false);
@@ -723,7 +716,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 cancelLinkRequest(queueInfo);
                 break;
             case "下麦":
-                leaveQueue();
+                leaveQueueBySelf();
                 break;
             case "取消":
                 dialog.dismiss();
@@ -750,6 +743,42 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         AVChatParameters parameters = new AVChatParameters();
         parameters.setInteger(AVChatParameters.KEY_SESSION_MULTI_MODE_USER_ROLE, isAudience ? AVChatUserRole.AUDIENCE : AVChatUserRole.NORMAL);
         AVChatManager.getInstance().setParameters(parameters);
+    }
+
+
+    private void updateUiByleaveQueue() {
+        updateAudioSwitchVisible(false);
+        updateRole(true);
+        int position = selfQueue.getIndex() + 1;
+        String cancelTips = DemoCache.getAccountInfo().nick + "退出了麦位" + position;
+        SimpleMessage simpleMessage = new SimpleMessage("", cancelTips, SimpleMessage.TYPE_MEMBER_CHANGE);
+        ChatRoomMessage message = ChatRoomMessageBuilder.createChatRoomTextMessage(roomInfo.getRoomId(), "退出了麦位" + position);
+        Map<String, Object> ex = new HashMap<>();
+        ex.put("type", 1);
+        message.setRemoteExtension(ex);
+        chatRoomService.sendMessage(message, false);
+        msgAdapter.appendItem(simpleMessage);
+        scrollToBottom();
+        selfQueue = null;
+    }
+
+    private void updateUiByInQueue(QueueInfo queueInfo) {
+        updateAudioSwitchVisible(true);
+        updateRole(false);
+        selfQueue = queueInfo;
+        if (selfQueue.getReason() != QueueInfo.Reason.init) {
+            int position = selfQueue.getIndex() + 1;
+            String cancelTips = DemoCache.getAccountInfo().nick + "进入了麦位" + position;
+            SimpleMessage simpleMessage = new SimpleMessage("", cancelTips, SimpleMessage.TYPE_MEMBER_CHANGE);
+            ChatRoomMessage message = ChatRoomMessageBuilder.createChatRoomTextMessage(roomInfo.getRoomId(), "进入了麦位" + position);
+            Map<String, Object> ex = new HashMap<>();
+            ex.put("type", 1);
+            message.setRemoteExtension(ex);
+            chatRoomService.sendMessage(message, false);
+            msgAdapter.appendItem(simpleMessage);
+            scrollToBottom();
+        }
+
     }
 
 }

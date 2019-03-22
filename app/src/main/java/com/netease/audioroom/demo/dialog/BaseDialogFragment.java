@@ -5,7 +5,6 @@ import android.support.v4.app.FragmentManager;
 
 public class BaseDialogFragment extends DialogFragment {
     public String TAG = getClass().getName();
-
     @Override
     public void show(FragmentManager manager, String tag) {
         if (manager.findFragmentByTag(TAG) != null && manager.findFragmentByTag(TAG).isVisible()) {
