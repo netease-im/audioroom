@@ -1,5 +1,6 @@
 package com.netease.audioroom.demo.dialog;
 
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
@@ -32,6 +33,8 @@ public class RequestLinkDialog extends BaseDialogFragment {
         void refuse(QueueInfo queueInfo);
 
         void agree(QueueInfo queueInfo);
+
+        void dissmiss();
 
     }
 
@@ -138,9 +141,16 @@ public class RequestLinkDialog extends BaseDialogFragment {
     }
 
     public void updateDate() {
-        if (isVisible()){
+        if (isVisible()) {
             adapter.notifyDataSetChanged();
         }
+
+    }
+
+    @Override
+    public void onDismiss(DialogInterface dialog) {
+        super.onDismiss(dialog);
+        requestAction.dissmiss();
 
     }
 }

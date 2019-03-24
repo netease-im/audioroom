@@ -121,7 +121,7 @@ public class MuteMemberListActivity extends BaseActivity {
             chatRoomMember.setAccount(queueMember.getAccount());
             chatRoomMember.setNick(queueMember.getNick());
             chatRoomMember.setAvatar(queueMember.getAvatar());
-            muteList.add(0,chatRoomMember);
+            muteList.add(0, chatRoomMember);
             //禁言
             if (muteList.size() == 0) {
                 recyclerView.setVisibility(View.GONE);
@@ -135,7 +135,8 @@ public class MuteMemberListActivity extends BaseActivity {
                         .setCallback(new RequestCallback<Void>() {
                             @Override
                             public void onSuccess(Void param) {
-                                ToastHelper.showToast(option.getAccount() + "已被禁言");
+                                String nick = chatRoomMember.getNick();
+                                ToastHelper.showToast(nick + "已被禁言");
                                 // 成功
                                 ArrayList<String> accountList = new ArrayList<>();
                                 for (String account : accountList) {
@@ -262,7 +263,7 @@ public class MuteMemberListActivity extends BaseActivity {
                 .setCallback(new RequestCallback<Void>() {
                     @Override
                     public void onSuccess(Void param) {
-                        ToastHelper.showToast(option.getAccount() + "已被解除禁言");
+                        ToastHelper.showToast(member.getNick() + "已被解除禁言");
                         muteList.remove(p);
                         if (muteList.size() == 0) {
                             adapter.notifyDataSetChanged();

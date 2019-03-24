@@ -247,6 +247,8 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     protected void onQueueItemClick(QueueInfo model, int position) {
         switch (model.getStatus()) {
             case QueueInfo.STATUS_INIT:
+                requestLink(model);
+                break;
             case QueueInfo.STATUS_FORBID:
                 //申请上麦
                 requestLink(model);
@@ -306,7 +308,8 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                         @Override
                         public void onSuccess(Void aVoid) {
                             int position = selfQueue.getIndex() + 1;
-                            ChatRoomMessage message = ChatRoomMessageBuilder.createChatRoomTextMessage(roomInfo.getRoomId(), "退出了麦位" + position);
+                            ChatRoomMessage message = ChatRoomMessageBuilder
+                                    .createChatRoomTextMessage(roomInfo.getRoomId(), "退出了麦位" + position);
                             Map<String, Object> ex = new HashMap<>();
                             ex.put("type", 1);
                             message.setRemoteExtension(ex);
@@ -447,6 +450,11 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             case QueueInfo.STATUS_CLOSE_SELF_AUDIO_AND_MUTED:
                 selfQueue = queueInfo;
                 break;
+            case QueueInfo.STATUS_FORBID:
+                if (queueInfo.getReason() == QueueInfo.Reason.cancelApplyByHost) {
+                    linkBeRejected();
+                }
+                break;
 
         }
 
@@ -554,7 +562,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 tipsDialog2.setArguments(bundle);
                 tipsDialog2.show(getSupportFragmentManager(), tipsDialog2.TAG);
                 tipsDialog2.setClickListener(() -> tipsDialog2.dismiss());
-                AVChatManager.getInstance().muteLocalAudio(false);
                 break;
             default:
                 break;
@@ -612,9 +619,8 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         tipsDialog.show(getSupportFragmentManager(), tipsDialog.TAG);
         tipsDialog.setClickListener(() -> tipsDialog.dismiss());
         selfQueue = queueInfo;
-        AVChatManager.getInstance().muteLocalAudio(true);
         updateRole(true);
-
+        updateAudioSwitchVisible(true);
     }
 
 
@@ -629,6 +635,11 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             boolean close = ivRoomAudioSwitch.isSelected();
             ivRoomAudioSwitch.setSelected(!close);
             muteRoomAudio(!close);
+            if (close) {
+                ToastHelper.showToast("已打开“聊天室声音”");
+            } else {
+                ToastHelper.showToast("已关闭“聊天室声音”");
+            }
         } else if (view == ivExistRoom) {
             exitRoom();
         }
@@ -657,6 +668,11 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             @Override
             public void onSuccess(Void param) {
                 ivSelfAudioSwitch.setSelected(AVChatManager.getInstance().isMicrophoneMute());
+                if (AVChatManager.getInstance().isMicrophoneMute()) {
+                    ToastHelper.showToast("话筒已关闭");
+                } else {
+                    ToastHelper.showToast("话筒已打开");
+                }
             }
 
             @Override
@@ -732,20 +748,26 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         if (visible) {
             ivCancelLink.setVisibility(View.VISIBLE);
             ivSelfAudioSwitch.setVisibility(View.VISIBLE);
+            //上麦时默认麦克风
+            if (AVChatManager.getInstance().isMicrophoneMute()) {
+                super.muteSelfAudio();
+                ivSelfAudioSwitch.setSelected(false);
+            }
+
         } else {
             ivCancelLink.setVisibility(View.GONE);
             ivSelfAudioSwitch.setVisibility(View.GONE);
         }
     }
 
-
+    //更新角色
     private void updateRole(boolean isAudience) {
         AVChatParameters parameters = new AVChatParameters();
         parameters.setInteger(AVChatParameters.KEY_SESSION_MULTI_MODE_USER_ROLE, isAudience ? AVChatUserRole.AUDIENCE : AVChatUserRole.NORMAL);
         AVChatManager.getInstance().setParameters(parameters);
     }
 
-
+    //离开麦位UI更新
     private void updateUiByleaveQueue() {
         updateAudioSwitchVisible(false);
         updateRole(true);
@@ -762,11 +784,14 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         selfQueue = null;
     }
 
+    //上麦UI更新
     private void updateUiByInQueue(QueueInfo queueInfo) {
+
         updateAudioSwitchVisible(true);
         updateRole(false);
         selfQueue = queueInfo;
-        if (selfQueue.getReason() != QueueInfo.Reason.init) {
+        if (selfQueue.getReason() == QueueInfo.Reason.agreeApply
+                || selfQueue.getReason() == QueueInfo.Reason.inviteByHost) {
             int position = selfQueue.getIndex() + 1;
             String cancelTips = DemoCache.getAccountInfo().nick + "进入了麦位" + position;
             SimpleMessage simpleMessage = new SimpleMessage("", cancelTips, SimpleMessage.TYPE_MEMBER_CHANGE);

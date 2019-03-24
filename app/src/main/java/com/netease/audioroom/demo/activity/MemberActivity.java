@@ -174,7 +174,7 @@ public class MemberActivity extends BaseActivity {
             }
             for (QueueInfo queueInfo : mQueueInfoList) {
                 if (queueInfo.getQueueMember() != null
-                        && queueInfo.getQueueMember().equals(queueMember)) {
+                        && queueInfo.getQueueMember().getAccount().equals(queueMember.getAccount())) {
                     if (!(QueueInfo.hasOccupancy(queueInfo)) || queueInfo.getStatus() == QueueInfo.STATUS_LOAD) {
                         queueMembers.add(queueMember);
                     }

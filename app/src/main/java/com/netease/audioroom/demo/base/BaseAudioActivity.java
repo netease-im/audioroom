@@ -194,7 +194,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
                             memberIn(memberIn);
                             updateRoonInfo();
                             break;
-
                         // 成员退出聊天室
                         case ChatRoomMemberExit:
                             ChatRoomQueueChangeAttachment memberExit = (ChatRoomQueueChangeAttachment) message.getAttachment();
@@ -227,7 +226,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
                                 memberMuteRemove(muteRemove);
                             }
                             break;
-
                         //队列变更
                         case ChatRoomQueueChange:
                             ChatRoomQueueChangeAttachment queueChange = (ChatRoomQueueChangeAttachment) message.getAttachment();
@@ -253,7 +251,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
                         case ChatRoomRoomDeMuted:
                             cancelMute();
                             break;
-
                         case ChatRoomInfoUpdated:
                             NIMClient.getService(ChatRoomService.class).fetchRoomInfo(roomInfo.getRoomId())
                                     .setCallback(new RequestCallback<ChatRoomInfo>() {
@@ -672,14 +669,14 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
 
             @Override
             public void onFailed(int code) {
-                //ToastHelper.showToast("加入音频房间失败， code = " + code);
+                ToastHelper.showToast("加入音频房间失败， code = " + code);
                 finish();
                 Log.e(TAG, "joinAudioRoom + onFailed");
             }
 
             @Override
             public void onException(Throwable exception) {
-                // ToastHelper.showToast("加入音频房间失败 , e =" + exception.getMessage());
+                 ToastHelper.showToast("加入音频房间失败 , e =" + exception.getMessage());
                 finish();
                 Log.e(TAG, "joinAudioRoom + onException");
             }
@@ -726,10 +723,18 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
                             circle.setVisibility(View.VISIBLE);
                         }
                     }
+
                     //观众
                     if (queueInfo != null && queueInfo.getQueueMember() != null) {
                         if (speakers.containsKey(queueInfo.getQueueMember().getAccount())) {
-                            if (!QueueInfo.hasOccupancy(queueInfo) || ivRoomAudioSwitch.isSelected()) {
+                            if (!QueueInfo.hasOccupancy(queueInfo)
+                                    || ivRoomAudioSwitch.isSelected()
+                                    || ivSelfAudioSwitch.isSelected()
+                                    || queueInfo.getStatus() == QueueInfo.STATUS_BE_MUTED_AUDIO
+                                    || queueInfo.getStatus() == QueueInfo.STATUS_CLOSE_SELF_AUDIO
+                                    || queueInfo.getStatus() == QueueInfo.STATUS_CLOSE_SELF_AUDIO_AND_MUTED
+
+                            ) {
                                 updateStatus(0, queueInfo.getIndex());
                             } else {
                                 updateStatus(findVolumeStep(speakers.get(queueInfo.getQueueMember().getAccount())), queueInfo.getIndex());

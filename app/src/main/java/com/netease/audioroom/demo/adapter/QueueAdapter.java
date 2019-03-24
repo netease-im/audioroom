@@ -75,7 +75,6 @@ public class QueueAdapter extends BaseAdapter<QueueInfo> {
                 break;
             case QueueInfo.STATUS_BE_MUTED_AUDIO:
                 viewHolder.iv_user_status.setVisibility(View.GONE);
-                viewHolder.iv_user_status.setVisibility(View.GONE);
                 viewHolder.ivStatusHint.setVisibility(View.VISIBLE);
                 viewHolder.ivStatusHint.setImageResource(R.drawable.audio_be_muted_status);
                 viewHolder.circle.setVisibility(View.INVISIBLE);
