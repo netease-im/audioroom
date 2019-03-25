@@ -1122,6 +1122,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                 queueInfo.toString()).setCallback(new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
+                int position = queueInfo.getIndex() + 1;
                 ToastHelper.showToast("\"麦位" + queueInfo.getIndex() + "\"已关闭");
             }
 
