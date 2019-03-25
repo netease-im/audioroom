@@ -84,10 +84,8 @@ public class ChatRoomHttpClient {
      * 向网易云信Demo应用服务器请求聊天室列表
      */
     public void fetchChatRoomList(int offset, int limit, final ChatRoomHttpCallback<ArrayList<DemoRoomInfo>> callback) {
-
         String url = getServer() + API_CHAT_ROOM_LIST;
         String body = null;
-
         if (offset >= 0 && limit > 0) {
             body = REQUEST_OFFSET + "=" + offset + "&" +
                     REQUEST_LIMIT + "=" + limit;
@@ -101,7 +99,6 @@ public class ChatRoomHttpClient {
                 if (callback == null) {
                     return;
                 }
-
                 if (code != 0) {
                     Log.e(TAG, "fetchChatRoomList failed : code = " + code + ", errorMsg = " + errorMsg);
                     callback.onFailed(code, errorMsg);

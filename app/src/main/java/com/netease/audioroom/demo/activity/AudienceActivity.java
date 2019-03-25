@@ -182,7 +182,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             @Override
             public void onNetworkInterrupt() {
                 Bundle bundle = new Bundle();
-                 topTipsDialog = new TopTipsDialog();
+                topTipsDialog = new TopTipsDialog();
                 TopTipsDialog.Style style = topTipsDialog.new Style(
                         "网络断开",
                         0,
@@ -249,7 +249,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 requestLink(model);
                 break;
             case QueueInfo.STATUS_FORBID:
-                //申请上麦
                 requestLink(model);
                 break;
             case QueueInfo.STATUS_LOAD:
@@ -348,7 +347,12 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     @Override
     public void requestLink(QueueInfo queueInfo) {
         if (selfQueue != null) {
-            ToastHelper.showToast("您已在麦上");
+            if (selfQueue.getStatus() == QueueInfo.STATUS_CLOSE) {
+                ToastHelper.showToast("麦位已关闭");
+            } else {
+                ToastHelper.showToast("您已在麦上");
+            }
+
             return;
         }
         P2PNotificationHelper.requestLink(queueInfo, DemoCache.getAccountInfo(), roomInfo.getCreator(), new RequestCallback<Void>() {
@@ -357,6 +361,11 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 Bundle bundle = new Bundle();
                 topTipsDialog = new TopTipsDialog();
                 selfQueue = queueInfo;
+                selfQueue.setStatus(QueueInfo.STATUS_LOAD);
+                if (queueAdapter.getItem(selfQueue.getIndex()).getStatus() == QueueInfo.STATUS_CLOSE) {
+                    ToastHelper.showToast("麦位已关闭");
+                    return;
+                }
                 TopTipsDialog.Style style = topTipsDialog.new Style(
                         "已申请上麦，等待通过...  <font color=\"#0888ff\">取消</color>",
                         0,
@@ -415,8 +424,9 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         }
         QueueInfo queueInfo = new QueueInfo(value);
         QueueMember member = queueInfo.getQueueMember();
-        //与自己无关
+
         int status = queueInfo.getStatus();
+        //与自己无关
         if (member == null || !TextUtils.equals(member.getAccount(), DemoCache.getAccountId())) {
             if (status == QueueInfo.STATUS_NORMAL) {
                 if (selfQueue != null && queueInfo.getIndex() == selfQueue.getIndex()) {
@@ -424,8 +434,8 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 }
             }
             return;
-
         }
+
         switch (status) {
             case QueueInfo.STATUS_NORMAL:
                 queueLinkNormal(queueInfo);
@@ -441,8 +451,16 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 }
                 break;
             case QueueInfo.STATUS_CLOSE:
+                if (selfQueue != null && selfQueue.getStatus() == QueueInfo.STATUS_LOAD) {
+                    if (topTipsDialog != null) {
+                        topTipsDialog.dismiss();
+                        ToastHelper.showToast("麦位已关闭");
+                        return;
+                    } else {
+                        removed(queueInfo);
+                    }
+                }
 
-                removed(queueInfo);
                 break;
             case QueueInfo.STATUS_CLOSE_SELF_AUDIO:
                 selfQueue = queueInfo;
