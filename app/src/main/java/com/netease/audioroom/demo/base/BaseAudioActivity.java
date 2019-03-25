@@ -16,6 +16,7 @@ import android.widget.TextView;
 
 import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.adapter.MessageListAdapter;
+import com.netease.audioroom.demo.adapter.MuteMemberListAdapter;
 import com.netease.audioroom.demo.adapter.QueueAdapter;
 import com.netease.audioroom.demo.base.adapter.BaseAdapter;
 import com.netease.audioroom.demo.cache.DemoCache;
@@ -32,6 +33,7 @@ import com.netease.audioroom.demo.util.ScreenUtil;
 import com.netease.audioroom.demo.util.ToastHelper;
 import com.netease.audioroom.demo.widget.HeadImageView;
 import com.netease.audioroom.demo.widget.VerticalItemDecoration;
+import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.ErrorCallback;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.NetErrCallback;
 import com.netease.nimlib.sdk.NIMClient;
 import com.netease.nimlib.sdk.Observer;
@@ -49,6 +51,7 @@ import com.netease.nimlib.sdk.chatroom.ChatRoomService;
 import com.netease.nimlib.sdk.chatroom.ChatRoomServiceObserver;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomInfo;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomKickOutEvent;
+import com.netease.nimlib.sdk.chatroom.model.ChatRoomMember;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMessage;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomNotificationAttachment;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomPartClearAttachment;
@@ -116,7 +119,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
 
     // 聊天室服务
     protected ChatRoomService chatRoomService;
-
 
     //音视频接口
     protected long audioUid;
@@ -243,13 +245,33 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
                                 logInfo.append("key = " + key + ", value= " + queuePartClear.getContentMap().get(key)).append(" ");
                             }
                             break;
-
+                        //聊天室禁言
                         case ChatRoomRoomMuted:
                             beMutedText();
                             break;
-
+                        //聊天室解除禁言
                         case ChatRoomRoomDeMuted:
-                            cancelMute();
+                            RoomMemberCache.getInstance().fetchMember(roomInfo.getRoomId(), DemoCache.getAccountId(), new RequestCallback<List<ChatRoomMember>>() {
+                                @Override
+                                public void onSuccess(List<ChatRoomMember> param) {
+                                    ChatRoomMember chatRoomMember = param.get(0);
+                                    if (!chatRoomMember.isTempMuted() && !chatRoomMember.isMuted()) {
+                                        cancelMute();
+                                    }
+                                }
+
+                                @Override
+                                public void onFailed(int code) {
+
+                                }
+
+                                @Override
+                                public void onException(Throwable exception) {
+
+                                }
+                            });
+
+
                             break;
                         case ChatRoomInfoUpdated:
                             NIMClient.getService(ChatRoomService.class).fetchRoomInfo(roomInfo.getRoomId())
@@ -676,7 +698,7 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
 
             @Override
             public void onException(Throwable exception) {
-                 ToastHelper.showToast("加入音频房间失败 , e =" + exception.getMessage());
+                ToastHelper.showToast("加入音频房间失败 , e =" + exception.getMessage());
                 finish();
                 Log.e(TAG, "joinAudioRoom + onException");
             }
@@ -733,7 +755,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
                                     || queueInfo.getStatus() == QueueInfo.STATUS_BE_MUTED_AUDIO
                                     || queueInfo.getStatus() == QueueInfo.STATUS_CLOSE_SELF_AUDIO
                                     || queueInfo.getStatus() == QueueInfo.STATUS_CLOSE_SELF_AUDIO_AND_MUTED
-
                             ) {
                                 updateStatus(0, queueInfo.getIndex());
                             } else {

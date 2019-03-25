@@ -204,9 +204,12 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                         0);
                 bundle.putParcelable(topTipsDialog.TAG, style);
                 topTipsDialog.setArguments(bundle);
-                topTipsDialog.show(getSupportFragmentManager(), topTipsDialog.TAG);
-                topTipsDialog.setClickListener(() -> {
-                });
+                if (!topTipsDialog.isVisible()) {
+                    topTipsDialog.show(getSupportFragmentManager(), topTipsDialog.TAG);
+                    topTipsDialog.setClickListener(() -> {
+                    });
+                }
+
             }
         });
 
@@ -468,7 +471,9 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                 break;
 
         }
-        bottomMenuDialog.show(getSupportFragmentManager(), bottomMenuDialog.TAG);
+        if (queueInfo.getStatus() != QueueInfo.STATUS_LOAD) {
+            bottomMenuDialog.show(getSupportFragmentManager(), bottomMenuDialog.TAG);
+        }
     }
 
     @Override
@@ -499,7 +504,11 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                 avatar = jsonObject.optString(P2PNotificationHelper.AVATAR);
                 queueMember = new QueueMember(customNotification.getFromAccount(), nick, avatar);
                 queueInfo = queueMap.get(QueueInfo.getKeyByIndex(index));
+
                 if (queueInfo != null) {
+                    if (queueInfo.getStatus() == QueueInfo.STATUS_CLOSE) {
+                        return;
+                    }
                     queueInfo.setQueueMember(queueMember);
                     if (queueInfo.getStatus() == QueueInfo.STATUS_FORBID) {
                         queueInfo.setReason(QueueInfo.Reason.applyInMute);
@@ -525,7 +534,11 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                 index = jsonObject.optInt(P2PNotificationHelper.INDEX, -1);
                 queueInfo = queueMap.get(QueueInfo.getKeyByIndex(index));
                 if (queueInfo != null) {
-                    queueInfo.setStatus(QueueInfo.STATUS_INIT);
+                    if (queueInfo.getStatus() == QueueInfo.STATUS_BE_MUTED_AUDIO || queueInfo.getStatus() == QueueInfo.STATUS_CLOSE_SELF_AUDIO_AND_MUTED) {
+                        queueInfo.setStatus(QueueInfo.STATUS_FORBID);
+                    } else {
+                        queueInfo.setStatus(QueueInfo.STATUS_INIT);
+                    }
                     queueInfo.setReason(QueueInfo.Reason.kickedBySelf);
                     chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString());
                 }
@@ -637,6 +650,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                     requestMemberList.remove(queueInfo);
                 }
                 if (requestMemberList.size() == 0) {
+                    semicircleView.setVisibility(View.INVISIBLE);
                     if (requestLinkDialog != null && requestLinkDialog.isVisible()) {
                         requestLinkDialog.dismiss();
                     }
@@ -1040,19 +1054,32 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
 
     }
 
+    String msg = "", errmsg = "";
+
     @Override
     public void openAudio(QueueInfo queueInfo) {
         //麦上没人
         switch (queueInfo.getStatus()) {
             case QueueInfo.STATUS_CLOSE:
+                int position = queueInfo.getIndex() + 1;
+                msg = "“麦位" + position + "”已打开”";
+                errmsg = "“麦位" + position + "”打开失败”";
+                break;
+
             case QueueInfo.STATUS_FORBID:
+                msg = "“该麦位已“解除语音屏蔽”";
+                errmsg = "该麦位“解除语音屏蔽”失败";
                 queueInfo.setStatus(QueueInfo.STATUS_INIT);
                 break;
             case QueueInfo.STATUS_BE_MUTED_AUDIO:
+                msg = "“该麦位已“解除语音屏蔽”";
+                errmsg = "该麦位“解除语音屏蔽”失败";
                 queueInfo.setStatus(QueueInfo.STATUS_NORMAL);
                 queueInfo.setReason(QueueInfo.Reason.cancelMuted);
                 break;
             case QueueInfo.STATUS_CLOSE_SELF_AUDIO_AND_MUTED:
+                msg = "该麦位已“解除语音屏蔽”";
+                errmsg = "该麦位“解除语音屏蔽”失败";
                 queueInfo.setStatus(QueueInfo.STATUS_CLOSE_SELF_AUDIO);
                 break;
             case QueueInfo.STATUS_CLOSE_SELF_AUDIO:
@@ -1063,17 +1090,17 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                 queueInfo.toString()).setCallback(new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
-                ToastHelper.showToast("“麦位" + queueInfo.getIndex() + 1 + "”已打开”");
+                ToastHelper.showToast(msg);
             }
 
             @Override
             public void onFailed(int i) {
-
+                ToastHelper.showToast(errmsg + "code" + i);
             }
 
             @Override
             public void onException(Throwable throwable) {
-
+                ToastHelper.showToast(errmsg + throwable.getMessage());
             }
         });
 

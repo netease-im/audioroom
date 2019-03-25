@@ -1,6 +1,5 @@
 package com.netease.audioroom.demo.activity;
 
-
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -58,7 +57,7 @@ import java.util.Map;
 
 import static com.netease.audioroom.demo.dialog.BottomMenuDialog.BOTTOMMENUS;
 
-/***
+/**
  * 观众页
  */
 public class AudienceActivity extends BaseAudioActivity implements IAudience, View.OnClickListener {
@@ -194,7 +193,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 bundle.putParcelable(topTipsDialog.TAG, style);
                 topTipsDialog.setArguments(bundle);
                 topTipsDialog.show(getSupportFragmentManager(), topTipsDialog.TAG);
-
             }
         });
 
@@ -771,6 +769,9 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     private void updateUiByleaveQueue() {
         updateAudioSwitchVisible(false);
         updateRole(true);
+        if (selfQueue == null) {
+            return;
+        }
         int position = selfQueue.getIndex() + 1;
         String cancelTips = DemoCache.getAccountInfo().nick + "退出了麦位" + position;
         SimpleMessage simpleMessage = new SimpleMessage("", cancelTips, SimpleMessage.TYPE_MEMBER_CHANGE);
@@ -786,7 +787,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
 
     //上麦UI更新
     private void updateUiByInQueue(QueueInfo queueInfo) {
-
         updateAudioSwitchVisible(true);
         updateRole(false);
         selfQueue = queueInfo;
@@ -803,7 +803,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             msgAdapter.appendItem(simpleMessage);
             scrollToBottom();
         }
-
     }
 
 }

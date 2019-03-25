@@ -91,8 +91,6 @@ public class MuteMemberListActivity extends BaseActivity {
                     isAllMute = false;
                     muteAllMember.setText("全部禁言");
                 }
-
-
             }
 
             @Override
@@ -268,8 +266,9 @@ public class MuteMemberListActivity extends BaseActivity {
                         if (muteList.size() == 0) {
                             adapter.notifyDataSetChanged();
                             empty_view.setVisibility(View.VISIBLE);
-
+                            title.setText("禁言成员");
                         } else {
+                            title.setText("禁言成员 (" + muteList.size() + ")");
                             adapter.notifyDataSetChanged();
                         }
                     }
@@ -293,5 +292,4 @@ public class MuteMemberListActivity extends BaseActivity {
         super.onDestroy();
         recyclerView.removeOnScrollListener(onScrollListener);
     }
-
 }

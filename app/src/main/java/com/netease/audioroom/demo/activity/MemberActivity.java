@@ -174,8 +174,10 @@ public class MemberActivity extends BaseActivity {
             }
             for (QueueInfo queueInfo : mQueueInfoList) {
                 if (queueInfo.getQueueMember() != null
-                        && queueInfo.getQueueMember().getAccount().equals(queueMember.getAccount())) {
-                    if (!(QueueInfo.hasOccupancy(queueInfo)) || queueInfo.getStatus() == QueueInfo.STATUS_LOAD) {
+                        && queueInfo.getQueueMember().getAccount()
+                        .equals(queueMember.getAccount())) {
+                    if (!(QueueInfo.hasOccupancy(queueInfo))
+                            || queueInfo.getStatus() == QueueInfo.STATUS_LOAD) {
                         queueMembers.add(queueMember);
                     }
                 }
@@ -184,6 +186,7 @@ public class MemberActivity extends BaseActivity {
         return queueMembers;
     }
 
+    //去除已禁言观众
     private ArrayList<QueueMember> repeatMuteList(List<ChatRoomMember> chatRoomMembers) {
         ArrayList<QueueMember> queueMembers = new ArrayList<>();
         for (ChatRoomMember chatRoomMember : chatRoomMembers) {

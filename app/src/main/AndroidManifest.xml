@@ -54,7 +54,6 @@
         <activity
             android:name=".activity.AudienceActivity"
             android:launchMode="singleTop"
-
             android:screenOrientation="portrait"
             android:windowSoftInputMode="stateHidden|adjustResize" />
 
@@ -63,8 +62,15 @@
             android:launchMode="singleTop"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="stateHidden|adjustResize" />
-        <activity android:name=".activity.MemberActivity" />
-        <activity android:name=".activity.MuteMemberListActivity" />
+
+        <activity
+            android:name=".activity.MemberActivity"
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".activity.MuteMemberListActivity"
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait" />
 
 
         <meta-data
