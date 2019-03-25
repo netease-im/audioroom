@@ -504,7 +504,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                 avatar = jsonObject.optString(P2PNotificationHelper.AVATAR);
                 queueMember = new QueueMember(customNotification.getFromAccount(), nick, avatar);
                 queueInfo = queueMap.get(QueueInfo.getKeyByIndex(index));
-
                 if (queueInfo != null) {
                     if (queueInfo.getStatus() == QueueInfo.STATUS_CLOSE) {
                         return;
@@ -898,7 +897,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
         stringBuilder.setSpan(new ForegroundColorSpan(Color.parseColor("#ffa410")),
                 0, stringBuilder.length(),
                 SpannableStringBuilder.SPAN_INCLUSIVE_EXCLUSIVE);
-
         stringBuilder.append(isPlaying ? "播放中" : "已暂停");
         tvMusicPlayHint.setText(stringBuilder);
 
@@ -1064,6 +1062,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                 int position = queueInfo.getIndex() + 1;
                 msg = "“麦位" + position + "”已打开”";
                 errmsg = "“麦位" + position + "”打开失败”";
+                queueInfo.setStatus(QueueInfo.STATUS_INIT);
                 break;
 
             case QueueInfo.STATUS_FORBID:
@@ -1109,6 +1108,15 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
     //关闭麦位
     @Override
     public void closeAudio(QueueInfo queueInfo) {
+        if (queueInfo.getStatus() == QueueInfo.STATUS_LOAD) {
+            requestMemberList.remove(queueInfo.getIndex());
+            if (requestMemberList.size() == 0) {
+                semicircleView.setVisibility(View.INVISIBLE);
+            } else {
+                semicircleView.setVisibility(View.VISIBLE);
+                semicircleView.setText(String.valueOf(requestMemberList.size()));
+            }
+        }
         queueInfo.setStatus(QueueInfo.STATUS_CLOSE);
         chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(),
                 queueInfo.toString()).setCallback(new RequestCallback<Void>() {

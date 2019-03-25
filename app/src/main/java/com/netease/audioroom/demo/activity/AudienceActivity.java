@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
-import android.support.v4.app.DialogFragment;
 import android.text.TextUtils;
 import android.view.View;
 
@@ -160,9 +159,8 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         setNetworkReconnection(new INetworkReconnection() {
             @Override
             public void onNetworkReconnection() {
-                if (getFragmentManager().findFragmentByTag("TopTipsDialog") != null
-                        && getFragmentManager().findFragmentByTag("TopTipsDialog").isVisible()) {
-                    ((DialogFragment) getSupportFragmentManager().findFragmentByTag("TopTipsDialog")).dismiss();
+                if (topTipsDialog != null) {
+                    topTipsDialog.dismiss();
                 }
                 LoginManager loginManager = LoginManager.getInstance();
                 loginManager.tryLogin();
@@ -184,7 +182,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             @Override
             public void onNetworkInterrupt() {
                 Bundle bundle = new Bundle();
-                TopTipsDialog topTipsDialog = new TopTipsDialog();
+                 topTipsDialog = new TopTipsDialog();
                 TopTipsDialog.Style style = topTipsDialog.new Style(
                         "网络断开",
                         0,
@@ -192,7 +190,10 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                         0);
                 bundle.putParcelable(topTipsDialog.TAG, style);
                 topTipsDialog.setArguments(bundle);
-                topTipsDialog.show(getSupportFragmentManager(), topTipsDialog.TAG);
+                if (!topTipsDialog.isVisible()) {
+                    topTipsDialog.show(getSupportFragmentManager(), topTipsDialog.TAG);
+                }
+
             }
         });
 
@@ -440,6 +441,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 }
                 break;
             case QueueInfo.STATUS_CLOSE:
+
                 removed(queueInfo);
                 break;
             case QueueInfo.STATUS_CLOSE_SELF_AUDIO:
