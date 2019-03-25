@@ -71,7 +71,6 @@ import static com.netease.audioroom.demo.dialog.BottomMenuDialog.BOTTOMMENUS;
 public class AudioLiveActivity extends BaseAudioActivity implements LoginManager.IAudioLive, View.OnClickListener {
     BottomMenuDialog bottomMenuDialog;
     EnterChatRoomResultData resultData;
-    boolean isCloseVoice = false;
 
     public static void start(Context context, DemoRoomInfo demoRoomInfo) {
         Intent intent = new Intent(context, AudioLiveActivity.class);
@@ -125,7 +124,8 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
             public void onSuccess(EnterChatRoomResultData resultData) {
                 loadService.showSuccess();
                 enterRoomSuccess(resultData);
-                updateRoomInfo(true);
+                updateMicrophoneRoomInfo(true);
+                updateVoiceRoomInfo(true);
             }
 
             @Override
@@ -775,8 +775,10 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                 muteRoomAudio(!close);
                 if (close) {
                     ToastHelper.showToast("已打开“聊天室声音”");
+                    updateVoiceRoomInfo(true);
                 } else {
                     ToastHelper.showToast("已关闭“聊天室声音”");
+                    updateVoiceRoomInfo(false);
                 }
                 break;
             case R.id.iv_exist_room:
@@ -840,11 +842,11 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                 muteSelfAudio();
                 if (AVChatManager.getInstance().isMicrophoneMute()) {
                     ToastHelper.showToast("话筒已关闭");
-                    updateRoomInfo(false);
+                    updateMicrophoneRoomInfo(false);
 
                 } else {
                     ToastHelper.showToast("话筒已打开");
-                    updateRoomInfo(true);
+                    updateMicrophoneRoomInfo(true);
                 }
                 ivSelfAudioSwitch.setSelected(AVChatManager.getInstance().isMicrophoneMute());
                 break;
@@ -1281,7 +1283,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
     }
 
     //初始化聊天室扩展字段（用于主播聊天室）默认打开
-    private void updateRoomInfo(boolean isOpenMicrophone) {
+    private void updateMicrophoneRoomInfo(boolean isOpenMicrophone) {
         ChatRoomUpdateInfo chatRoomUpdateInfo = new ChatRoomUpdateInfo();
         Map<String, Object> param = new HashMap<>();
         if (isOpenMicrophone) {
@@ -1289,9 +1291,16 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
         } else {
             param.put(ROOM_MICROPHONE_OPEN, 0);
         }
-
         chatRoomUpdateInfo.setExtension(param);
         chatRoomService.updateRoomInfo(roomInfo.getRoomId(), chatRoomUpdateInfo, true, null);
+    }
+
+    private void updateVoiceRoomInfo(boolean isOpenVoice) {
+        ChatRoomUpdateInfo chatRoomUpdateInfo = new ChatRoomUpdateInfo();
+        Map<String, Object> param = new HashMap<>();
+        param.put(ROOM_VOICE_OPEN, isOpenVoice);
+        chatRoomUpdateInfo.setExtension(param);
+        chatRoomService.updateRoomInfo(roomInfo.getRoomId(), chatRoomUpdateInfo, false, null);
     }
 
 

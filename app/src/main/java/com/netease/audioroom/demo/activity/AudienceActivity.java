@@ -814,6 +814,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 || selfQueue.getReason() == QueueInfo.Reason.inviteByHost) {
             int position = selfQueue.getIndex() + 1;
             String cancelTips = DemoCache.getAccountInfo().nick + "进入了麦位" + position;
+
             SimpleMessage simpleMessage = new SimpleMessage("", cancelTips, SimpleMessage.TYPE_MEMBER_CHANGE);
             ChatRoomMessage message = ChatRoomMessageBuilder.createChatRoomTextMessage(roomInfo.getRoomId(), "进入了麦位" + position);
             Map<String, Object> ex = new HashMap<>();

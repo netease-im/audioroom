@@ -80,8 +80,12 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
     private static final int QUEUE_SIZE = 8;
     public static final String ROOM_INFO_KEY = "room_info_key";
     public static final String ROOM_MICROPHONE_OPEN = "anchorMute";
+    public static final String ROOM_VOICE_OPEN = "room_voice_open";
+
 
     public static final String TAG = "AudioRoom";
+
+    boolean isCloseVoice = false;//主播有的变量（控制聊天室语音关闭）
 
     private static final int KEY_BOARD_MIN_SIZE = ScreenUtil.dip2px(DemoCache.getContext(), 80);
 
@@ -414,6 +418,7 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
             SimpleMessage simpleMessage = new SimpleMessage("", "“" + nick + "”进了房间", SimpleMessage.TYPE_MEMBER_CHANGE);
             msgAdapter.appendItem(simpleMessage);
             updateRoonInfo();
+
         }
         scrollToBottom();
     }
@@ -531,6 +536,12 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
                     + message.getChatRoomMessageExtension().getSenderNick() + "”" + message.getContent(),
                     SimpleMessage.TYPE_MEMBER_CHANGE);
             msgAdapter.appendItem(simpleMessage);
+            if (DemoCache.getAccountInfo().account.equals(creater)) {
+                if (isCloseVoice) {
+                    muteRoomAudio(true);
+                }
+            }
+
 
         } else {
             msgAdapter.appendItem(new SimpleMessage(message.getChatRoomMessageExtension().getSenderNick(),
@@ -580,6 +591,7 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
      */
     protected void muteSelfAudio() {
         AVChatManager.getInstance().setMicrophoneMute(!AVChatManager.getInstance().isMicrophoneMute());
+
     }
 
     /**
@@ -587,6 +599,11 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
      */
     protected void muteRoomAudio(boolean isMutex) {
         AVChatManager.getInstance().muteAllRemoteAudio(isMutex);
+        if (isMutex) {
+            isCloseVoice = true;
+        } else {
+            isCloseVoice = false;
+        }
     }
 
 
