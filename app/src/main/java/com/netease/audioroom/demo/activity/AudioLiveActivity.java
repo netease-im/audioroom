@@ -1123,7 +1123,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
             @Override
             public void onSuccess(Void aVoid) {
                 int position = queueInfo.getIndex() + 1;
-                ToastHelper.showToast("\"麦位" + queueInfo.getIndex() + "\"已关闭");
+                ToastHelper.showToast("\"麦位" + position + "\"已关闭");
             }
 
             @Override
