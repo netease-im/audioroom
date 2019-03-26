@@ -2,8 +2,6 @@ package com.netease.audioroom.demo.model;
 
 import android.text.TextUtils;
 
-import com.netease.nimlib.sdk.chatroom.model.ChatRoomMember;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 

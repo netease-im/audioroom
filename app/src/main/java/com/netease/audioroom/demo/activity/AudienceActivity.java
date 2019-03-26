@@ -38,7 +38,6 @@ import com.netease.nimlib.sdk.chatroom.ChatRoomService;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomInfo;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMember;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMessage;
-import com.netease.nimlib.sdk.chatroom.model.ChatRoomNotificationAttachment;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomQueueChangeAttachment;
 import com.netease.nimlib.sdk.chatroom.model.EnterChatRoomData;
 import com.netease.nimlib.sdk.chatroom.model.EnterChatRoomResultData;
@@ -376,10 +375,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 topTipsDialog = new TopTipsDialog();
                 selfQueue = queueInfo;
                 selfQueue.setStatus(QueueInfo.STATUS_LOAD);
-                if (queueAdapter.getItem(selfQueue.getIndex()).getStatus() == QueueInfo.STATUS_CLOSE) {
-                    ToastHelper.showToast("麦位已关闭");
-                    return;
-                }
                 TopTipsDialog.Style style = topTipsDialog.new Style(
                         "已申请上麦，等待通过...  <font color=\"#0888ff\">取消</color>",
                         0,
@@ -387,6 +382,14 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                         0);
                 bundle.putParcelable(topTipsDialog.TAG, style);
                 topTipsDialog.setArguments(bundle);
+                if (queueAdapter.getItem(queueInfo.getIndex()).getStatus() == QueueInfo.STATUS_CLOSE) {
+                    ToastHelper.showToast("麦位已关闭");
+                    selfQueue = null;
+                    if (topTipsDialog != null && topTipsDialog.isVisible()) {
+                        topTipsDialog.dismiss();
+                    }
+                    return;
+                }
                 topTipsDialog.show(getSupportFragmentManager(), topTipsDialog.TAG);
                 topTipsDialog.setClickListener(() -> {
                     topTipsDialog.dismiss();
@@ -464,10 +467,10 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 break;
             case QueueInfo.STATUS_CLOSE:
                 if (selfQueue != null && selfQueue.getStatus() == QueueInfo.STATUS_LOAD) {
+                    ToastHelper.showToast("麦位已关闭");
                     if (topTipsDialog != null) {
                         topTipsDialog.dismiss();
-                        ToastHelper.showToast("麦位已关闭");
-                        return;
+                        selfQueue = null;
                     } else {
                         removed(queueInfo);
                     }
@@ -544,7 +547,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         tipsDialog.show(getSupportFragmentManager(), "TipsDialog");
         tipsDialog.setClickListener(() -> {
             tipsDialog.dismiss();
-            if (topTipsDialog != null) {
+            if (topTipsDialog != null && getSupportFragmentManager() != null) {
                 topTipsDialog.dismiss();
                 selfQueue = null;
             }

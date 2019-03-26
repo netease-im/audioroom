@@ -164,26 +164,42 @@ public class MemberActivity extends BaseActivity {
 
         if (mQueueInfoList != null) {
             for (QueueInfo queueInfo : mQueueInfoList) {
-                mQueueMembers.add(queueInfo.getQueueMember());
+                if (queueInfo.getQueueMember() != null)
+                    mQueueMembers.add(queueInfo.getQueueMember());
             }
         }
+        //判断当前用户是否在麦上
         for (ChatRoomMember chatRoomMember : chatRoomMembers) {
             QueueMember queueMember = new QueueMember(chatRoomMember.getAccount(), chatRoomMember.getNick(), chatRoomMember.getAvatar());
-            if (!mQueueMembers.contains(queueMember)) {
+            boolean isContain = false;
+            for (QueueMember q : mQueueMembers) {
+                if (q != null && q.getAccount().equals(queueMember.getAccount())) {
+                    isContain = true;//存在麦上
+                    break;
+                }
+            }
+            //麦位上不存在该用户
+            if (!isContain) {
                 queueMembers.add(queueMember);
                 continue;
             }
+            //当前观众
+            boolean isContains = false;
             for (QueueInfo queueInfo : mQueueInfoList) {
-                if (queueInfo.getQueueMember() != null
-                        && queueInfo.getQueueMember().getAccount().equals(queueMember.getAccount())) {
+                if (queueInfo.getQueueMember() != null && queueInfo.getQueueMember().getAccount().equals(queueMember.getAccount())) {
                     if (!(QueueInfo.hasOccupancy(queueInfo)) || queueInfo.getStatus() == QueueInfo.STATUS_LOAD) {
-                        if (!queueMembers.contains(queueMember)) {
-                            queueMembers.add(queueMember);
-                        }
-
+                        isContains = true;
+                        break;
                     }
                 }
             }
+
+            if (isContains) {
+                if (!mQueueMembers.contains(queueMember)) {
+                    queueMembers.add(queueMember);
+                }
+            }
+
         }
         return queueMembers;
     }

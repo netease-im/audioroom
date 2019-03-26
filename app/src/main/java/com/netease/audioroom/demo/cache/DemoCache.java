@@ -3,11 +3,7 @@ package com.netease.audioroom.demo.cache;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-import com.netease.audioroom.demo.activity.MainActivity;
-import com.netease.audioroom.demo.http.ChatRoomHttpClient;
 import com.netease.audioroom.demo.model.AccountInfo;
-import com.netease.audioroom.demo.model.DemoRoomInfo;
-import com.netease.audioroom.demo.util.ToastHelper;
 
 import java.util.Calendar;
 

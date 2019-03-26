@@ -16,7 +16,6 @@ import android.widget.TextView;
 
 import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.adapter.MessageListAdapter;
-import com.netease.audioroom.demo.adapter.MuteMemberListAdapter;
 import com.netease.audioroom.demo.adapter.QueueAdapter;
 import com.netease.audioroom.demo.base.adapter.BaseAdapter;
 import com.netease.audioroom.demo.cache.DemoCache;
@@ -33,7 +32,6 @@ import com.netease.audioroom.demo.util.ScreenUtil;
 import com.netease.audioroom.demo.util.ToastHelper;
 import com.netease.audioroom.demo.widget.HeadImageView;
 import com.netease.audioroom.demo.widget.VerticalItemDecoration;
-import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.ErrorCallback;
 import com.netease.audioroom.demo.widget.unitepage.loadsir.callback.NetErrCallback;
 import com.netease.nimlib.sdk.NIMClient;
 import com.netease.nimlib.sdk.Observer;
@@ -85,7 +83,7 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
 
     public static final String TAG = "AudioRoom";
 
-    boolean isCloseVoice = false;//主播有的变量（控制聊天室语音关闭）
+    protected boolean isCloseVoice = false;//主播有的变量（控制聊天室语音关闭）
 
     private static final int KEY_BOARD_MIN_SIZE = ScreenUtil.dip2px(DemoCache.getContext(), 80);
 
@@ -266,7 +264,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
 
                                 @Override
                                 public void onFailed(int code) {
-
                                 }
 
                                 @Override
@@ -292,7 +289,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
                                     }
                                 }
                             }
-//
                             break;
                     }
                 } else {
@@ -736,7 +732,7 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
                 for (QueueInfo queueInfo : getQueueList(param)) {
                     //主播
                     if (speakers.containsKey(creater)) {
-                        if (findVolumeStep(speakers.get(creater)) == 0 || ivRoomAudioSwitch.isSelected()) {
+                        if (findVolumeStep(speakers.get(creater)) == 0 || ivSelfAudioSwitch.isSelected()) {
                             circle.setVisibility(View.INVISIBLE);
                         } else {
                             circle.setVisibility(View.VISIBLE);

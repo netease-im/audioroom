@@ -249,10 +249,12 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                                 ArrayList<QueueInfo> allQueueInfoArrayList = getQueueList(param);
                                 for (QueueInfo q : allQueueInfoArrayList) {
                                     if (q.getQueueMember() != null && q.getQueueMember().getAccount().equals(queueMember.getAccount())) {//存在于列表中
-                                        if (QueueInfo.hasOccupancy(q) || q.getStatus() == QueueInfo.STATUS_LOAD) {
+                                        if (QueueInfo.hasOccupancy(q)) {
                                             ToastHelper.showToast("操作失败:当前用户已在麦位上");
                                             isInQueue = true;
                                             break;
+                                        } else if (q.getStatus() == QueueInfo.STATUS_LOAD) {
+                                            rejectLink(q);
                                         }
                                     }
                                 }
@@ -505,15 +507,16 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
         QueueMember queueMember;
         switch (command) {
             case P2PNotificationHelper.REQUEST_LINK://请求连麦
+                if (bottomMenuDialog != null) {
+                    bottomMenuDialog.dismiss();
+                }
                 index = jsonObject.optInt(P2PNotificationHelper.INDEX);
                 nick = jsonObject.optString(P2PNotificationHelper.NICK);
                 avatar = jsonObject.optString(P2PNotificationHelper.AVATAR);
                 queueMember = new QueueMember(customNotification.getFromAccount(), nick, avatar);
                 queueInfo = queueMap.get(QueueInfo.getKeyByIndex(index));
                 if (queueInfo != null) {
-                    if (queueInfo.getStatus() == QueueInfo.STATUS_CLOSE) {
-                        return;
-                    }
+
                     queueInfo.setQueueMember(queueMember);
                     if (queueInfo.getStatus() == QueueInfo.STATUS_FORBID) {
                         queueInfo.setReason(QueueInfo.Reason.applyInMute);
@@ -564,7 +567,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                 }
                 break;
         }
-
     }
 
     @Override
@@ -640,6 +642,9 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
 
     @Override
     public void linkRequest(QueueInfo queueInfo) {
+        if (queueAdapter.getItem(queueInfo.getIndex()).getStatus() == QueueInfo.STATUS_CLOSE) {
+            return;
+        }
         chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString());
         requestMemberList.add(queueInfo);
         if (requestMemberList.size() > 0) {
@@ -713,6 +718,9 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                     if (requestLinkDialog != null && requestLinkDialog.isVisible()) {
                         requestLinkDialog.dismiss();
                     }
+                    if (semicircleView.getVisibility() == View.VISIBLE) {
+                        semicircleView.setVisibility(View.INVISIBLE);
+                    }
                 } else {
                     if (requestLinkDialog.isVisible()) {
                         requestLinkDialog.updateDate();
@@ -736,7 +744,12 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
 
     @Override
     public void acceptLink(QueueInfo queueInfo) {
-        //当前麦位有人了
+        //当前麦位关闭
+        if (queueInfo.getStatus() == QueueInfo.STATUS_CLOSE) {
+            rejectLink(queueInfo);
+            ToastHelper.showToast("当前麦位已关闭");
+            return;
+        }
         if (QueueInfo.hasOccupancy(queueInfo)) {
             rejectLink(queueInfo);
         } else {
@@ -781,7 +794,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
         }
     }
 
-
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
@@ -789,7 +801,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                 //禁言
                 MuteMemberListActivity.start(mContext, roomInfo);
                 break;
-
             case R.id.iv_close_room_audio_switch:
                 boolean close = ivRoomAudioSwitch.isSelected();
                 ivRoomAudioSwitch.setSelected(!close);
@@ -1333,6 +1344,9 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
         String cancelTips;
         if (OnQueue) {
             cancelTips = "\"" + queueInfo.getQueueMember().getNick() + "\"" + "进入了麦位" + position;
+            if (isCloseVoice) {
+                muteRoomAudio(true);
+            }
         } else {
             cancelTips = "\"" + queueInfo.getQueueMember().getNick() + "\"" + "退出了麦位" + position;
         }

@@ -2,12 +2,9 @@ package com.netease.audioroom.demo.http;
 
 import android.util.Log;
 
-
 import com.netease.audioroom.demo.cache.DemoCache;
 import com.netease.audioroom.demo.model.AccountInfo;
 import com.netease.audioroom.demo.model.DemoRoomInfo;
-import com.netease.audioroom.demo.util.NetworkChange;
-
 
 import org.json.JSONArray;
 import org.json.JSONException;

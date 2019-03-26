@@ -8,12 +8,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-
 import com.netease.audioroom.demo.R;
-import com.netease.audioroom.demo.cache.RecyclerViewHolder;
 
 import java.util.ArrayList;
-import java.util.Map;
 
 public abstract class BaseAdapter<T> extends RecyclerView.Adapter {
 

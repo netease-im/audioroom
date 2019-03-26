@@ -2,11 +2,7 @@ package com.netease.audioroom.demo.app;
 
 import android.app.Activity;
 import android.app.Application;
-
-import android.content.Context;
 import android.content.IntentFilter;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Bundle;
 
 import com.netease.audioroom.demo.base.BaseActivityManager;
