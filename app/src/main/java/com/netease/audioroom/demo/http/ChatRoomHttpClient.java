@@ -30,7 +30,7 @@ public class ChatRoomHttpClient {
     private static final int RESULT_CODE_SUCCESS = 200;
 
     private static final String API__REL_SERVER = "https://app.yunxin.163.com/appdemo/voicechat/";
-    private static final String API_TEST_SERVER = "https://apptest.netease.im/appdemo/voicechat/";
+    private static final String API_TEST_SERVER = "http://apptest.netease.im:8080/appdemo/voicechat/";
     // api
     private static final String API_CHAT_ROOM_LIST = "room/list";
     private static final String API_GET_USER = "user/get";

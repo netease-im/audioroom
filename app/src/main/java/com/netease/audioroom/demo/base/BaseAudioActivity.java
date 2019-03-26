@@ -274,41 +274,25 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
 
                                 }
                             });
-
-
                             break;
                         case ChatRoomInfoUpdated:
-                            NIMClient.getService(ChatRoomService.class).fetchRoomInfo(roomInfo.getRoomId())
-                                    .setCallback(new RequestCallback<ChatRoomInfo>() {
-                                        @Override
-                                        public void onSuccess(ChatRoomInfo param) {
-                                            // 成功
-                                            if (param.getExtension() != null) {
-                                                for (Map.Entry<String, Object> entry : param.getExtension().entrySet()) {
-                                                    if (entry.getKey().equals(ROOM_MICROPHONE_OPEN)) {
-                                                        int status = (int) entry.getValue();
-                                                        switch (status) {
-                                                            case 0:
-                                                                ivLiverAudioCloseHint.setVisibility(View.VISIBLE);
-                                                                break;
-                                                            case 1:
-                                                                ivLiverAudioCloseHint.setVisibility(View.INVISIBLE);
-                                                                break;
-                                                        }
-                                                        break;
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                        @Override
-                                        public void onFailed(int code) {
-                                        }
-
-                                        @Override
-                                        public void onException(Throwable exception) {
-                                        }
-                                    });
+                            if (((ChatRoomNotificationAttachment) message.getAttachment()).getExtension() == null) {
+                                return;
+                            }
+                            for (Map.Entry<String, Object> entry : ((ChatRoomNotificationAttachment) message.getAttachment()).getExtension().entrySet()) {
+                                if (entry.getKey().equals(ROOM_MICROPHONE_OPEN)) {
+                                    int status = (int) entry.getValue();
+                                    switch (status) {
+                                        case 1:
+                                            ivLiverAudioCloseHint.setVisibility(View.VISIBLE);
+                                            break;
+                                        case 0:
+                                            ivLiverAudioCloseHint.setVisibility(View.INVISIBLE);
+                                            break;
+                                    }
+                                }
+                            }
+//
                             break;
                     }
                 } else {
@@ -508,7 +492,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
                 } else {
                     selfQueue = null;
                 }
-
             }
         }
         queueAdapter.setItems(queueInfoList);
@@ -532,16 +515,13 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
             return;
         }
         if (message.getRemoteExtension() != null && message.getRemoteExtension().get("type").equals(1)) {
-            SimpleMessage simpleMessage = new SimpleMessage("", "“"
-                    + message.getChatRoomMessageExtension().getSenderNick() + "”" + message.getContent(),
-                    SimpleMessage.TYPE_MEMBER_CHANGE);
+            SimpleMessage simpleMessage = new SimpleMessage("", message.getContent(), SimpleMessage.TYPE_MEMBER_CHANGE);
             msgAdapter.appendItem(simpleMessage);
             if (DemoCache.getAccountInfo().account.equals(creater)) {
                 if (isCloseVoice) {
                     muteRoomAudio(true);
                 }
             }
-
 
         } else {
             msgAdapter.appendItem(new SimpleMessage(message.getChatRoomMessageExtension().getSenderNick(),

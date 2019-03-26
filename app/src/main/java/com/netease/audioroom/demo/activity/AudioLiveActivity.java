@@ -31,6 +31,7 @@ import com.netease.audioroom.demo.model.AudioMixingInfo;
 import com.netease.audioroom.demo.model.DemoRoomInfo;
 import com.netease.audioroom.demo.model.QueueInfo;
 import com.netease.audioroom.demo.model.QueueMember;
+import com.netease.audioroom.demo.model.SimpleMessage;
 import com.netease.audioroom.demo.util.CommonUtil;
 import com.netease.audioroom.demo.util.JsonUtil;
 import com.netease.audioroom.demo.util.ToastHelper;
@@ -42,7 +43,9 @@ import com.netease.nimlib.sdk.avchat.AVChatManager;
 import com.netease.nimlib.sdk.avchat.constant.AVChatUserRole;
 import com.netease.nimlib.sdk.avchat.model.AVChatChannelInfo;
 import com.netease.nimlib.sdk.avchat.model.AVChatParameters;
+import com.netease.nimlib.sdk.chatroom.ChatRoomMessageBuilder;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMember;
+import com.netease.nimlib.sdk.chatroom.model.ChatRoomMessage;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomQueueChangeAttachment;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomRoomMemberInAttachment;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomTempMuteAddAttachment;
@@ -254,11 +257,13 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                                     }
                                 }
                                 if (!isInQueue) {
+                                    QueueInfo queueInfo;
                                     if (allQueueInfoArrayList.get(inviteIndex).getStatus() == QueueInfo.STATUS_FORBID) {
-                                        invitedLink(new QueueInfo(inviteIndex, queueMember, QueueInfo.STATUS_FORBID, QueueInfo.Reason.inviteByHost));
+                                        queueInfo = new QueueInfo(inviteIndex, queueMember, QueueInfo.STATUS_FORBID, QueueInfo.Reason.inviteByHost);
                                     } else {
-                                        invitedLink(new QueueInfo(inviteIndex, queueMember, QueueInfo.STATUS_NORMAL, QueueInfo.Reason.inviteByHost));
+                                        queueInfo = new QueueInfo(inviteIndex, queueMember, QueueInfo.STATUS_NORMAL, QueueInfo.Reason.inviteByHost);
                                     }
+                                    invitedLink(queueInfo);
 
                                 }
                             }
@@ -521,7 +526,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                 }
                 linkRequest(queueInfo);
                 break;
-
             case P2PNotificationHelper.CANCEL_REQUEST_LINK://取消请求
                 index = jsonObject.optInt(P2PNotificationHelper.INDEX);
                 queueInfo = queueMap.get(QueueInfo.getKeyByIndex(index));
@@ -540,7 +544,23 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                         queueInfo.setStatus(QueueInfo.STATUS_INIT);
                     }
                     queueInfo.setReason(QueueInfo.Reason.kickedBySelf);
-                    chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString());
+                    final QueueInfo tempQueueInfo = queueInfo;
+                    chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString()).setCallback(new RequestCallback<Void>() {
+                        @Override
+                        public void onSuccess(Void param) {
+                            sendOnQueueMsg(false, tempQueueInfo);
+                        }
+
+                        @Override
+                        public void onFailed(int code) {
+
+                        }
+
+                        @Override
+                        public void onException(Throwable exception) {
+
+                        }
+                    });
                 }
                 break;
         }
@@ -731,6 +751,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                     queueInfo.toString()).setCallback(new RequestCallback<Void>() {
                 @Override
                 public void onSuccess(Void aVoid) {
+                    sendOnQueueMsg(true, queueInfo);
                     ToastHelper.showToast("成功通过连麦请求");
                     Iterator<QueueInfo> queueInfoIterator = requestMemberList.iterator();
                     while (queueInfoIterator.hasNext()) {
@@ -991,7 +1012,9 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
         chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString()).setCallback(new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
-                ToastHelper.showToast("已将" + queueInfo.getQueueMember().getNick() + "抱上麦位" + inviteIndex + 1);
+                sendOnQueueMsg(true, queueInfo);
+                int position = inviteIndex + 1;
+                ToastHelper.showToast("已将" + queueInfo.getQueueMember().getNick() + "抱上麦位" + position);
             }
 
             @Override
@@ -1022,6 +1045,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                 queueInfo.toString()).setCallback(new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
+                sendOnQueueMsg(false, queueInfo);
                 ToastHelper.showToast("已将“" + Tempname + "”踢下麦位");
             }
 
@@ -1111,6 +1135,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
     //关闭麦位
     @Override
     public void closeAudio(QueueInfo queueInfo) {
+        queueInfo.setStatus(QueueInfo.STATUS_CLOSE);
         if (queueInfo.getStatus() == QueueInfo.STATUS_LOAD) {
             requestMemberList.remove(queueInfo.getIndex());
             if (requestMemberList.size() == 0) {
@@ -1120,7 +1145,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                 semicircleView.setText(String.valueOf(requestMemberList.size()));
             }
         }
-        queueInfo.setStatus(QueueInfo.STATUS_CLOSE);
         chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(),
                 queueInfo.toString()).setCallback(new RequestCallback<Void>() {
             @Override
@@ -1287,12 +1311,12 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
         ChatRoomUpdateInfo chatRoomUpdateInfo = new ChatRoomUpdateInfo();
         Map<String, Object> param = new HashMap<>();
         if (isOpenMicrophone) {
-            param.put(ROOM_MICROPHONE_OPEN, 1);
-        } else {
             param.put(ROOM_MICROPHONE_OPEN, 0);
+        } else {
+            param.put(ROOM_MICROPHONE_OPEN, 1);
         }
         chatRoomUpdateInfo.setExtension(param);
-        chatRoomService.updateRoomInfo(roomInfo.getRoomId(), chatRoomUpdateInfo, true, null);
+        chatRoomService.updateRoomInfo(roomInfo.getRoomId(), chatRoomUpdateInfo, true, param);
     }
 
     private void updateVoiceRoomInfo(boolean isOpenVoice) {
@@ -1301,6 +1325,26 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
         param.put(ROOM_VOICE_OPEN, isOpenVoice);
         chatRoomUpdateInfo.setExtension(param);
         chatRoomService.updateRoomInfo(roomInfo.getRoomId(), chatRoomUpdateInfo, false, null);
+    }
+
+    //发送上麦消息
+    private void sendOnQueueMsg(boolean OnQueue, QueueInfo queueInfo) {
+        int position = queueInfo.getIndex() + 1;
+        String cancelTips;
+        if (OnQueue) {
+            cancelTips = "\"" + queueInfo.getQueueMember().getNick() + "\"" + "进入了麦位" + position;
+        } else {
+            cancelTips = "\"" + queueInfo.getQueueMember().getNick() + "\"" + "退出了麦位" + position;
+        }
+        SimpleMessage simpleMessage = new SimpleMessage("", cancelTips, SimpleMessage.TYPE_MEMBER_CHANGE);
+        ChatRoomMessage message = ChatRoomMessageBuilder.createChatRoomTextMessage(roomInfo.getRoomId(), cancelTips);
+        Map<String, Object> ex = new HashMap<>();
+        ex.put("type", 1);
+        message.setRemoteExtension(ex);
+        chatRoomService.sendMessage(message, false);
+        msgAdapter.appendItem(simpleMessage);
+        scrollToBottom();
+
     }
 
 

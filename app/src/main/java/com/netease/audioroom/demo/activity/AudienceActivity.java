@@ -24,7 +24,6 @@ import com.netease.audioroom.demo.model.AccountInfo;
 import com.netease.audioroom.demo.model.DemoRoomInfo;
 import com.netease.audioroom.demo.model.QueueInfo;
 import com.netease.audioroom.demo.model.QueueMember;
-import com.netease.audioroom.demo.model.SimpleMessage;
 import com.netease.audioroom.demo.util.CommonUtil;
 import com.netease.audioroom.demo.util.JsonUtil;
 import com.netease.audioroom.demo.util.ToastHelper;
@@ -39,6 +38,7 @@ import com.netease.nimlib.sdk.chatroom.ChatRoomService;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomInfo;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMember;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomMessage;
+import com.netease.nimlib.sdk.chatroom.model.ChatRoomNotificationAttachment;
 import com.netease.nimlib.sdk.chatroom.model.ChatRoomQueueChangeAttachment;
 import com.netease.nimlib.sdk.chatroom.model.EnterChatRoomData;
 import com.netease.nimlib.sdk.chatroom.model.EnterChatRoomResultData;
@@ -90,6 +90,23 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 if (param.isMute()) {
                     beMutedText();
                 }
+                if (param.getExtension() == null) {
+                    return;
+                }
+                for (Map.Entry<String, Object> entry : param.getExtension().entrySet()) {
+                    if (entry.getKey().equals(ROOM_MICROPHONE_OPEN)) {
+                        int status = (int) entry.getValue();
+                        switch (status) {
+                            case 1:
+                                ivLiverAudioCloseHint.setVisibility(View.VISIBLE);
+                                break;
+                            case 0:
+                                ivLiverAudioCloseHint.setVisibility(View.INVISIBLE);
+                                break;
+                        }
+                    }
+                }
+
             }
 
             @Override
@@ -329,8 +346,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         } else {
             release();
         }
-
-
     }
 
     @Override
@@ -352,7 +367,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             } else {
                 ToastHelper.showToast("您已在麦上");
             }
-
             return;
         }
         P2PNotificationHelper.requestLink(queueInfo, DemoCache.getAccountInfo(), roomInfo.getCreator(), new RequestCallback<Void>() {
@@ -395,10 +409,8 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                                     topTipsDialog.show(getSupportFragmentManager(), topTipsDialog.TAG);
                                 break;
                         }
-
                     });
                 });
-
             }
 
             @Override
@@ -460,7 +472,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                         removed(queueInfo);
                     }
                 }
-
                 break;
             case QueueInfo.STATUS_CLOSE_SELF_AUDIO:
                 selfQueue = queueInfo;
@@ -473,11 +484,8 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                     linkBeRejected();
                 }
                 break;
-
         }
-
     }
-
 
     @Override
     public void cancelLinkRequest(QueueInfo queueInfo) {
@@ -501,6 +509,9 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     }
 
     private void leaveQueueBySelf() {
+        if (selfQueue == null) {
+            return;
+        }
         P2PNotificationHelper.cancelLink(selfQueue.getIndex(),
                 DemoCache.getAccountInfo().account,
                 roomInfo.getCreator(),
@@ -789,19 +800,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     private void updateUiByleaveQueue() {
         updateAudioSwitchVisible(false);
         updateRole(true);
-        if (selfQueue == null) {
-            return;
-        }
-        int position = selfQueue.getIndex() + 1;
-        String cancelTips = DemoCache.getAccountInfo().nick + "退出了麦位" + position;
-        SimpleMessage simpleMessage = new SimpleMessage("", cancelTips, SimpleMessage.TYPE_MEMBER_CHANGE);
-        ChatRoomMessage message = ChatRoomMessageBuilder.createChatRoomTextMessage(roomInfo.getRoomId(), "退出了麦位" + position);
-        Map<String, Object> ex = new HashMap<>();
-        ex.put("type", 1);
-        message.setRemoteExtension(ex);
-        chatRoomService.sendMessage(message, false);
-        msgAdapter.appendItem(simpleMessage);
-        scrollToBottom();
         selfQueue = null;
     }
 
@@ -810,20 +808,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         updateAudioSwitchVisible(true);
         updateRole(false);
         selfQueue = queueInfo;
-        if (selfQueue.getReason() == QueueInfo.Reason.agreeApply
-                || selfQueue.getReason() == QueueInfo.Reason.inviteByHost) {
-            int position = selfQueue.getIndex() + 1;
-            String cancelTips = DemoCache.getAccountInfo().nick + "进入了麦位" + position;
-
-            SimpleMessage simpleMessage = new SimpleMessage("", cancelTips, SimpleMessage.TYPE_MEMBER_CHANGE);
-            ChatRoomMessage message = ChatRoomMessageBuilder.createChatRoomTextMessage(roomInfo.getRoomId(), "进入了麦位" + position);
-            Map<String, Object> ex = new HashMap<>();
-            ex.put("type", 1);
-            message.setRemoteExtension(ex);
-            chatRoomService.sendMessage(message, false);
-            msgAdapter.appendItem(simpleMessage);
-            scrollToBottom();
-        }
     }
 
 }
