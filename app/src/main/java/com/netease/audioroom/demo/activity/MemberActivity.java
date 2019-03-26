@@ -159,8 +159,9 @@ public class MemberActivity extends BaseActivity {
 
     //去除麦位上除申请的用户
     private ArrayList<QueueMember> repeateLoad(List<ChatRoomMember> chatRoomMembers) {
-        ArrayList<QueueMember> queueMembers = new ArrayList<>();
-        ArrayList<QueueMember> mQueueMembers = new ArrayList<>();
+        ArrayList<QueueMember> mQueueMembers = new ArrayList<>();//在麦上的情况
+        ArrayList<QueueMember> queueMembers = new ArrayList<>();//结果集
+
         if (mQueueInfoList != null) {
             for (QueueInfo queueInfo : mQueueInfoList) {
                 mQueueMembers.add(queueInfo.getQueueMember());
@@ -174,11 +175,12 @@ public class MemberActivity extends BaseActivity {
             }
             for (QueueInfo queueInfo : mQueueInfoList) {
                 if (queueInfo.getQueueMember() != null
-                        && queueInfo.getQueueMember().getAccount()
-                        .equals(queueMember.getAccount())) {
-                    if (!(QueueInfo.hasOccupancy(queueInfo))
-                            || queueInfo.getStatus() == QueueInfo.STATUS_LOAD) {
-                        queueMembers.add(queueMember);
+                        && queueInfo.getQueueMember().getAccount().equals(queueMember.getAccount())) {
+                    if (!(QueueInfo.hasOccupancy(queueInfo)) || queueInfo.getStatus() == QueueInfo.STATUS_LOAD) {
+                        if (!queueMembers.contains(queueMember)) {
+                            queueMembers.add(queueMember);
+                        }
+
                     }
                 }
             }
@@ -186,7 +188,6 @@ public class MemberActivity extends BaseActivity {
         return queueMembers;
     }
 
-    //去除已禁言观众
     private ArrayList<QueueMember> repeatMuteList(List<ChatRoomMember> chatRoomMembers) {
         ArrayList<QueueMember> queueMembers = new ArrayList<>();
         for (ChatRoomMember chatRoomMember : chatRoomMembers) {
