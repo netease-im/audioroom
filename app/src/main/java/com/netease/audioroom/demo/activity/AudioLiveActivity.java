@@ -1013,6 +1013,9 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
     //抱麦操作
     @Override
     public void invitedLink(QueueInfo queueInfo) {
+        if (queueInfo.getStatus() == QueueInfo.STATUS_LOAD) {
+            rejectLink(queueInfo);
+        }
         if (queueInfo.getStatus() == QueueInfo.STATUS_FORBID) {
             queueInfo.setStatus(QueueInfo.STATUS_BE_MUTED_AUDIO);
         } else {

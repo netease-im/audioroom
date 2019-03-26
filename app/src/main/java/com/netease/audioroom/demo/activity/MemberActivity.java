@@ -159,20 +159,21 @@ public class MemberActivity extends BaseActivity {
 
     //去除麦位上除申请的用户
     private ArrayList<QueueMember> repeateLoad(List<ChatRoomMember> chatRoomMembers) {
-        ArrayList<QueueMember> mQueueMembers = new ArrayList<>();//在麦上的情况
-        ArrayList<QueueMember> queueMembers = new ArrayList<>();//结果集
+        ArrayList<QueueMember> memberArrayOnQueueList = new ArrayList<>();//在麦上的情况
+        ArrayList<QueueMember> resultMemberList = new ArrayList<>();//结果集
 
         if (mQueueInfoList != null) {
             for (QueueInfo queueInfo : mQueueInfoList) {
                 if (queueInfo.getQueueMember() != null)
-                    mQueueMembers.add(queueInfo.getQueueMember());
+                    memberArrayOnQueueList.add(queueInfo.getQueueMember());
             }
         }
+
         //判断当前用户是否在麦上
         for (ChatRoomMember chatRoomMember : chatRoomMembers) {
             QueueMember queueMember = new QueueMember(chatRoomMember.getAccount(), chatRoomMember.getNick(), chatRoomMember.getAvatar());
             boolean isContain = false;
-            for (QueueMember q : mQueueMembers) {
+            for (QueueMember q : memberArrayOnQueueList) {
                 if (q != null && q.getAccount().equals(queueMember.getAccount())) {
                     isContain = true;//存在麦上
                     break;
@@ -180,28 +181,29 @@ public class MemberActivity extends BaseActivity {
             }
             //麦位上不存在该用户
             if (!isContain) {
-                queueMembers.add(queueMember);
+                resultMemberList.add(queueMember);
                 continue;
             }
-            //当前观众
+            //麦位上存在该用户
             boolean isContains = false;
+            int ContainsCount = 0;
             for (QueueInfo queueInfo : mQueueInfoList) {
                 if (queueInfo.getQueueMember() != null && queueInfo.getQueueMember().getAccount().equals(queueMember.getAccount())) {
                     if (!(QueueInfo.hasOccupancy(queueInfo)) || queueInfo.getStatus() == QueueInfo.STATUS_LOAD) {
                         isContains = true;
-                        break;
+                    } else {
+                        ContainsCount++;
                     }
                 }
             }
-
-            if (isContains) {
-                if (!mQueueMembers.contains(queueMember)) {
-                    queueMembers.add(queueMember);
+            if (isContains && ContainsCount == 0) {
+                if (!resultMemberList.contains(queueMember)) {
+                    resultMemberList.add(queueMember);
                 }
             }
 
         }
-        return queueMembers;
+        return resultMemberList;
     }
 
     private ArrayList<QueueMember> repeatMuteList(List<ChatRoomMember> chatRoomMembers) {
