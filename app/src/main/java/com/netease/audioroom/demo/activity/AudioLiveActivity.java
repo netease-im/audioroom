@@ -1031,6 +1031,19 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                 sendOnQueueMsg(true, queueInfo);
                 int position = inviteIndex + 1;
                 ToastHelper.showToast("已将" + queueInfo.getQueueMember().getNick() + "抱上麦位" + position);
+                if (requestMemberList != null && requestMemberList.size() != 0) {
+                    for (QueueInfo q : requestMemberList) {
+                        if (q.getIndex() == queueInfo.getIndex()) {
+                            requestMemberList.remove(q);
+                        }
+                    }
+
+                    if (requestMemberList.size() == 0) {
+                        semicircleView.setVisibility(View.INVISIBLE);
+                    } else {
+                        semicircleView.setText(String.valueOf(requestMemberList));
+                    }
+                }
             }
 
             @Override
