@@ -513,10 +513,8 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
         if (message.getRemoteExtension() != null && message.getRemoteExtension().get("type").equals(1)) {
             SimpleMessage simpleMessage = new SimpleMessage("", message.getContent(), SimpleMessage.TYPE_MEMBER_CHANGE);
             msgAdapter.appendItem(simpleMessage);
-            if (DemoCache.getAccountInfo().account.equals(creater)) {
-                if (isCloseVoice) {
-                    muteRoomAudio(true);
-                }
+            if (isCloseVoice) {
+                muteRoomAudio(true);
             }
 
         } else {
@@ -810,7 +808,11 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
 
     private void updateStatus(int volume, int itemIndex) {
         if (rcyQueueRecyclerView == null) {
-            return;
+            rcyQueueRecyclerView = findViewById(R.id.rl_base_audio_ui).findViewById(R.id.rcy_queue_list);
+        }
+        if (rcyQueueRecyclerView.getLayoutManager() == null) {
+            rcyQueueRecyclerView.setLayoutManager(new GridLayoutManager(this, 4));
+
         }
         ImageView circle = rcyQueueRecyclerView.getLayoutManager().findViewByPosition(itemIndex).findViewById(R.id.circle);
         if (volume == 0) {

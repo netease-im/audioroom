@@ -74,6 +74,7 @@ import static com.netease.audioroom.demo.dialog.BottomMenuDialog.BOTTOMMENUS;
 public class AudioLiveActivity extends BaseAudioActivity implements LoginManager.IAudioLive, View.OnClickListener {
     BottomMenuDialog bottomMenuDialog;
     EnterChatRoomResultData resultData;
+    protected boolean isCloseVoice = false;//主播有的变量（控制聊天室语音关闭）
 
     public static void start(Context context, DemoRoomInfo demoRoomInfo) {
         Intent intent = new Intent(context, AudioLiveActivity.class);
@@ -508,7 +509,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
         switch (command) {
             case P2PNotificationHelper.REQUEST_LINK://请求连麦
                 if (bottomMenuDialog != null) {
-                    bottomMenuDialog.dismiss();
                 }
                 index = jsonObject.optInt(P2PNotificationHelper.INDEX);
                 nick = jsonObject.optString(P2PNotificationHelper.NICK);
@@ -1013,9 +1013,11 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
     //抱麦操作
     @Override
     public void invitedLink(QueueInfo queueInfo) {
+        //拒绝当前在申请的麦位
         if (queueInfo.getStatus() == QueueInfo.STATUS_LOAD) {
             rejectLink(queueInfo);
         }
+
         if (queueInfo.getStatus() == QueueInfo.STATUS_FORBID) {
             queueInfo.setStatus(QueueInfo.STATUS_BE_MUTED_AUDIO);
         } else {
@@ -1149,7 +1151,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
     //关闭麦位
     @Override
     public void closeAudio(QueueInfo queueInfo) {
-        queueInfo.setStatus(QueueInfo.STATUS_CLOSE);
         if (queueInfo.getStatus() == QueueInfo.STATUS_LOAD) {
             requestMemberList.remove(queueInfo.getIndex());
             if (requestMemberList.size() == 0) {
@@ -1159,6 +1160,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                 semicircleView.setText(String.valueOf(requestMemberList.size()));
             }
         }
+        queueInfo.setStatus(QueueInfo.STATUS_CLOSE);
         chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(),
                 queueInfo.toString()).setCallback(new RequestCallback<Void>() {
             @Override

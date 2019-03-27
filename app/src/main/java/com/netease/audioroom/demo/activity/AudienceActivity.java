@@ -61,6 +61,7 @@ import static com.netease.audioroom.demo.dialog.BottomMenuDialog.BOTTOMMENUS;
 public class AudienceActivity extends BaseAudioActivity implements IAudience, View.OnClickListener {
     String creator;
     TopTipsDialog topTipsDialog;
+    BottomMenuDialog bottomMenuDialog;
 
     public static void start(Context context, DemoRoomInfo model) {
         Intent intent = new Intent(context, AudienceActivity.class);
@@ -328,7 +329,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                             ex.put("type", 1);
                             message.setRemoteExtension(ex);
                             chatRoomService.sendMessage(message, false);
-                            selfQueue = null;
+                            updateUiByleaveQueue();
                             release();
                         }
 
@@ -368,6 +369,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             }
             return;
         }
+
         P2PNotificationHelper.requestLink(queueInfo, DemoCache.getAccountInfo(), roomInfo.getCreator(), new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
@@ -384,16 +386,13 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 topTipsDialog.setArguments(bundle);
                 if (queueAdapter.getItem(queueInfo.getIndex()).getStatus() == QueueInfo.STATUS_CLOSE) {
                     ToastHelper.showToast("麦位已关闭");
-                    selfQueue = null;
-                    if (topTipsDialog != null && topTipsDialog.isVisible()) {
-                        topTipsDialog.dismiss();
-                    }
+                    topTipsDialog = null;
                     return;
                 }
                 topTipsDialog.show(getSupportFragmentManager(), topTipsDialog.TAG);
                 topTipsDialog.setClickListener(() -> {
                     topTipsDialog.dismiss();
-                    BottomMenuDialog bottomMenuDialog = new BottomMenuDialog();
+                    bottomMenuDialog = new BottomMenuDialog();
                     Bundle bundle1 = new Bundle();
                     ArrayList<String> mune = new ArrayList<>();
                     mune.add("<font color=\"#ff4f4f\">确认取消申请上麦</color>");
@@ -415,6 +414,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                     });
                 });
             }
+
 
             @Override
             public void onFailed(int i) {
@@ -439,12 +439,14 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         }
         QueueInfo queueInfo = new QueueInfo(value);
         QueueMember member = queueInfo.getQueueMember();
-
         int status = queueInfo.getStatus();
         //与自己无关
-        if (member == null || !TextUtils.equals(member.getAccount(), DemoCache.getAccountId())) {
+        if (member == null
+                || !TextUtils.equals(member.getAccount(), DemoCache.getAccountId())
+                || !QueueInfo.hasOccupancy(queueInfo)) {
             if (status == QueueInfo.STATUS_NORMAL) {
-                if (selfQueue != null && queueInfo.getIndex() == selfQueue.getIndex()) {
+                if (selfQueue != null
+                        && queueInfo.getIndex() == selfQueue.getIndex()) {
                     linkBeRejected();
                 }
             }
@@ -459,18 +461,20 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 beMutedAudio(queueInfo);
                 break;
             case QueueInfo.STATUS_INIT:
+
                 if (queueInfo.getReason() == QueueInfo.Reason.cancelApplyByHost) {
                     linkBeRejected();
                 } else if (queueInfo.getReason() == QueueInfo.Reason.kickByHost) {
                     removed(queueInfo);
                 }
+
                 break;
             case QueueInfo.STATUS_CLOSE:
                 if (selfQueue != null && selfQueue.getStatus() == QueueInfo.STATUS_LOAD) {
                     ToastHelper.showToast("麦位已关闭");
                     if (topTipsDialog != null) {
                         topTipsDialog.dismiss();
-                        selfQueue = null;
+                        updateUiByleaveQueue();
                     } else {
                         removed(queueInfo);
                     }
@@ -496,7 +500,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             @Override
             public void onSuccess(Void aVoid) {
                 ToastHelper.showToast("已取消申请上麦");
-                selfQueue = null;
+                updateUiByleaveQueue();
             }
 
             @Override
@@ -545,11 +549,12 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         bundle.putString(tipsDialog.TAG, "您的申请已被拒绝");
         tipsDialog.setArguments(bundle);
         tipsDialog.show(getSupportFragmentManager(), "TipsDialog");
+        updateUiByleaveQueue();
         tipsDialog.setClickListener(() -> {
             tipsDialog.dismiss();
             if (topTipsDialog != null && getSupportFragmentManager() != null) {
                 topTipsDialog.dismiss();
-                selfQueue = null;
+
             }
         });
     }
@@ -811,6 +816,13 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         updateAudioSwitchVisible(true);
         updateRole(false);
         selfQueue = queueInfo;
+        if (topTipsDialog != null) {
+            topTipsDialog.dismiss();
+        }
+
+        if (bottomMenuDialog != null) {
+            bottomMenuDialog.dismiss();
+        }
     }
 
 }
