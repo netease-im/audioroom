@@ -1037,7 +1037,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                             requestMemberList.remove(q);
                         }
                     }
-
                     if (requestMemberList.size() == 0) {
                         semicircleView.setVisibility(View.INVISIBLE);
                     } else {
@@ -1164,6 +1163,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
     @Override
     public void closeAudio(QueueInfo queueInfo) {
         queueInfo.setStatus(QueueInfo.STATUS_CLOSE);
+        queueInfo.setReason(QueueInfo.Reason.init);
         chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(),
                 queueInfo.toString()).setCallback(new RequestCallback<Void>() {
             @Override
@@ -1215,6 +1215,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                     queueInfo.setStatus(QueueInfo.STATUS_BE_MUTED_AUDIO);
                 } else {
                     queueInfo.setStatus(QueueInfo.STATUS_FORBID);
+                    queueInfo.setReason(QueueInfo.Reason.init);
                 }
                 break;
         }
@@ -1384,6 +1385,4 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
         scrollToBottom();
 
     }
-
-
 }

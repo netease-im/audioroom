@@ -374,9 +374,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         P2PNotificationHelper.requestLink(queueInfo, DemoCache.getAccountInfo(), roomInfo.getCreator(), new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
-                if (colsePosition.contains(queueInfo.getIndex())) {
-                    return;
-                }
+
                 Bundle bundle = new Bundle();
                 topTipsDialog = new TopTipsDialog();
                 selfQueue = queueInfo;
@@ -388,6 +386,12 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                         0);
                 bundle.putParcelable(topTipsDialog.TAG, style);
                 topTipsDialog.setArguments(bundle);
+                if (colsePosition.contains(queueInfo.getIndex())) {
+                    if (selfQueue != null) {
+                        selfQueue.setStatus(QueueInfo.STATUS_CLOSE);
+                    }
+                    return;
+                }
                 topTipsDialog.show(getSupportFragmentManager(), topTipsDialog.TAG);
                 topTipsDialog.setClickListener(() -> {
                     topTipsDialog.dismiss();
@@ -449,7 +453,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             }
         }
         //与自己无关
-        if (member == null || !TextUtils.equals(member.getAccount(), DemoCache.getAccountId()) || !QueueInfo.hasOccupancy(queueInfo)) {
+        if (member == null || !TextUtils.equals(member.getAccount(), DemoCache.getAccountId())) {
             if (status == QueueInfo.STATUS_NORMAL) {
                 if (selfQueue != null
                         && queueInfo.getIndex() == selfQueue.getIndex()) {
@@ -503,6 +507,9 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
 
     @Override
     public void cancelLinkRequest(QueueInfo queueInfo) {
+        if (queueInfo.getStatus() == QueueInfo.STATUS_CLOSE) {
+            return;
+        }
         P2PNotificationHelper.cancelLinkRequest(queueInfo, DemoCache.getAccountId(), roomInfo.getCreator(), new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
@@ -618,13 +625,16 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         if (topTipsDialog != null) {
             topTipsDialog.dismiss();
         }
-        TipsDialog tipsDialog = new TipsDialog();
-        Bundle bundle = new Bundle();
-        bundle.putString(tipsDialog.TAG, "您已被主播请下麦位");
-        tipsDialog.setArguments(bundle);
-        tipsDialog.show(getSupportFragmentManager(), tipsDialog.TAG);
-        tipsDialog.setClickListener(() -> tipsDialog.dismiss());
-        updateUiByleaveQueue();
+        if (queueInfo.getReason() == QueueInfo.Reason.kickedBySelf) {
+            TipsDialog tipsDialog = new TipsDialog();
+            Bundle bundle = new Bundle();
+            bundle.putString(tipsDialog.TAG, "您已被主播请下麦位");
+            tipsDialog.setArguments(bundle);
+            tipsDialog.show(getSupportFragmentManager(), tipsDialog.TAG);
+            tipsDialog.setClickListener(() -> tipsDialog.dismiss());
+            updateUiByleaveQueue();
+        }
+
     }
 
     @Override
@@ -829,7 +839,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         if (topTipsDialog != null) {
             topTipsDialog.dismiss();
         }
-
         if (bottomMenuDialog != null) {
             bottomMenuDialog.dismiss();
         }
