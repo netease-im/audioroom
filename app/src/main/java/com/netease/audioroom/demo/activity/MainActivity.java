@@ -114,7 +114,6 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
                 tvNick.setText(accountInfo.nick);
                 requestLivePermission();
             }
-
             @Override
             public void onFailed(int code, String errorMsg) {
                 loadService.showCallback(ErrorCallback.class);

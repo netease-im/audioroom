@@ -508,21 +508,22 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
         QueueMember queueMember;
         switch (command) {
             case P2PNotificationHelper.REQUEST_LINK://请求连麦
-                if (bottomMenuDialog != null) {
-                }
                 index = jsonObject.optInt(P2PNotificationHelper.INDEX);
                 nick = jsonObject.optString(P2PNotificationHelper.NICK);
                 avatar = jsonObject.optString(P2PNotificationHelper.AVATAR);
                 queueMember = new QueueMember(customNotification.getFromAccount(), nick, avatar);
                 queueInfo = queueMap.get(QueueInfo.getKeyByIndex(index));
                 if (queueInfo != null) {
-
                     queueInfo.setQueueMember(queueMember);
+                    if (queueInfo.getStatus() == QueueInfo.STATUS_CLOSE) {
+                        return;
+                    }
                     if (queueInfo.getStatus() == QueueInfo.STATUS_FORBID) {
                         queueInfo.setReason(QueueInfo.Reason.applyInMute);
                     } else {
                         queueInfo.setReason(QueueInfo.Reason.init);
                     }
+
                     queueInfo.setStatus(QueueInfo.STATUS_LOAD);
                 } else {
                     queueInfo = new QueueInfo(index, queueMember, QueueInfo.STATUS_LOAD, QueueInfo.Reason.init);
@@ -556,7 +557,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
 
                         @Override
                         public void onFailed(int code) {
-
                         }
 
                         @Override
@@ -1145,21 +1145,11 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                 ToastHelper.showToast(errmsg + throwable.getMessage());
             }
         });
-
     }
 
     //关闭麦位
     @Override
     public void closeAudio(QueueInfo queueInfo) {
-        if (queueInfo.getStatus() == QueueInfo.STATUS_LOAD) {
-            requestMemberList.remove(queueInfo.getIndex());
-            if (requestMemberList.size() == 0) {
-                semicircleView.setVisibility(View.INVISIBLE);
-            } else {
-                semicircleView.setVisibility(View.VISIBLE);
-                semicircleView.setText(String.valueOf(requestMemberList.size()));
-            }
-        }
         queueInfo.setStatus(QueueInfo.STATUS_CLOSE);
         chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(),
                 queueInfo.toString()).setCallback(new RequestCallback<Void>() {
@@ -1167,6 +1157,22 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
             public void onSuccess(Void aVoid) {
                 int position = queueInfo.getIndex() + 1;
                 ToastHelper.showToast("\"麦位" + position + "\"已关闭");
+                if (requestMemberList == null && requestMemberList.size() == 0) {
+                    return;
+                }
+                for (QueueInfo q : requestMemberList) {
+                    if (q.getIndex() == queueInfo.getIndex()) {
+                        requestMemberList.remove(q);
+                    }
+                }
+                if (requestMemberList.size() == 0) {
+                    semicircleView.setVisibility(View.INVISIBLE);
+                } else {
+                    semicircleView.setVisibility(View.VISIBLE);
+                    semicircleView.setText(String.valueOf(requestMemberList.size()));
+                }
+
+
             }
 
             @Override

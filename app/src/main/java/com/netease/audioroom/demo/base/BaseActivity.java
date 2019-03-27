@@ -26,8 +26,6 @@ public abstract class BaseActivity extends AppCompatActivity {
 
     protected static final int LIVE_PERMISSION_REQUEST_CODE = 1001;
 
-
-    protected boolean isPermissionGrant = false;
     protected boolean isPaused = true;
     protected Context mContext;
 

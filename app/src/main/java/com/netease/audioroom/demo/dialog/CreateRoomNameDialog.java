@@ -1,5 +1,6 @@
 package com.netease.audioroom.demo.dialog;
 
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentTransaction;
@@ -15,11 +16,17 @@ import android.widget.EditText;
 
 import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.activity.AudioLiveActivity;
+import com.netease.audioroom.demo.base.action.INetworkReconnection;
 import com.netease.audioroom.demo.cache.DemoCache;
 import com.netease.audioroom.demo.http.ChatRoomHttpClient;
 import com.netease.audioroom.demo.model.DemoRoomInfo;
+import com.netease.audioroom.demo.util.Network;
+import com.netease.audioroom.demo.util.NetworkChange;
 import com.netease.audioroom.demo.util.NetworkUtils;
+import com.netease.audioroom.demo.util.NetworkWatcher;
 import com.netease.audioroom.demo.util.ToastHelper;
+
+import java.util.Observable;
 
 public class CreateRoomNameDialog extends BaseDialogFragment {
 
@@ -30,11 +37,16 @@ public class CreateRoomNameDialog extends BaseDialogFragment {
 
     View mRootview, mLoading;
 
+    boolean hasNet = true;
+
+    //网络状态监听
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setStyle(android.app.DialogFragment.STYLE_NO_TITLE, R.style.create_dialog_fragment);
+
 
     }
 
@@ -52,6 +64,25 @@ public class CreateRoomNameDialog extends BaseDialogFragment {
         super.onStart();
         initView();
         initListener();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        NetworkWatcher watcher = new NetworkWatcher() {
+            @Override
+            public void update(Observable observable, Object data) {
+                super.update(observable, data);
+                Network network = (Network) data;
+                if (!network.isConnected()) {
+                    hasNet = false;
+                } else {
+                    hasNet = true;
+                }
+            }
+        };
+
+        NetworkChange.getInstance().addObserver(watcher);
     }
 
     private void initView() {
@@ -94,9 +125,14 @@ public class CreateRoomNameDialog extends BaseDialogFragment {
         });
         mBtnCancal.setOnClickListener((v) -> dismiss());
         mBtnCreaterRoom.setOnClickListener((v) -> {
-            mBtnCreaterRoom.setEnabled(false);
-            isLoading(true);
-            createRoom(mEditText.getText().toString());
+            if (!hasNet) {
+                ToastHelper.showToast(" 请检查你的网络");
+            } else {
+                mBtnCreaterRoom.setEnabled(false);
+                isLoading(true);
+                createRoom(mEditText.getText().toString());
+            }
+
         });
     }
 
@@ -140,5 +176,10 @@ public class CreateRoomNameDialog extends BaseDialogFragment {
         }
     }
 
+    @Override
+    public void onDismiss(DialogInterface dialog) {
+        NetworkChange.getInstance().deleteObservers();
+        super.onDismiss(dialog);
 
+    }
 }

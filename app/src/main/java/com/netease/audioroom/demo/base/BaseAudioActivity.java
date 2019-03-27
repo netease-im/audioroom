@@ -238,7 +238,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
                                     .append(", value = ").append(queueChange.getContent());
                             onQueueChange(queueChange);
                             break;
-
                         //队列批量变更，好像没用了
                         case ChatRoomQueueBatchChange:
                             ChatRoomPartClearAttachment queuePartClear = (ChatRoomPartClearAttachment) message.getAttachment();
@@ -641,7 +640,6 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
         if (changeType == ChatRoomQueueChangeType.OFFER && !TextUtils.isEmpty(value)) {
             QueueInfo queueInfo = new QueueInfo(value);
             queueAdapter.updateItem(queueInfo.getIndex(), queueInfo);
-            return;
         }
     }
 
