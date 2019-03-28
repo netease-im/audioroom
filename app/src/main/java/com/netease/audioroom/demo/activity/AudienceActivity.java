@@ -452,7 +452,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             if (queueAdapter.getItem(queueInfo.getIndex()) != null
                     && queueAdapter.getItem(queueInfo.getIndex()).getStatus() == QueueInfo.STATUS_CLOSE) {
                 if (selfQueue != null && selfQueue.getIndex() == queueInfo.getIndex()) {
-                    if (topTipsDialog != null) {
+                    if (topTipsDialog != null && topTipsDialog.isVisible()) {
                         topTipsDialog.dismiss();
                         selfQueue = null;
                         return;
