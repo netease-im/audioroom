@@ -555,6 +555,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                     }
                     queueInfo.setReason(QueueInfo.Reason.kickedBySelf);
                     final QueueInfo tempQueueInfo = queueInfo;
+                    //TODO java.lang.String com.netease.audioroom.demo.model.QueueMember.getNick()
                     chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString()).setCallback(new RequestCallback<Void>() {
                         @Override
                         public void onSuccess(Void param) {
@@ -629,6 +630,11 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
         String value = queueChange.getContent();
         if (changeType == ChatRoomQueueChangeType.OFFER && !TextUtils.isEmpty(value)) {
             QueueInfo queueInfo = new QueueInfo(value);
+            //流程上close状态不会变成关闭状态，但是在及某些特定场景下会出现这样的问题，所以在此加上限定
+            if (queueAdapter.getItem(queueInfo.getIndex()).getStatus() == QueueInfo.STATUS_CLOSE
+                    && queueInfo.getStatus() == QueueInfo.STATUS_LOAD) {
+                return;
+            }
             queueAdapter.updateItem(queueInfo.getIndex(), queueInfo);
         }
         // 队列被清空

@@ -62,7 +62,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     String creator;
     TopTipsDialog topTipsDialog;
     BottomMenuDialog bottomMenuDialog;
-    ArrayList<Integer> colsePosition = new ArrayList<>();
 
     public static void start(Context context, DemoRoomInfo model) {
         Intent intent = new Intent(context, AudienceActivity.class);
@@ -382,7 +381,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                         0);
                 bundle.putParcelable(topTipsDialog.TAG, style);
                 topTipsDialog.setArguments(bundle);
-                if (colsePosition.contains(queueInfo.getIndex())) {
+                if (queueAdapter.getItem(selfQueue.getIndex()).getStatus() == QueueInfo.STATUS_CLOSE) {
                     if (selfQueue != null) {
                         selfQueue.setStatus(QueueInfo.STATUS_CLOSE);
                     }
@@ -436,18 +435,18 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             return;
         }
         String value = queueChange.getContent();
-
         QueueInfo queueInfo = new QueueInfo(value);
         QueueMember member = queueInfo.getQueueMember();
         int status = queueInfo.getStatus();
-
         if (changeType == ChatRoomQueueChangeType.OFFER && !TextUtils.isEmpty(value)) {
             queueAdapter.updateItem(queueInfo.getIndex(), queueInfo);
             //解决同时申请关闭麦位问题
-            if (queueAdapter.getItem(queueInfo.getIndex()) != null && queueAdapter.getItem(queueInfo.getIndex()).getStatus() == QueueInfo.STATUS_CLOSE) {
+            if (queueAdapter.getItem(queueInfo.getIndex()) != null
+                    && queueAdapter.getItem(queueInfo.getIndex()).getStatus() == QueueInfo.STATUS_CLOSE) {
                 if (selfQueue != null && selfQueue.getIndex() == queueInfo.getIndex()) {
                     if (topTipsDialog != null) {
-                        linkBeRejected(selfQueue);
+                        topTipsDialog.dismiss();
+                        selfQueue = null;
                         return;
                     }
                 }
@@ -485,18 +484,14 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 }
                 break;
             case QueueInfo.STATUS_CLOSE:
-                if (topTipsDialog != null) {
-                    topTipsDialog.dismiss();
+                if (QueueInfo.hasOccupancy(queueInfo)) {
+                    if (selfQueue != null && selfQueue.getStatus() == QueueInfo.STATUS_LOAD) {
+                        linkBeRejected(queueInfo);
+                    } else {
+                        removed(queueInfo);
+                    }
+                    updateUiByleaveQueue(queueInfo);
                 }
-                if (bottomMenuDialog != null) {
-                    bottomMenuDialog.dismiss();
-                }
-                if (selfQueue != null && selfQueue.getStatus() == QueueInfo.STATUS_LOAD) {
-                    linkBeRejected(queueInfo);
-                } else {
-                    removed(queueInfo);
-                }
-                updateUiByleaveQueue(queueInfo);
 
                 break;
             case QueueInfo.STATUS_CLOSE_SELF_AUDIO:
