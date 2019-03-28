@@ -730,6 +730,9 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
 
     @Override
     public void rejectLink(QueueInfo queueInfo) {
+        if (!QueueInfo.hasOccupancy(queueInfo)) {
+            return;
+        }
         if (queueInfo.getReason() == QueueInfo.Reason.applyInMute) {
             queueInfo.setStatus(QueueInfo.STATUS_FORBID);
         } else {
@@ -737,9 +740,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
         }
         queueInfo.setReason(QueueInfo.Reason.cancelApplyByHost);
         requestMemberList.remove(queueInfo);
-        if (!QueueInfo.hasOccupancy(queueInfo)) {
-            return;
-        }
+
         chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString()).setCallback(new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
