@@ -373,6 +373,9 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             public void onSuccess(Void aVoid) {
                 Bundle bundle = new Bundle();
                 topTipsDialog = new TopTipsDialog();
+                if (selfQueue == null) {
+                    return;
+                }
                 selfQueue.setStatus(QueueInfo.STATUS_LOAD);
                 TopTipsDialog.Style style = topTipsDialog.new Style(
                         "已申请上麦，等待通过...  <font color=\"#0888ff\">取消</color>",

@@ -713,8 +713,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                         requestLinkDialog.updateDate();
                     }
                 }
-
-
             }
 
             @Override
