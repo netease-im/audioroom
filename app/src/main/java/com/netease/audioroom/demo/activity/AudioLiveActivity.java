@@ -1070,7 +1070,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                     if (requestMemberList.size() == 0) {
                         semicircleView.setVisibility(View.INVISIBLE);
                     } else {
-                        semicircleView.setText(String.valueOf(requestMemberList));
+                        semicircleView.setText(String.valueOf(requestMemberList.size()));
                     }
                 }
             }
