@@ -248,26 +248,35 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                             @Override
                             public void onSuccess(List<Entry<String, String>> param) {
                                 boolean isInQueue = false;
+                                int position = 0;//当前用户申请麦位位置
                                 ArrayList<QueueInfo> allQueueInfoArrayList = getQueueList(param);
                                 for (QueueInfo queueInfoItem : allQueueInfoArrayList) {
                                     if (queueInfoItem.getQueueMember() != null && queueInfoItem.getQueueMember().getAccount().equals(selelctQueueMember.getAccount())) {
                                         //用户在麦上
+
                                         if (QueueInfo.hasOccupancy(queueInfoItem)) {
                                             ToastHelper.showToast("操作失败:当前用户已在麦位上");
                                             isInQueue = true;
                                             break;
                                             //当前麦位处于申请状态
+                                        } else if (queueInfoItem.getStatus() == QueueInfo.STATUS_LOAD) {
+                                            position = queueInfoItem.getIndex();
                                         }
                                     }
                                 }
 
                                 if (!isInQueue) {
-                                    QueueInfo queueInfo;
+                                    //拒绝申请麦位上不是选中用户的观众
                                     if (queueAdapter.getItem(inviteIndex).getStatus() == QueueInfo.STATUS_LOAD
                                             && queueAdapter.getItem(inviteIndex).getQueueMember() != null
                                             && !queueAdapter.getItem(inviteIndex).getQueueMember().getAccount().equals(selelctQueueMember.getAccount())) {
                                         rejectLink(queueAdapter.getItem(inviteIndex));
                                     }
+                                    //拒绝选中用户的观众在别的麦位的申请
+                                    if (position != inviteIndex) {
+                                        rejectLink(queueAdapter.getItem(position));
+                                    }
+                                    QueueInfo queueInfo;
                                     if (allQueueInfoArrayList.get(inviteIndex).getStatus() == QueueInfo.STATUS_FORBID) {
                                         queueInfo = new QueueInfo(inviteIndex, selelctQueueMember, QueueInfo.STATUS_FORBID, QueueInfo.Reason.inviteByHost);
                                     } else {

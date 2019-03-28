@@ -360,7 +360,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     @Override
     public void requestLink(QueueInfo queueInfo) {
         if (selfQueue != null) {
-            if (selfQueue.getStatus() == QueueInfo.STATUS_CLOSE) {
+            if (queueAdapter.getItem(selfQueue.getIndex()).getStatus() == QueueInfo.STATUS_CLOSE) {
                 ToastHelper.showToast("麦位已关闭");
             } else {
                 ToastHelper.showToast("您已在麦上");
@@ -492,7 +492,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                     }
                     updateUiByleaveQueue(queueInfo);
                 }
-
                 break;
             case QueueInfo.STATUS_CLOSE_SELF_AUDIO:
                 selfQueue = queueInfo;
