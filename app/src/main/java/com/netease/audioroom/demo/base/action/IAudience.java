@@ -28,7 +28,7 @@ public interface IAudience {
     /**
      * 主播拒绝连麦
      */
-    void linkBeRejected();
+    void linkBeRejected(QueueInfo queueInfo);
 
 
     /**

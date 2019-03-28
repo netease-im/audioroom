@@ -226,7 +226,8 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
         if (resultCode == RESULT_OK) {
             //抱麦
             loadService.showCallback(LoadingCallback.class);
-            QueueMember queueMember = (QueueMember) data.getSerializableExtra(MemberActivity.MEMBERACTIVITY);
+            //被抱用户
+            QueueMember selelctQueueMember = (QueueMember) data.getSerializableExtra(MemberActivity.MEMBERACTIVITY);
             //判断当前用户是否离开
             RoomMemberCache.getInstance().fetchMembers(roomInfo.getRoomId(), 0, 100000, new RequestCallback<List<ChatRoomMember>>() {
                 @Override
@@ -237,7 +238,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                     }
                     boolean isContains = false;
                     for (QueueMember member : allQueueMemberArrayList) {
-                        if (member != null && member.getAccount() != null && member.getAccount().equals(queueMember.getAccount())) {
+                        if (member != null && member.getAccount() != null && member.getAccount().equals(selelctQueueMember.getAccount())) {
                             isContains = true;
                             break;
                         }
@@ -248,26 +249,31 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                             public void onSuccess(List<Entry<String, String>> param) {
                                 boolean isInQueue = false;
                                 ArrayList<QueueInfo> allQueueInfoArrayList = getQueueList(param);
-                                for (QueueInfo q : allQueueInfoArrayList) {
-                                    if (q.getQueueMember() != null && q.getQueueMember().getAccount().equals(queueMember.getAccount())) {//存在于列表中
-                                        if (QueueInfo.hasOccupancy(q)) {
+                                for (QueueInfo queueInfoItem : allQueueInfoArrayList) {
+                                    if (queueInfoItem.getQueueMember() != null && queueInfoItem.getQueueMember().getAccount().equals(selelctQueueMember.getAccount())) {
+                                        //用户在麦上
+                                        if (QueueInfo.hasOccupancy(queueInfoItem)) {
                                             ToastHelper.showToast("操作失败:当前用户已在麦位上");
                                             isInQueue = true;
                                             break;
-                                        } else if (q.getStatus() == QueueInfo.STATUS_LOAD) {
-                                            rejectLink(q);
+                                            //当前麦位处于申请状态
                                         }
                                     }
                                 }
+
                                 if (!isInQueue) {
                                     QueueInfo queueInfo;
+                                    if (queueAdapter.getItem(inviteIndex).getStatus() == QueueInfo.STATUS_LOAD
+                                            && queueAdapter.getItem(inviteIndex).getQueueMember() != null
+                                            && !queueAdapter.getItem(inviteIndex).getQueueMember().getAccount().equals(selelctQueueMember.getAccount())) {
+                                        rejectLink(queueAdapter.getItem(inviteIndex));
+                                    }
                                     if (allQueueInfoArrayList.get(inviteIndex).getStatus() == QueueInfo.STATUS_FORBID) {
-                                        queueInfo = new QueueInfo(inviteIndex, queueMember, QueueInfo.STATUS_FORBID, QueueInfo.Reason.inviteByHost);
+                                        queueInfo = new QueueInfo(inviteIndex, selelctQueueMember, QueueInfo.STATUS_FORBID, QueueInfo.Reason.inviteByHost);
                                     } else {
-                                        queueInfo = new QueueInfo(inviteIndex, queueMember, QueueInfo.STATUS_NORMAL, QueueInfo.Reason.inviteByHost);
+                                        queueInfo = new QueueInfo(inviteIndex, selelctQueueMember, QueueInfo.STATUS_NORMAL, QueueInfo.Reason.inviteByHost);
                                     }
                                     invitedLink(queueInfo);
-
                                 }
                             }
 
@@ -614,14 +620,23 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
 
     @Override
     protected void onQueueChange(ChatRoomQueueChangeAttachment queueChange) {
-        super.onQueueChange(queueChange);
         ChatRoomQueueChangeType changeType = queueChange.getChatRoomQueueChangeType();
+        // 队列被清空
+        if (changeType == ChatRoomQueueChangeType.DROP) {
+            initQueue(null);
+            return;
+        }
+        String value = queueChange.getContent();
+        if (changeType == ChatRoomQueueChangeType.OFFER && !TextUtils.isEmpty(value)) {
+            QueueInfo queueInfo = new QueueInfo(value);
+            queueAdapter.updateItem(queueInfo.getIndex(), queueInfo);
+        }
         // 队列被清空
         if (changeType == ChatRoomQueueChangeType.DROP) {
             queueMap.clear();
             return;
         }
-        String value = queueChange.getContent();
+
         //新增元素或更新
         if (changeType == ChatRoomQueueChangeType.OFFER && !TextUtils.isEmpty(value)) {
             QueueInfo queueInfo = new QueueInfo(value);

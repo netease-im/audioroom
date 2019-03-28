@@ -629,18 +629,9 @@ public abstract class BaseAudioActivity extends BaseActivity implements ViewTree
 
 
     protected void onQueueChange(ChatRoomQueueChangeAttachment queueChange) {
-        ChatRoomQueueChangeType changeType = queueChange.getChatRoomQueueChangeType();
-        // 队列被清空
-        if (changeType == ChatRoomQueueChangeType.DROP) {
-            initQueue(null);
-            return;
-        }
-        String value = queueChange.getContent();
-        //新增元素或更新
-        if (changeType == ChatRoomQueueChangeType.OFFER && !TextUtils.isEmpty(value)) {
-            QueueInfo queueInfo = new QueueInfo(value);
-            queueAdapter.updateItem(queueInfo.getIndex(), queueInfo);
-        }
+
+
+
     }
 
     @Override
