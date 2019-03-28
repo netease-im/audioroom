@@ -263,7 +263,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                                         }
                                     }
                                 }
-
                                 if (!isInQueue) {
                                     //拒绝申请麦位上不是选中用户的观众
                                     if (queueAdapter.getItem(inviteIndex).getStatus() == QueueInfo.STATUS_LOAD
@@ -1091,14 +1090,13 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
     //踢人下麦
     @Override
     public void removeLink(QueueInfo queueInfo) {
-        if (queueInfo.getStatus() == QueueInfo.STATUS_CLOSE_SELF_AUDIO_AND_MUTED
-                || queueInfo.getStatus() == QueueInfo.STATUS_BE_MUTED_AUDIO) {
+        if (queueInfo.getStatus() == QueueInfo.STATUS_CLOSE_SELF_AUDIO_AND_MUTED || queueInfo.getStatus() == QueueInfo.STATUS_BE_MUTED_AUDIO) {
             queueInfo.setStatus(QueueInfo.STATUS_FORBID);
         } else {
             queueInfo.setStatus(QueueInfo.STATUS_INIT);
         }
-
         queueInfo.setReason(QueueInfo.Reason.kickByHost);
+
         String Tempname = queueInfo.getQueueMember().getNick();
         chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(),
                 queueInfo.toString()).setCallback(new RequestCallback<Void>() {

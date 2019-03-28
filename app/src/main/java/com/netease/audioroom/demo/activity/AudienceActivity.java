@@ -510,6 +510,9 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             case QueueInfo.STATUS_FORBID:
                 if (queueInfo.getReason() == QueueInfo.Reason.cancelApplyByHost) {
                     linkBeRejected(queueInfo);
+                } else if (queueInfo.getReason() == QueueInfo.Reason.kickByHost) {
+                    removed(queueInfo);
+
                 }
                 break;
         }
