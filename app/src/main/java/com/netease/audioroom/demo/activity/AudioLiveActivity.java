@@ -253,7 +253,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                                 for (QueueInfo queueInfoItem : allQueueInfoArrayList) {
                                     if (queueInfoItem.getQueueMember() != null && queueInfoItem.getQueueMember().getAccount().equals(selelctQueueMember.getAccount())) {
                                         //用户在麦上
-
                                         if (QueueInfo.hasOccupancy(queueInfoItem)) {
                                             ToastHelper.showToast("操作失败:当前用户已在麦位上");
                                             isInQueue = true;
@@ -272,6 +271,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                                             && !queueAdapter.getItem(inviteIndex).getQueueMember().getAccount().equals(selelctQueueMember.getAccount())) {
                                         rejectLink(queueAdapter.getItem(inviteIndex));
                                     }
+
                                     //拒绝选中用户的观众在别的麦位的申请
                                     if (position != inviteIndex) {
                                         rejectLink(queueAdapter.getItem(position));
@@ -730,7 +730,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
 
     @Override
     public void rejectLink(QueueInfo queueInfo) {
-        if (!QueueInfo.hasOccupancy(queueInfo)) {
+        if (!QueueInfo.hasOccupancy(queueInfo) && queueInfo.getStatus() != QueueInfo.STATUS_LOAD) {
             return;
         }
         if (queueInfo.getReason() == QueueInfo.Reason.applyInMute) {
