@@ -564,7 +564,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                     }
                     queueInfo.setReason(QueueInfo.Reason.kickedBySelf);
                     final QueueInfo tempQueueInfo = queueInfo;
-                    //TODO java.lang.String com.netease.audioroom.demo.model.QueueMember.getNick()
                     chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString()).setCallback(new RequestCallback<Void>() {
                         @Override
                         public void onSuccess(Void param) {

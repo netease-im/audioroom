@@ -439,6 +439,11 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         QueueMember member = queueInfo.getQueueMember();
         int status = queueInfo.getStatus();
         if (changeType == ChatRoomQueueChangeType.OFFER && !TextUtils.isEmpty(value)) {
+            //流程上close状态不会变成关闭状态，但是在及某些特定场景下会出现这样的问题，所以在此加上限定
+            if (queueAdapter.getItem(queueInfo.getIndex()).getStatus() == QueueInfo.STATUS_CLOSE
+                    && queueInfo.getStatus() == QueueInfo.STATUS_LOAD) {
+                return;
+            }
             queueAdapter.updateItem(queueInfo.getIndex(), queueInfo);
             //解决同时申请关闭麦位问题
             if (queueAdapter.getItem(queueInfo.getIndex()) != null
