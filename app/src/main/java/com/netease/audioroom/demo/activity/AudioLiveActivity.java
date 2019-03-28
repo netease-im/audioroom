@@ -678,7 +678,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
         if (requestMemberList.size() > 0) {
             semicircleView.setVisibility(View.VISIBLE);
             semicircleView.setText(String.valueOf(requestMemberList.size()));
-            if (requestLinkDialog != null && requestLinkDialog.isVisible()) {
+            if (requestLinkDialog != null) {
                 requestLinkDialog.updateDate();
             }
         } else {
@@ -752,7 +752,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                         semicircleView.setVisibility(View.INVISIBLE);
                     }
                 } else {
-                    if (requestLinkDialog.isVisible()) {
+                    if (requestLinkDialog != null && requestLinkDialog.isVisible()) {
                         requestLinkDialog.updateDate();
                     }
 
