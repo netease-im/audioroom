@@ -737,6 +737,9 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
         }
         queueInfo.setReason(QueueInfo.Reason.cancelApplyByHost);
         requestMemberList.remove(queueInfo);
+        if (!QueueInfo.hasOccupancy(queueInfo)) {
+            return;
+        }
         chatRoomService.updateQueue(roomInfo.getRoomId(), queueInfo.getKey(), queueInfo.toString()).setCallback(new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
