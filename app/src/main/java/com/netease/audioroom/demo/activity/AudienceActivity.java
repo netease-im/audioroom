@@ -10,11 +10,13 @@ import android.text.TextUtils;
 import android.view.View;
 
 import com.netease.audioroom.demo.R;
+import com.netease.audioroom.demo.adapter.MuteMemberListAdapter;
 import com.netease.audioroom.demo.base.BaseAudioActivity;
 import com.netease.audioroom.demo.base.LoginManager;
 import com.netease.audioroom.demo.base.action.IAudience;
 import com.netease.audioroom.demo.base.action.INetworkReconnection;
 import com.netease.audioroom.demo.cache.DemoCache;
+import com.netease.audioroom.demo.cache.RoomMemberCache;
 import com.netease.audioroom.demo.custom.CloseRoomAttach;
 import com.netease.audioroom.demo.custom.P2PNotificationHelper;
 import com.netease.audioroom.demo.dialog.BottomMenuDialog;
@@ -87,6 +89,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             public void onSuccess(ChatRoomInfo param) {
                 // 成功
                 creator = param.getCreator();
+                //判断聊天室是否禁言
                 if (param.isMute()) {
                     beMutedText();
                 }
@@ -121,9 +124,36 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 ToastHelper.showToast("获取当前聊天室信息失败" + exception.getMessage());
             }
         });
+
+        //判断当前用户是否被禁麦
+        RoomMemberCache.getInstance().fetchMembers(roomInfo.getRoomId(), 0, 100, new RequestCallback<List<ChatRoomMember>>() {
+            @Override
+            public void onSuccess(List<ChatRoomMember> chatRoomMembers) {
+                loadService.showSuccess();
+                for (ChatRoomMember c : chatRoomMembers) {
+                    if (c.getAccount().equals(DemoCache.getAccountInfo().account)) {
+                        beMutedText();
+                        break;
+                    }
+                }
+
+            }
+
+            @Override
+            public void onFailed(int i) {
+                loadService.showCallback(ErrorCallback.class);
+            }
+
+            @Override
+            public void onException(Throwable throwable) {
+                loadService.showCallback(ErrorCallback.class);
+            }
+        });
         enterChatRoom(roomInfo.getRoomId());
+
         joinAudioRoom();
     }
+
 
     @Override
     public void onBackPressed() {
@@ -863,5 +893,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             bottomMenuDialog.dismiss();
         }
     }
+
 
 }

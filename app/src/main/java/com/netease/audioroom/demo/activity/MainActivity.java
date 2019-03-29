@@ -114,6 +114,7 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
                 tvNick.setText(accountInfo.nick);
                 requestLivePermission();
             }
+
             @Override
             public void onFailed(int code, String errorMsg) {
                 loadService.showCallback(ErrorCallback.class);
@@ -141,6 +142,7 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
                             chatRoomListAdapter.refrshList(mRoomList);
                         }
                         mPullLoadMoreRecyclerView.setPullLoadMoreCompleted();
+
                     }
 
                     @Override
@@ -154,10 +156,11 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
     @Override
     public void onRefresh() {
         mRoomList.clear();
-        if (Network.getInstance().isConnected())
+        if (Network.getInstance().isConnected()) {
             fetchChatRoomList();
-        else
+        } else {
             netErrCallback();
+        }
     }
 
 

@@ -1300,12 +1300,9 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                     public void onSuccess(List<Entry<String, String>> param) {
                         MemberActivity.startRepeat(AudioLiveActivity.this, roomInfo.getRoomId(), getQueueList(param));
                     }
-
                     @Override
                     public void onFailed(int code) {
-
                     }
-
                     @Override
                     public void onException(Throwable exception) {
 
