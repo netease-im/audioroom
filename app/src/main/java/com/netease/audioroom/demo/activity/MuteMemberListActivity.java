@@ -143,7 +143,13 @@ public class MuteMemberListActivity extends BaseActivity {
                                 adapter = new MuteMemberListAdapter(mContext, muteList);
                                 recyclerView.setAdapter(adapter);
                                 title.setText("禁言成员 (" + muteList.size() + ")");
-                                adapter.setRemoveMute((p) -> removeMuteMember(p, muteList.get(p)));
+                                adapter.setRemoveMute((p) -> {
+                                    if (isAllMute) {
+                                        ToastHelper.showToast("全员禁言中,不能解禁");
+                                    } else {
+                                        removeMuteMember(p, muteList.get(p));
+                                    }
+                                });
                             }
 
                             @Override
@@ -180,7 +186,13 @@ public class MuteMemberListActivity extends BaseActivity {
                     adapter = new MuteMemberListAdapter(mContext, muteList);
                     recyclerView.setAdapter(adapter);
                     title.setText("禁言成员 (" + muteList.size() + ")");
-                    adapter.setRemoveMute((p) -> removeMuteMember(p, muteList.get(p)));
+                    adapter.setRemoveMute((p) -> {
+                        if (isAllMute) {
+                            ToastHelper.showToast("全员禁言中,不能解禁");
+                        } else {
+                            removeMuteMember(p, muteList.get(p));
+                        }
+                    });
                 } else {
                     recyclerView.setVisibility(View.GONE);
                     empty_view.setVisibility(View.VISIBLE);

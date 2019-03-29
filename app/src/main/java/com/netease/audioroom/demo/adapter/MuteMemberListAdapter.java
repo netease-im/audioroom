@@ -52,12 +52,7 @@ public class MuteMemberListAdapter extends RecyclerSwipeAdapter<MuteMemberListAd
     @Override
     public void onBindViewHolder(MuteMemberViewHolder viewHolder, int position) {
         viewHolder.swipeLayout.setShowMode(SwipeLayout.ShowMode.LayDown);
-        viewHolder.linearLayout.setOnClickListener(v -> {
-                    removeMute.remove(position);
-//                    list.remove(position);
-//                    notifyDataSetChanged();
-                }
-        );
+        viewHolder.linearLayout.setOnClickListener(v -> removeMute.remove(position));
         viewHolder.name.setText(list.get(position).getNick());
         viewHolder.headImageView.loadAvatar(list.get(position).getAvatar());
     }
@@ -65,7 +60,6 @@ public class MuteMemberListAdapter extends RecyclerSwipeAdapter<MuteMemberListAd
     public class MuteMemberViewHolder extends RecyclerView.ViewHolder {
         SwipeLayout swipeLayout;
         LinearLayout linearLayout;
-
         HeadImageView headImageView;
         TextView name;
 
