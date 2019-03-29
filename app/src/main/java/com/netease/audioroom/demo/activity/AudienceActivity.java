@@ -411,6 +411,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                 }
                 if (queueAdapter.getItem(selfQueue.getIndex()).getStatus() == QueueInfo.STATUS_CLOSE) {
                     selfQueue.setStatus(QueueInfo.STATUS_CLOSE);
+                    queueAdapter.updateItem(selfQueue.getIndex(), selfQueue);
                     return;
                 }
                 Bundle bundle = new Bundle();
