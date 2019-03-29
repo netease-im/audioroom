@@ -10,7 +10,6 @@ import android.text.TextUtils;
 import android.view.View;
 
 import com.netease.audioroom.demo.R;
-import com.netease.audioroom.demo.adapter.MuteMemberListAdapter;
 import com.netease.audioroom.demo.base.BaseAudioActivity;
 import com.netease.audioroom.demo.base.LoginManager;
 import com.netease.audioroom.demo.base.action.IAudience;
@@ -131,7 +130,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             public void onSuccess(List<ChatRoomMember> chatRoomMembers) {
                 loadService.showSuccess();
                 for (ChatRoomMember c : chatRoomMembers) {
-                    if (c.getAccount().equals(DemoCache.getAccountInfo().account)&&(c.isTempMuted()||c.isMuted())) {
+                    if (c.getAccount().equals(DemoCache.getAccountInfo().account) && (c.isTempMuted() || c.isMuted())) {
                         beMutedText();
                         break;
                     }
@@ -388,7 +387,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
      * 请求连麦
      */
     @Override
-    public void requestLink(QueueInfo queueInfo) {
+    public synchronized void requestLink(QueueInfo queueInfo) {
         if (selfQueue != null) {
             if (queueAdapter.getItem(selfQueue.getIndex()).getStatus() == QueueInfo.STATUS_CLOSE) {
                 ToastHelper.showToast("麦位已关闭");
@@ -401,6 +400,19 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         P2PNotificationHelper.requestLink(queueInfo, DemoCache.getAccountInfo(), roomInfo.getCreator(), new RequestCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
+                /**
+                 * 流程上close状态不会变为申请状态
+                 * 但是在主播关麦的同时麦位被申请，
+                 * 由于消息传达的延迟可能造成ui不同步的错误，
+                 * 所以在此加上限定
+                 */
+                if (selfQueue == null) {
+                    return;
+                }
+                if (queueAdapter.getItem(selfQueue.getIndex()).getStatus() == QueueInfo.STATUS_CLOSE) {
+                    selfQueue.setStatus(QueueInfo.STATUS_CLOSE);
+                    return;
+                }
                 Bundle bundle = new Bundle();
                 topTipsDialog = new TopTipsDialog();
                 if (selfQueue == null) {
@@ -414,12 +426,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
                         0);
                 bundle.putParcelable(topTipsDialog.TAG, style);
                 topTipsDialog.setArguments(bundle);
-                if (queueAdapter.getItem(selfQueue.getIndex()).getStatus() == QueueInfo.STATUS_CLOSE) {
-                    if (selfQueue != null) {
-                        selfQueue.setStatus(QueueInfo.STATUS_CLOSE);
-                    }
-                    return;
-                }
                 topTipsDialog.show(getSupportFragmentManager(), topTipsDialog.TAG);
                 topTipsDialog.setClickListener(() -> {
                     topTipsDialog.dismiss();
@@ -460,7 +466,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
     }
 
     @Override
-    protected void onQueueChange(ChatRoomQueueChangeAttachment queueChange) {
+    protected synchronized void onQueueChange(ChatRoomQueueChangeAttachment queueChange) {
         ChatRoomQueueChangeType changeType = queueChange.getChatRoomQueueChangeType();
         // 队列被清空
         if (changeType == ChatRoomQueueChangeType.DROP) {
@@ -472,20 +478,30 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         QueueMember member = queueInfo.getQueueMember();
         int status = queueInfo.getStatus();
         if (changeType == ChatRoomQueueChangeType.OFFER && !TextUtils.isEmpty(value)) {
-            //流程上close状态不会变成关闭状态，但是在及某些特定场景下会出现这样的问题，所以在此加上限定
+
+            queueAdapter.updateItem(queueInfo.getIndex(), queueInfo);
+            //解决同时申请关闭麦位问题
+            /**
+             * 流程上close状态不会变为申请状态
+             * ，但是在主播关麦的同时麦位被申请，
+             * 由于消息传达的延迟可能造成ui不同步的错误，
+             * 所以在此加上限定
+             */
             if (queueAdapter.getItem(queueInfo.getIndex()).getStatus() == QueueInfo.STATUS_CLOSE
                     && queueInfo.getStatus() == QueueInfo.STATUS_LOAD) {
                 return;
             }
-            queueAdapter.updateItem(queueInfo.getIndex(), queueInfo);
-            //解决同时申请关闭麦位问题
             if (queueAdapter.getItem(queueInfo.getIndex()) != null
                     && queueAdapter.getItem(queueInfo.getIndex()).getStatus() == QueueInfo.STATUS_CLOSE) {
                 if (selfQueue != null && selfQueue.getIndex() == queueInfo.getIndex()) {
-                    if (topTipsDialog != null && topTipsDialog.isVisible()) {
-                        topTipsDialog.dismiss();
-                        selfQueue = null;
-                        return;
+                    try {
+                        if (topTipsDialog != null) {
+                            topTipsDialog.dismiss();
+                            selfQueue = null;
+                            return;
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
                 }
             }

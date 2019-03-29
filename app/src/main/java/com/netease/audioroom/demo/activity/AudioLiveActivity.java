@@ -342,7 +342,7 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
 
 
     @Override
-    protected void onQueueItemClick(QueueInfo queueInfo, int position) {
+    protected synchronized void onQueueItemClick(QueueInfo queueInfo, int position) {
         Bundle bundle = new Bundle();
         bottomMenuDialog = new BottomMenuDialog();
         ArrayList<String> mune = new ArrayList<>();
@@ -1300,9 +1300,11 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                     public void onSuccess(List<Entry<String, String>> param) {
                         MemberActivity.startRepeat(AudioLiveActivity.this, roomInfo.getRoomId(), getQueueList(param));
                     }
+
                     @Override
                     public void onFailed(int code) {
                     }
+
                     @Override
                     public void onException(Throwable exception) {
 
