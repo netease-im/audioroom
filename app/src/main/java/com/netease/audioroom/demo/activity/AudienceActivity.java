@@ -131,7 +131,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             public void onSuccess(List<ChatRoomMember> chatRoomMembers) {
                 loadService.showSuccess();
                 for (ChatRoomMember c : chatRoomMembers) {
-                    if (c.getAccount().equals(DemoCache.getAccountInfo().account)) {
+                    if (c.getAccount().equals(DemoCache.getAccountInfo().account)&&(c.isTempMuted()||c.isMuted())) {
                         beMutedText();
                         break;
                     }
