@@ -149,7 +149,6 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             }
         });
         enterChatRoom(roomInfo.getRoomId());
-
         joinAudioRoom();
     }
 
@@ -479,15 +478,8 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
         QueueMember member = queueInfo.getQueueMember();
         int status = queueInfo.getStatus();
         if (changeType == ChatRoomQueueChangeType.OFFER && !TextUtils.isEmpty(value)) {
-
             queueAdapter.updateItem(queueInfo.getIndex(), queueInfo);
             //解决同时申请关闭麦位问题
-            /**
-             * 流程上close状态不会变为申请状态
-             * ，但是在主播关麦的同时麦位被申请，
-             * 由于消息传达的延迟可能造成ui不同步的错误，
-             * 所以在此加上限定
-             */
             if (queueAdapter.getItem(queueInfo.getIndex()).getStatus() == QueueInfo.STATUS_CLOSE
                     && queueInfo.getStatus() == QueueInfo.STATUS_LOAD) {
                 return;
@@ -512,6 +504,7 @@ public class AudienceActivity extends BaseAudioActivity implements IAudience, Vi
             if (status == QueueInfo.STATUS_NORMAL) {
                 if (selfQueue != null && queueInfo.getIndex() == selfQueue.getIndex()) {
                     ToastHelper.showToast("申请麦位已被拒绝");
+                    selfQueue = null;
                     //申请麦位被别人上麦
                     if (topTipsDialog != null) {
                         topTipsDialog.dismiss();

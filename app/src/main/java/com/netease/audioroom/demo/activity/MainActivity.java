@@ -7,7 +7,6 @@ import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.widget.TextView;
-
 import com.netease.audioroom.demo.R;
 import com.netease.audioroom.demo.adapter.ChatRoomListAdapter;
 import com.netease.audioroom.demo.base.BaseActivity;
@@ -97,11 +96,6 @@ public class MainActivity extends BaseActivity implements BaseAdapter.ItemClickL
         });
     }
 
-    @Override
-    protected void onRestart() {
-        super.onRestart();
-        onRefresh();
-    }
 
     private void onNetWork() {
         LoginManager loginManager = LoginManager.getInstance();

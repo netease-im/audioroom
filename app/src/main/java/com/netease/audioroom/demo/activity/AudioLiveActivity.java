@@ -537,7 +537,6 @@ public class AudioLiveActivity extends BaseAudioActivity implements LoginManager
                     } else {
                         queueInfo.setReason(QueueInfo.Reason.init);
                     }
-
                     queueInfo.setStatus(QueueInfo.STATUS_LOAD);
                 } else {
                     queueInfo = new QueueInfo(index, queueMember, QueueInfo.STATUS_LOAD, QueueInfo.Reason.init);
